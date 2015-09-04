@@ -15,18 +15,17 @@
  */
 package com.consol.citrus.channel.selector;
 
-import static org.easymock.EasyMock.*;
-
+import com.consol.citrus.xml.namespace.NamespaceContextBuilder;
 import org.easymock.EasyMock;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.integration.Message;
+import org.springframework.messaging.Message;
 import org.springframework.integration.support.MessageBuilder;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.consol.citrus.xml.namespace.NamespaceContextBuilder;
+import static org.easymock.EasyMock.*;
 
 /**
  * @author Christoph Deppisch

@@ -44,21 +44,21 @@
         </variables>
         <actions>
             <parallel>
-              <send with="syncGetDateRequestSender">
+              <send endpoint="syncGetDateRequestSender">
                   <message>
                       <data>
                       <![CDATA[
-			        	<GetDateRequestMessage>
-							<MessageHeader>
-								<ConversationId>_</ConversationId>
-								<Timestamp>citrus:currentDate()</Timestamp>
-							</MessageHeader>
-							<MessageBody>
-								<Format>yyyy-mm-dd</Format>
-							</MessageBody>
-						</GetDateRequestMessage>	
-					  ]]>
-					  </data>
+                          <GetDateRequestMessage>
+                            <MessageHeader>
+                              <ConversationId>_</ConversationId>
+                              <Timestamp>citrus:currentDate()</Timestamp>
+                            </MessageHeader>
+                            <MessageBody>
+                              <Format>yyyy-mm-dd</Format>
+                            </MessageBody>
+                          </GetDateRequestMessage>
+                      ]]>
+                      </data>
                       <element path="ConversationId" value="${conversationId}"/>
                   </message>
                   <header>
@@ -66,13 +66,13 @@
                       <element name="ConversationId" value="${conversationId}"/>
                   </header>
                   <extract>
-                      <header name="id" variable="syncRequestCorrelatorId"></header>
+                      <header name="citrus_message_id" variable="syncRequestCorrelatorId"></header>
                   </extract>
               </send>
               
               <sequential>
-                <receive with="syncGetDateRequestReceiver">
-                    <message validator="xmlMessageValidator">
+                <receive endpoint="syncGetDateRequestReceiver">
+                    <message validator="defaultXmlMessageValidator">
                         <data>
                         <![CDATA[
 	                        <GetDateRequestMessage>
@@ -91,11 +91,9 @@
                         <element name="Operation" value="${operation}"/>
                         <element name="ConversationId" value="${conversationId}"/>
                     </header>
-                    <extract>
-                        <header name="id" variable="syncMessageCorrelatorId"></header>
-                    </extract>
                 </receive>
-                <send with="getDateRequestReplySender">
+
+                <send endpoint="syncGetDateRequestReceiver">
                     <message>
                         <data>
                         <![CDATA[
@@ -115,13 +113,12 @@
                     <header>
                         <element name="Operation" value="${operation}"/>
                         <element name="ConversationId" value="${conversationId}"/>
-                        <element name="citrus_sync_message_correlator" value="${syncMessageCorrelatorId}"/>
                     </header>
                 </send>
                 
-                <receive with="syncGetDateResponseHandler" timeout="5000">
+                <receive endpoint="syncGetDateRequestSender" timeout="5000">
                     <selector>
-                        <element name="id" value="${syncRequestCorrelatorId}"/>
+                        <element name="citrus_message_id" value="${syncRequestCorrelatorId}"/>
                     </selector>
                     <message>
                         <data>

@@ -16,45 +16,47 @@
 
 package com.consol.citrus.dsl.definition;
 
-import java.io.IOException;
-
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.Resource;
-import org.springframework.ws.soap.SoapMessageFactory;
-
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.util.FileUtils;
 import com.consol.citrus.validation.xml.XmlMessageValidationContext;
 import com.consol.citrus.ws.actions.AssertSoapFault;
-import com.consol.citrus.ws.message.CitrusSoapMessageHeaders;
 import com.consol.citrus.ws.validation.SoapFaultDetailValidationContext;
 import com.consol.citrus.ws.validation.SoapFaultValidator;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.Resource;
+
+import java.io.IOException;
 
 /**
  * @author Christoph Deppisch
  * since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.AssertSoapFaultBuilder}
  */
-public class AssertSoapFaultDefinition extends AbstractActionDefinition<AssertSoapFault> {
+public class AssertSoapFaultDefinition extends AbstractActionContainerDefinition<AssertSoapFault> {
 
-    /** Citrus base application context */
-    private ApplicationContext applicationContext;
-    
     private XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-    
-	public AssertSoapFaultDefinition(AssertSoapFault action, ApplicationContext ctx) {
+
+    /**
+     * Constructor using action field.
+     * @param action
+     */
+	public AssertSoapFaultDefinition(AssertSoapFault action) {
 	    super(action);
-	    this.applicationContext = ctx;
-	    
-	    action.setMessageFactory(applicationContext.getBean("messageFactory", SoapMessageFactory.class));
-	    action.setValidator(applicationContext.getBean("soapFaultValidator", SoapFaultValidator.class));
-	    
+
 	    // for now support one single soap fault detail
 	    SoapFaultDetailValidationContext soapFaultDetailValidationContext = new SoapFaultDetailValidationContext();
 	    soapFaultDetailValidationContext.addValidationContext(validationContext);
 	    action.setValidationContext(soapFaultDetailValidationContext);
     }
-	
-	/**
+
+    /**
+     * Default constructor
+     */
+    public AssertSoapFaultDefinition() {
+        this(new AssertSoapFault());
+    }
+
+    /**
 	 * Expect fault code in SOAP fault message.
 	 * @param code
 	 * @return
@@ -63,7 +65,7 @@ public class AssertSoapFaultDefinition extends AbstractActionDefinition<AssertSo
 	    action.setFaultCode(code);
 	    return this;
 	}
-	
+
 	/**
      * Expect fault string in SOAP fault message.
      * @param faultString
@@ -73,7 +75,7 @@ public class AssertSoapFaultDefinition extends AbstractActionDefinition<AssertSo
         action.setFaultString(faultString);
         return this;
     }
-    
+
     /**
      * Expect fault actor in SOAP fault message.
      * @param faultActor
@@ -83,7 +85,7 @@ public class AssertSoapFaultDefinition extends AbstractActionDefinition<AssertSo
         action.setFaultActor(faultActor);
         return this;
     }
-    
+
     /**
      * Expect fault detail in SOAP fault message.
      * @param faultDetail
@@ -93,7 +95,7 @@ public class AssertSoapFaultDefinition extends AbstractActionDefinition<AssertSo
         action.getFaultDetails().add(faultDetail);
         return this;
     }
-    
+
     /**
      * Expect fault detail from file resource.
      * @param resource
@@ -107,17 +109,17 @@ public class AssertSoapFaultDefinition extends AbstractActionDefinition<AssertSo
         }
         return this;
     }
-    
+
     /**
      * Expect fault detail from file resource.
      * @param filePath
      * @return
      */
     public AssertSoapFaultDefinition faultDetailResource(String filePath) {
-        action.getFaultDetails().add(CitrusSoapMessageHeaders.SOAP_FAULT_DETAIL_RESOURCE + "(" + filePath + ")");
+        action.getFaultDetailResourcePaths().add(filePath);
         return this;
     }
-    
+
     /**
      * Set explicit SOAP fault validator implementation.
      * @param validator
@@ -127,37 +129,18 @@ public class AssertSoapFaultDefinition extends AbstractActionDefinition<AssertSo
         action.setValidator(validator);
         return this;
     }
-    
+
     /**
      * Set explicit SOAP fault validator implementation by bean name.
      * @param validatorName
+     * @param applicationContext
      * @return
      */
-    public AssertSoapFaultDefinition validator(String validatorName) {
+    public AssertSoapFaultDefinition validator(String validatorName, ApplicationContext applicationContext) {
         action.setValidator(applicationContext.getBean(validatorName, SoapFaultValidator.class));
         return this;
     }
-    
-    /**
-     * Set explicit SOAP message factory implementation.
-     * @param messageFactory
-     * @return
-     */
-    public AssertSoapFaultDefinition messageFactory(SoapMessageFactory messageFactory) {
-        action.setMessageFactory(messageFactory);
-        return this;
-    }
-    
-    /**
-     * Set explicit SOAP message factory implementation by bean name.
-     * @param messageFactoryName
-     * @return
-     */
-    public AssertSoapFaultDefinition messageFactory(String messageFactoryName) {
-        action.setMessageFactory(applicationContext.getBean(messageFactoryName, SoapMessageFactory.class));
-        return this;
-    }
-    
+
     /**
      * Sets schema validation enabled/disabled for this SOAP fault assertion.
      * @param enabled
@@ -167,7 +150,7 @@ public class AssertSoapFaultDefinition extends AbstractActionDefinition<AssertSo
         validationContext.setSchemaValidation(enabled);
         return this;
     }
-    
+
     /**
      * Sets explicit schema instance name to use for schema validation.
      * @param schemaName
@@ -177,7 +160,7 @@ public class AssertSoapFaultDefinition extends AbstractActionDefinition<AssertSo
         validationContext.setSchema(schemaName);
         return this;
     }
-    
+
     /**
      * Sets explicit xsd schema repository instance to use for validation.
      * @param schemaRepository

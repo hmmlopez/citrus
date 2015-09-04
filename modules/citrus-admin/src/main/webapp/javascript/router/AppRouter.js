@@ -1,42 +1,104 @@
 (function() {
-    define(["views/HeaderView", "views/WelcomeView", "views/TestListView", "views/FooterView"], function(HeaderView, WelcomeView, TestListView, FooterView) {
+    define(["views/HeaderView", "views/ProjectView", "views/ConfigView", "views/TestListView", "views/FooterView"], function(HeaderView, ProjectView, ConfigView, TestListView, FooterView) {
         var AppRouter = Backbone.Router.extend({
-        
+
+          headerView: undefined,
+          footerView: undefined,
+          projectView: undefined,
+          configView: undefined,
+          testListView: undefined,
+          statsView: undefined,
+          settingsView: undefined,
+          aboutView: undefined,
+
           routes: {
-            "": "welcome", // #welcome
+            "": "project", // #project
+            "project": "project", // #project
             "config": "config", //#config
-            "testcases": "testcases", // #testcases
+            "config/:page": "config", //#config/endpoints
+            "tests": "tests", // #tests
+            "tests/:testName": "testDetails", // #tests/EchoActionITest
             "stats": "stats", // #stats
+            "settings": "settings", // #settings
             "about": "about" // #about
           },
         
           initialize: function() {
-              var headerView = new HeaderView({el: $('#header')});
-              headerView.render();
-              var footerView = new FooterView({el: $('#footer')});
-              footerView.render();
+              this.headerView = new HeaderView({el: $('#header')});
+              this.headerView.render();
+
+              this.footerView = new FooterView({el: $('#footer')});
+              this.footerView.render();
           },
           
-          welcome: function() {
-              var welcomeView = new WelcomeView({el: $('#content')});
-              welcomeView.render();
+          project: function() {
+              if (!this.projectView) {
+                  this.projectView = new ProjectView({el: $('#project-content')});
+                  this.projectView.render();
+              }
+
+              $('#content').children().hide();
+              $('#project-content').show();
           },
           
-          config: function() {
-              $('#content').html('<div class="container"><h1 class="page-header">Configuration <small>Manage project settings</small></h1><br/><p>Not implemented yet! Coming soon!</p></div>');
+          config: function(page) {
+              if (!this.configView) {
+                  this.configView = new ConfigView({el: $('#config-content')});
+                  this.configView.render();
+                  this.configView.afterRender();
+              }
+
+              if (page) {
+                  this.configView.show(page);
+              }
+
+              $('#content').children().hide();
+              $('#config-content').show();
           },
         
-          testcases: function() {
-              var testListView = new TestListView({el: $('#content')});
-              testListView.render();
+          tests: function() {
+              if (!this.testListView) {
+                  this.testListView = new TestListView({el: $('#tests-content')});
+                  this.testListView.render();
+              }
+
+              $('#content').children().hide();
+              $('#tests-content').show();
+          },
+
+          testDetails: function(testName) {
+              this.tests();
+              this.testListView.showDetails(testName);
           },
           
           stats: function() {
-              $('#content').html('<div class="container"><h1 class="page-header">Statistics <small>Manage project statistics</small></h1><br/><p>Not implemented yet! Coming soon!</p></div>');
+              if (!this.statsView) {
+                  $('#stats-content').html('<div class="container content-header"><h1>Statistics <small>Manage project statistics</small></h1></div><div class="container"><div class="content-nav"><p>Not implemented yet! Coming soon!</p></div></div>');
+              }
+
+              $('#content').children().hide();
+              $('#stats-content').show();
+
           },
-          
+
+          settings: function() {
+                if (!this.statsView) {
+                    $('#settings-content').html('<div class="container content-header"><h1>Settings <small>Administration settings</small></h1></div><div class="container"><div class="content-nav"><p>Not implemented yet! Coming soon!</p></div></div>');
+                }
+
+                $('#content').children().hide();
+                $('#settings-content').show();
+
+            },
+
           about: function() {
-              $('#content').html('<div class="container"><h1 class="page-header">About <small>Behind the scenes</small></h1><br/><p>Not implemented yet! Coming soon!</p></div>');
+              if (!this.statsView) {
+                  $('#about-content').html('<div class="container content-header"><h1>About <small>Behind the scenes</small></h1></div><div class="container"><div class="content-nav"><p>Not implemented yet! Coming soon!</p></div></div>');
+              }
+
+              $('#content').children().hide();
+              $('#about-content').show();
+
           }
         
         });

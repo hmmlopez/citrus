@@ -16,16 +16,19 @@
 
 package com.consol.citrus.admin.controller;
 
-import java.util.List;
-
 import com.consol.citrus.admin.launcher.ProcessMonitor;
+import com.consol.citrus.admin.model.TestCaseData;
+import com.consol.citrus.admin.model.TestCaseType;
+import com.consol.citrus.admin.service.ProjectService;
+import com.consol.citrus.admin.service.TestCaseService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import com.consol.citrus.admin.model.TestCaseType;
-import com.consol.citrus.admin.service.TestCaseService;
+import java.util.List;
 
 /**
  * Controller manages test case related queries like get all tests
@@ -42,31 +45,57 @@ public class TestCaseController {
 
     @Autowired
     private TestCaseService testCaseService;
-    
+
+    @Autowired
+    private ProjectService projectService;
+
     @RequestMapping(method = { RequestMethod.GET })
     @ResponseBody
-    public List<TestCaseType> list(HttpEntity<String> requestEntity) {
-        return testCaseService.getAllTests();
+    public List<TestCaseData> list() {
+        return testCaseService.getTests(projectService.getActiveProject());
+    }
+
+    @RequestMapping(value = "/count", method = { RequestMethod.POST })
+    @ResponseBody
+    public Long testCount() {
+        return testCaseService.getTestCount(projectService.getActiveProject());
+    }
+
+    @RequestMapping(value="/details/{type}/{package}/{name}", method = { RequestMethod.GET })
+    @ResponseBody
+    public TestCaseData getTestDetail(@PathVariable("package") String testPackage, @PathVariable("name") String testName,
+                                        @PathVariable("type") String type, @RequestParam(value = "method", required = false) String method) {
+        if (StringUtils.hasText(method)) {
+            return testCaseService.getTestDetail(projectService.getActiveProject(), testPackage, testName + "." + method, TestCaseType.valueOf(type.toUpperCase()));
+        } else {
+            return testCaseService.getTestDetail(projectService.getActiveProject(), testPackage, testName, TestCaseType.valueOf(type.toUpperCase()));
+        }
     }
     
-    @RequestMapping(value="/{package}/{name}/{type}", method = { RequestMethod.GET })
+    @RequestMapping(value="/source/{type}/{package}/{name}", method = { RequestMethod.GET })
     @ResponseBody
     public String getSourceCode(@PathVariable("package") String testPackage, @PathVariable("name") String testName,
-            @PathVariable("type") String type) {
-        return testCaseService.getTestSources(testPackage, testName, type);
+                                @PathVariable("type") String type) {
+        return testCaseService.getSourceCode(projectService.getActiveProject(), testPackage, testName, TestCaseType.valueOf(type.toUpperCase()));
     }
     
-    @RequestMapping(value="/execute/{name}", method = { RequestMethod.GET })
+    @RequestMapping(value="/execute/{package}/{name}", method = { RequestMethod.GET })
     @ResponseBody
-    public String executeTest(@PathVariable("name") String testName) {
-        testCaseService.executeTest(testName);
-        return "LAUNCHED";
+    public ResponseEntity<String> executeTest(@PathVariable("package") String testPackage, @PathVariable("name") String testName,
+                                              @RequestParam(value = "runConfiguration", required = true) String runConfigurationId, @RequestParam(value = "method", required = false) String method) {
+        if (StringUtils.hasText(method)) {
+            testCaseService.executeTest(projectService.getActiveProject(), testPackage, testName + "." + method, runConfigurationId);
+        } else {
+            testCaseService.executeTest(projectService.getActiveProject(), testPackage, testName, runConfigurationId);
+        }
+
+        return new ResponseEntity<String>(HttpStatus.OK);
     }
 
     @RequestMapping(value="/stop/{processId}", method = { RequestMethod.GET })
     @ResponseBody
-    public String stopTest(@PathVariable("processId") String processId) {
+    public ResponseEntity<String> stopTest(@PathVariable("processId") String processId) {
         processMonitor.stopProcess(processId);
-        return "STOPPED";
+        return new ResponseEntity<String>(HttpStatus.OK);
     }
 }

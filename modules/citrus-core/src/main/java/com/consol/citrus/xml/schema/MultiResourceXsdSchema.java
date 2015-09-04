@@ -15,10 +15,7 @@
  */
 package com.consol.citrus.xml.schema;
 
-import java.io.IOException;
-
-import javax.xml.parsers.ParserConfigurationException;
-
+import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.Resource;
 import org.springframework.util.Assert;
@@ -26,6 +23,10 @@ import org.springframework.xml.validation.XmlValidator;
 import org.springframework.xml.validation.XmlValidatorFactory;
 import org.springframework.xml.xsd.SimpleXsdSchema;
 import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Schema combines multiple file resources usually with exactly the same target namespace to
@@ -41,8 +42,12 @@ public class MultiResourceXsdSchema extends SimpleXsdSchema implements Initializ
     public static final String W3C_XML_SCHEMA_NS_URI = "http://www.w3.org/2001/XMLSchema";
     
     @Override
-    public XmlValidator createValidator() throws IOException {
-        return XmlValidatorFactory.createValidator(schemas, W3C_XML_SCHEMA_NS_URI);
+    public XmlValidator createValidator() {
+        try {
+            return XmlValidatorFactory.createValidator(schemas, W3C_XML_SCHEMA_NS_URI);
+        } catch (IOException e) {
+            throw new CitrusRuntimeException("Failed to create validator from multi resource schema files", e);
+        }
     }
     
     @Override
@@ -53,11 +58,20 @@ public class MultiResourceXsdSchema extends SimpleXsdSchema implements Initializ
         
         super.afterPropertiesSet();
     }
+
+    /**
+     * Gets the schemas included in this collection.
+     * @return
+     */
+    public Resource[] getSchemas() {
+        return Arrays.copyOf(schemas, schemas.length);
+    }
     
     /**
+     * Sets the schemas in this collection.
      * @param schemas the schema resources to set
      */
     public void setSchemas(Resource[] schemas) {
-        this.schemas = schemas.clone();
+        this.schemas = Arrays.copyOf(schemas, schemas.length);
     }
 }

@@ -16,25 +16,41 @@
 
 package com.consol.citrus.dsl.definition;
 
-import java.util.Arrays;
-
+import com.consol.citrus.actions.AntRunAction;
 import org.apache.tools.ant.BuildListener;
 import org.springframework.util.StringUtils;
 
-import com.consol.citrus.actions.AntRunAction;
+import java.util.Arrays;
 
 /**
  * Action running ANT build targets during test.
  * 
  * @author Christoph Deppisch
  * @since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.AntRunBuilder}
  */
 public class AntRunActionDefinition extends AbstractActionDefinition<AntRunAction> {
 
+    /**
+     * Constructor using action field.
+     * @param action
+     */
 	public AntRunActionDefinition(AntRunAction action) {
 	    super(action);
     }
-	
+
+    /**
+     * Default constructor.
+     */
+    public AntRunActionDefinition() {
+        super(new AntRunAction());
+    }
+
+    public AntRunActionDefinition buildFilePath(String buildFilePath) {
+        action.setBuildFilePath(buildFilePath);
+        return this;
+    }
+
 	/**
      * Build target name to call.
      * @param target
@@ -43,7 +59,7 @@ public class AntRunActionDefinition extends AbstractActionDefinition<AntRunActio
 		action.setTarget(target);
 		return this;
 	}
-	
+
 	/**
      * Multiple build target names to call.
      * @param targets
@@ -52,7 +68,7 @@ public class AntRunActionDefinition extends AbstractActionDefinition<AntRunActio
         action.setTargets(StringUtils.collectionToCommaDelimitedString(Arrays.asList(targets)));
         return this;
     }
-    
+
     /**
      * Adds a build property by name and value.
      * @param name
@@ -62,7 +78,7 @@ public class AntRunActionDefinition extends AbstractActionDefinition<AntRunActio
         action.getProperties().put(name, value);
         return this;
     }
-    
+
     /**
      * Adds a build property file reference by file path.
      * @param filePath
@@ -71,7 +87,7 @@ public class AntRunActionDefinition extends AbstractActionDefinition<AntRunActio
         action.setPropertyFilePath(filePath);
         return this;
     }
-    
+
     /**
      * Adds custom build listener implementation.
      * @param buildListener

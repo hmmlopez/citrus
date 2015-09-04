@@ -1,6 +1,6 @@
 package com.consol.citrus.sample;
 
-import org.testng.ITestContext;
+import com.consol.citrus.annotations.CitrusXmlTest;
 import org.testng.annotations.Test;
 
 import com.consol.citrus.testng.AbstractTestNGCitrusTest;
@@ -13,7 +13,7 @@ import com.consol.citrus.testng.AbstractTestNGCitrusTest;
  */
 public class SampleTest extends AbstractTestNGCitrusTest {
     @Test
-    public void sampleTest(ITestContext testContext) {
-        executeTest(testContext);
+    @CitrusXmlTest(name = "SampleTest")
+    public void sampleTest() {
     }
 }

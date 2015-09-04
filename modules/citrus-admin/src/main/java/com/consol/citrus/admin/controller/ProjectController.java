@@ -16,15 +16,19 @@
 
 package com.consol.citrus.admin.controller;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-
+import com.consol.citrus.admin.model.Project;
+import com.consol.citrus.admin.model.TestReport;
+import com.consol.citrus.admin.report.TestReportService;
+import com.consol.citrus.admin.service.ConfigurationService;
+import com.consol.citrus.admin.service.ProjectService;
+import com.consol.citrus.admin.util.FileHelper;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
-import com.consol.citrus.admin.service.ConfigService;
-import com.consol.citrus.admin.service.ProjectService;
+import java.io.File;
 
 /**
  * @author Christoph Deppisch
@@ -35,44 +39,53 @@ public class ProjectController {
     
     @Autowired
     private ProjectService projectService;
-    
+
     @Autowired
-    private ConfigService configService;
+    private TestReportService testReportService;
+
+    @Autowired
+    private ConfigurationService configurationService;
+
+    @Autowired
+    private FileHelper fileHelper;
 
     @RequestMapping(method = RequestMethod.POST)
     @ResponseBody
-    public String searchProjectHome(@RequestParam("dir") String dir) throws UnsupportedEncodingException {
-        String directory = URLDecoder.decode(dir, "UTF-8"); // TODO use system default encoding?
-        if (directory.equals("/")) {
-            directory = configService.getRootDirectory();
-        }
-        
-        if (directory.charAt(directory.length() - 1) == '\\') {
-            directory = directory.substring(0, directory.length() - 1) + "/";
-        } else if (directory.charAt(directory.length() - 1) != '/') {
-            directory += "/";
-        }
-        
-        String[] folders = projectService.getFolders(URLDecoder.decode(directory, "UTF-8"));
-        
-        StringBuilder structure = new StringBuilder();
-        structure.append("<ul class=\"jqueryFileTree\" style=\"display: none;\">");
-        for (String file : folders) {
-            structure.append("<li class=\"directory collapsed\"><a href=\"#\" rel=\"" + directory + file + "/\">"
-                + file + "</a></li>");
-        }
-        structure.append("</ul>");
-        
-        return structure.toString();
+    public ModelAndView browseProjectHome(@RequestParam("dir") String dir) {
+        String directory = FilenameUtils.separatorsToSystem(fileHelper.decodeDirectoryUrl(dir, configurationService.getRootDirectory()));
+        String[] folders = fileHelper.getFolders(new File(directory));
+
+        ModelAndView view = new ModelAndView("FileTree");
+        view.addObject("folders", folders);
+        view.addObject("baseDir", FilenameUtils.separatorsToUnix(directory));
+
+        return view;
+    }
+
+    @RequestMapping(value = "/active", method = RequestMethod.GET)
+    @ResponseBody
+    public Project getActiveProject() {
+        return projectService.getActiveProject();
     }
     
-    @RequestMapping(params = {"projecthome"}, method = RequestMethod.GET)
-    public String setProjectHome(@RequestParam("projecthome") String projecthome) {
-        if (!projectService.isProjectHome(projecthome)) {
-            throw new IllegalArgumentException("Invalid project home - not a proper Citrus project");
-        }
-        
-        configService.setProjectHome(projecthome);
+    @RequestMapping(value = "/open", method = RequestMethod.POST)
+    public String openProject(@RequestParam("projecthome") String projecthome) {
+        projectService.load(projecthome);
         return "redirect:/";
+    }
+
+    @RequestMapping(value = "/reset", method = RequestMethod.GET)
+    public String openProject() {
+        if (projectService.getActiveProject() != null) {
+            return "redirect:/";
+        } else {
+            return "redirect:/setup";
+        }
+    }
+
+    @RequestMapping(value = "/testreport", method = RequestMethod.GET)
+    @ResponseBody
+    public TestReport getTestReport() {
+        return testReportService.loadReport(projectService.getActiveProject());
     }
 }

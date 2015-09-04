@@ -16,18 +16,18 @@
 
 package com.consol.citrus.context;
 
-import java.util.*;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
+import com.consol.citrus.CitrusConstants;
 import com.consol.citrus.TestCase;
 import com.consol.citrus.actions.CreateVariablesAction;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.exceptions.VariableNullValueException;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import com.consol.citrus.variable.GlobalVariables;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.util.*;
 
 /**
  * @author Christoph Deppisch
@@ -44,27 +44,34 @@ public class TestContextTest extends AbstractTestNGUnitTest {
         TestCase testcase = new TestCase();
         testcase.setName("MyTestCase");
         
-        testcase.setVariableDefinitions(Collections.singletonMap("test1Var", "456"));
-        
-        testcase.execute(createTestContext());
-        
-        Assert.assertTrue(testcase.getTestContext().getVariables().containsKey("defaultVar"));
-        Assert.assertEquals(testcase.getTestContext().getVariables().get("defaultVar"), "123");
-        Assert.assertTrue(testcase.getTestContext().getVariables().containsKey("test1Var"));
-        Assert.assertEquals(testcase.getTestContext().getVariables().get("test1Var"), "456");
+        testcase.setVariableDefinitions(Collections.<String, Object>singletonMap("test1Var", "456"));
+
+        TestContext testContext = createTestContext();
+        testcase.execute(testContext);
+
+        Assert.assertEquals(testContext.getVariables().get(CitrusConstants.TEST_NAME_VARIABLE), "MyTestCase");
+        Assert.assertEquals(testContext.getVariables().get(CitrusConstants.TEST_PACKAGE_VARIABLE), TestCase.class.getPackage().getName());
+        Assert.assertTrue(testContext.getVariables().containsKey("defaultVar"));
+        Assert.assertEquals(testContext.getVariables().get("defaultVar"), "123");
+        Assert.assertTrue(testContext.getVariables().containsKey("test1Var"));
+        Assert.assertEquals(testContext.getVariables().get("test1Var"), "456");
         
         TestCase testcase2 = new TestCase();
         testcase2.setName("MyTestCase2");
+        testcase2.setPackageName("com.consol.citrus");
         
-        testcase2.setVariableDefinitions(Collections.singletonMap("test2Var", "456"));
-        
-        testcase2.execute(createTestContext());
-        
-        Assert.assertTrue(testcase2.getTestContext().getVariables().containsKey("defaultVar"));
-        Assert.assertEquals(testcase2.getTestContext().getVariables().get("defaultVar"), "123");
-        Assert.assertTrue(testcase2.getTestContext().getVariables().containsKey("test2Var"));
-        Assert.assertEquals(testcase2.getTestContext().getVariables().get("test2Var"), "456");
-        Assert.assertFalse(testcase2.getTestContext().getVariables().containsKey("test1Var"));
+        testcase2.setVariableDefinitions(Collections.<String, Object>singletonMap("test2Var", "456"));
+
+        testContext = createTestContext();
+        testcase2.execute(testContext);
+
+        Assert.assertEquals(testContext.getVariables().get(CitrusConstants.TEST_NAME_VARIABLE), "MyTestCase2");
+        Assert.assertEquals(testContext.getVariables().get(CitrusConstants.TEST_PACKAGE_VARIABLE), "com.consol.citrus");
+        Assert.assertTrue(testContext.getVariables().containsKey("defaultVar"));
+        Assert.assertEquals(testContext.getVariables().get("defaultVar"), "123");
+        Assert.assertTrue(testContext.getVariables().containsKey("test2Var"));
+        Assert.assertEquals(testContext.getVariables().get("test2Var"), "456");
+        Assert.assertFalse(testContext.getVariables().containsKey("test1Var"));
     }
     
     @Test
@@ -77,18 +84,21 @@ public class TestContextTest extends AbstractTestNGUnitTest {
         CreateVariablesAction varSetting = new CreateVariablesAction();
         varSetting.setVariables(Collections.singletonMap("defaultVar", "ABC"));
         testcase.addTestAction(varSetting);
-        testcase.execute(createTestContext());
+
+        TestContext testContext = createTestContext();
+        testcase.execute(testContext);
         
-        Assert.assertTrue(testcase.getTestContext().getVariables().containsKey("defaultVar"));
-        Assert.assertEquals(testcase.getTestContext().getVariables().get("defaultVar"), "ABC");
+        Assert.assertTrue(testContext.getVariables().containsKey("defaultVar"));
+        Assert.assertEquals(testContext.getVariables().get("defaultVar"), "ABC");
         
         TestCase testcase2 = new TestCase();
         testcase2.setName("MyTestCase2");
+
+        testContext = createTestContext();
+        testcase2.execute(testContext);
         
-        testcase2.execute(createTestContext());
-        
-        Assert.assertTrue(testcase2.getTestContext().getVariables().containsKey("defaultVar"));
-        Assert.assertEquals(testcase2.getTestContext().getVariables().get("defaultVar"), "123");
+        Assert.assertTrue(testContext.getVariables().containsKey("defaultVar"));
+        Assert.assertEquals(testContext.getVariables().get("defaultVar"), "123");
     }
     
     @Test

@@ -16,50 +16,47 @@
 
 package com.consol.citrus.report;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.consol.citrus.TestCase;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.message.RawMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
-import com.consol.citrus.TestCase;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Test listener collects all messages sent and received by Citrus during test execution. Listener
  * writes a trace file with all message content per test case to a output directory.
  * 
- * Note: This class is not thread safe! Parallel test execution might lead to unexpected behaviour.
+ * Note: This class is not thread safe! Parallel test execution leads to behaviour that messages get mixed.
+ * Proper correlation to test case is not possible here.
  * 
  * @author Christoph Deppisch
  * @since 1.2
  */
-public class MessageTracingTestListener extends AbstractTestListener implements InitializingBean {
+public class MessageTracingTestListener extends AbstractTestListener implements InitializingBean, MessageListener {
     
-    /** New line in log file */
-    private static final String NEWLINE = "\n";
-
-    /** Separator string placed between messages in log */
-    private static final String SEPARATOR = "======================================================================";
-
     /** File ending for all message trace files */
     private static final String TRACE_FILE_ENDING = ".msgs";
 
     /** Output directory */
     private Resource outputDirectory = new FileSystemResource("logs/trace/messages/");
     
-    /** Logger */
-    private static Logger log = LoggerFactory.getLogger(MessageTracingTestListener.class);
-    
     /** List of messages to trace */
     private List<String> messages = new ArrayList<String>();
     
     /** Locking object for synchronization */
     private Object lockObject = new Object();
+
+    /** Logger */
+    private static Logger log = LoggerFactory.getLogger(MessageTracingTestListener.class);
             
     /**
      * {@inheritDoc}
@@ -76,6 +73,10 @@ public class MessageTracingTestListener extends AbstractTestListener implements 
      */
     @Override
     public void onTestFinish(TestCase test) {
+        if (messages.isEmpty()) {
+            return; // do not write empty message trace file
+        }
+
         BufferedWriter writer = null;
         
         try {
@@ -83,12 +84,12 @@ public class MessageTracingTestListener extends AbstractTestListener implements 
             
             writer = new BufferedWriter(new FileWriter(outputFile.getFile()));
             
-            writer.write(SEPARATOR + NEWLINE + NEWLINE);
+            writer.write(separator() + newLine() + newLine());
             
             synchronized (lockObject) {
                 for (String message : messages) {
                     writer.write(message);
-                    writer.write(NEWLINE + SEPARATOR + NEWLINE + NEWLINE);
+                    writer.write(newLine() + separator() + newLine() + newLine());
                 }
             }
             
@@ -106,14 +107,38 @@ public class MessageTracingTestListener extends AbstractTestListener implements 
         }
     }
     
-    /**
-     * Adds a message to the current message stack for this test execution.
-     * @param message the message content.
-     */
-    public void traceMessage(String message) {
-        synchronized (lockObject) {
-            messages.add(message);
+    @Override
+    public void onInboundMessage(Message message, TestContext context) {
+        if (message instanceof RawMessage) {
+            synchronized (lockObject) {
+                messages.add("INBOUND_MESSAGE:" + newLine() + newLine() + message);
+            }
         }
+    }
+
+    @Override
+    public void onOutboundMessage(Message message, TestContext context) {
+        if (message instanceof RawMessage) {
+            synchronized (lockObject) {
+                messages.add("OUTBOUND_MESSAGE:" + newLine() + newLine() + message);
+            }
+        }
+    }
+
+    /**
+     * Creates message separator line.
+     * @return
+     */
+    private String separator() {
+        return "======================================================================";
+    }
+
+    /**
+     * Get new line character.
+     * @return
+     */
+    private String newLine() {
+        return System.getProperty("line.separator");
     }
 
     /**

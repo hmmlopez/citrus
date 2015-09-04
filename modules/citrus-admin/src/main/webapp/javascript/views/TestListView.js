@@ -3,89 +3,113 @@
         var TestListView = Backbone.View.extend({
     
           tests: {},
-          searchResults: {},
-          
+
           events: {
-              "click tr.show-test-details" : "showDetails",
-              "submit #search-form" : "searchTests"
+              "submit #search-test-form" : "searchTest"
           },
           
           initialize: function() {
-          },
-          
-          render: function() {
-              $(this.el).html(TemplateManager.template('TestListView', {}));
-              
-              $.ajax({
+            $.ajax({
                   url: "testcase",
                   type: 'GET',
                   dataType: "json",
                   success: _.bind(function(response) {
                       this.tests = response;
-                      this.searchResults = response;
-                      this.afterRender();
+                  }, this),
+                  async: false
+              });
+          },
+          
+          render: function() {
+              var testItems = _.map(this.tests, function(item) {
+                  return _.pick(item, 'name', 'packageName');
+              });
+
+              var grouped = _.groupBy(testItems, 'packageName');
+              var packages = _.map(_.uniq(_.pluck(testItems, 'packageName')), function(item) {
+                  return { packageName: item, tests: _.property(item)(grouped) };
+              });
+
+              $(this.el).html(TemplateManager.template('TestListView', { testPackages: packages }));
+
+              var searchKeys = _.map(this.tests, function(test){ return test.name; });
+              $('#test-name').typeahead({
+                  source: _.uniq(searchKeys),
+                  items: 15,
+                  minLength: 1,
+                  updater: _.bind(function(item) {
+                      $('#test-name').val(item);
+                      this.searchTest();
+                      return item;
                   }, this)
               });
-              
+
               return this;
           },
           
-          afterRender: function() {
-              $('#search-results').html(TemplateManager.template('TestTableView', { tests: this.tests }));
-              
-              var searchNames = _.map(this.tests, function(test){ return test.name; });
-              var searchPackages = _.map(this.tests, function(test){ return test.packageName + ".*"; });
-              var searchKeys = _.union(searchPackages, searchNames);
-              $('#test-name').typeahead({
-                  source: searchKeys,
-                  items: 5,
-                  minLength: 1
-              });
-          },
-          
-          searchTests: function() {
+          searchTest: function() {
               var searchKey = $('#test-name').val();
-              
-              if (searchKey) {
-                  if (searchKey.indexOf(".*") > 0) {
-                      this.searchResults = _.where(this.tests, {packageName: searchKey.substring(0, searchKey.length - 2)});
-                  } else {
-                      this.searchResults = _.where(this.tests, {name: searchKey});
-                  }
-                  
-              } else {
-                  this.searchResults = this.tests;
-              }
-              
-              $('#search-results').html(TemplateManager.template('TestTableView', { tests: this.searchResults }));
+              var test = _.find(this.tests, function(t) {return t.name == searchKey});
+
+              var pathTokens = test.packageName.split(".");
+              var path = "";
+              _.each(pathTokens, _.bind(function (token) {
+                  path += token + "/";
+                  this.openDirectory(path);
+              }, this));
+
+              $('#test-name').val('');
+              CitrusAdmin.navigate("tests/" + test.name, true);
+
+              // prevent default form submission
+              return false;
           },
           
-          showDetails: function(event) {
-              var test = this.searchResults[event.currentTarget.rowIndex - 1];
-              var idHash= test.name.toLowerCase();
-              
-              if ($('ul#testlist-tabs li#tab-' + idHash).size() === 0) {
-                  
-                  $('ul#testlist-tabs').append(Handlebars.compile($('#test-details-tab').html())({hash: idHash, name: test.name}));
-                  $('div#testlist-tab-content').append(Handlebars.compile($('#test-details-tab-pane').html())({hash: idHash}));
-                
-                  // bind close function on newly created tab
-                  $('#tab-close-' + idHash).click(function() {
-                      if ($(this).parent('li').hasClass('active')) {
-                          // removed tab was active so display first tab (search tab)
-                          $('#testlist-tabs a:first').tab('show');
-                      }
-                    
-                      // remove tab item
-                      $(this).parent('li').remove();
+          showDetails: function(testName) {
+              var test = _.find(this.tests, function(t) {return t.name == testName});
+
+              if (!test.id) {
+                _.extend(test, {id: _.uniqueId()});
+              }
+
+              if ($('ul#test-tabs li#tab-' + test.id).size() === 0) {
+                  $('ul#test-tabs').append(Handlebars.compile($('#test-details-tab').html())({id: test.id, name: test.name}));
+                  $('div#test-tab-content').append(Handlebars.compile($('#test-details-tab-pane').html())({id: test.id}));
+
+                  $('li#tab-' + test.id).find('a:first').on('shown.bs.tab', function (e) {
+                    CitrusAdmin.navigate('tests/' + $(e.target).text(), false);
                   });
                 
-                  $('#test-case-details-' + idHash).html(new TestDetailsView({ test: test }).render().el);
+                  // bind close function on newly created tab
+                  $('#tab-close-' + test.id).click(function() {
+                      var isActiveTab = $(this).parent('li').hasClass('active')
+
+                      // remove tab item
+                      $(this).parent('li').remove();
+
+                      if (isActiveTab) {
+                          // removed tab was active so display next tab
+                          $('ul#test-tabs').children('li:last').find('a:first').tab('show');
+                      }
+
+                      if ($('ul#test-tabs').children('li').size() == 1) {
+                          // last tab was closed so navigate to testcase base page
+                          CitrusAdmin.navigate('tests', false);
+                      }
+                  });
+                
+                  $('#test-case-details-' + test.id).html(new TestDetailsView({ test: test }).render().el);
               }
               
               // show test details tab
-              $('#testlist-tabs a[href="#test-details-tab-' + idHash + '"]').tab('show');
-          } 
+              $('#test-tabs a[href="#test-details-tab-' + test.id + '"]').tab('show');
+
+              return false;
+          },
+
+          openDirectory: function(path) {
+              $('li.directory.collapsed').children('a[rel$="' + path + '"]').trigger('click');
+          }
     
         });
         

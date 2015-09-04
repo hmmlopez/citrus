@@ -16,31 +16,48 @@
 
 package com.consol.citrus.admin.controller;
 
+import com.consol.citrus.admin.configuration.RunConfiguration;
+import com.consol.citrus.admin.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import com.consol.citrus.admin.service.ConfigService;
+import java.util.List;
 
 /**
- * Project controller handles project choosing requests and project configuration setup
- * form submits
+ * Configuration controller handles project choosing requests and project configuration setup
+ * form submits. In addition to that manages spring bean configuration with adding/updating/deleting beans
+ * from application context.
  * 
  * @author Christoph Deppisch
  */
 @Controller
-@RequestMapping("/config")
+@RequestMapping("/configuration")
 public class ConfigurationController {
 
     @Autowired
-    private ConfigService configService;
+    private ConfigurationService configService;
 
-    @RequestMapping(value = "/projecthome", method = RequestMethod.GET)
-    public String getProjectHome() {
-        return configService.getProjectHome();
+    @Autowired
+    private ProjectService projectService;
+
+    @Autowired
+    private SpringBeanService springBeanService;
+
+    @RequestMapping(value = "/search", method = RequestMethod.POST)
+    @ResponseBody
+    public List<String> search(@RequestBody String key) {
+        return springBeanService.getBeanNames(projectService.getProjectContextConfigFile(), key);
     }
-    
+
+    @RequestMapping(value = "/run", method = RequestMethod.GET)
+    @ResponseBody
+    public List<RunConfiguration> getRunConfigurations() {
+        return projectService.getActiveProject().getRunConfigurations();
+    }
+
     @RequestMapping(value = "/root", method = RequestMethod.GET)
+    @ResponseBody
     public String getRootDirectory() {
         return configService.getRootDirectory();
     }

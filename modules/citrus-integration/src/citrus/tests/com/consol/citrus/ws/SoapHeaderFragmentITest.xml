@@ -22,7 +22,7 @@
 		</variables>
 		
         <actions>
-            <ws:send with="webServiceRequestSender" fork="true">
+            <ws:send endpoint="webServiceClient" fork="true">
                 <message>
                     <data>
                         <![CDATA[
@@ -52,7 +52,7 @@
                 </header>
             </ws:send>
             
-            <receive with="webServiceRequestReceiver">
+            <ws:receive endpoint="webServiceRequestReceiver">
             	<message schema-validation="false">
             		<data>
             			<![CDATA[
@@ -84,11 +84,11 @@
                 <element name="citrus_soap_action" value= "sayHello"/>
               </header>
               <extract>
-                  <header name="jms_messageId" variable="internal_correlation_id"/>
+                  <header name="citrus_jms_messageId" variable="internal_correlation_id"/>
               </extract>
-            </receive>
+            </ws:receive>
             
-            <send with="webServiceResponseSender">
+            <ws:send endpoint="webServiceResponseSender">
             	<message>
             		<data>
             			<![CDATA[
@@ -114,11 +114,11 @@
                     </data>
                     <element name="{http://citrusframework.org/test}Operation" value="answerHello"/>
                     <element name="citrus_http_operation" value="answerHello"/>
-                    <element name="jms_correlationId" value="${internal_correlation_id}"/>
+                    <element name="citrus_jms_correlationId" value="${internal_correlation_id}"/>
                 </header>
-            </send>
+            </ws:send>
             
-            <receive with="webServiceReplyHandler" timeout="5000">
+            <ws:receive endpoint="webServiceClient" timeout="5000">
                 <message schema-validation="false">
                     <data>
                         <![CDATA[
@@ -148,7 +148,7 @@
                     <element name="Operation" value="answerHello"/>
                     <element name="operation" value="answerHello"/>
                 </header>
-            </receive>
+            </ws:receive>
     	</actions>
     </testcase>
 </spring:beans>

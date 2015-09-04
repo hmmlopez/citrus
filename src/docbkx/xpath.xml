@@ -2,17 +2,19 @@
 <chapter id="xpath">
     <title>Using XPath</title>
 
-    <para>Some time ago in this document we have seen how XML elements are manipulated using XPath expressions 
-    when sending and receiving messages. Now using XPath might raise some problems regarding namespaces that we
-    want to deal with now.</para> 
+    <para>Some time ago in this document we have already seen how XML message payloads are constructed when sending and receiving messages.
+    Now using XPath is a very powerful way of accessing elements in complex XML structures. The XPath expression language is very handy when it comes
+    to save element values as test variables or when validating special elements in a XML message structure.</para>
     
     <para>XPath is a very powerful technology for walking XML trees. This W3C standard stands for advanced
-    XML tree handling using a special syntax as query language. The test framework supports this XPath
-    syntax in the following fields:</para>
+    XML tree handling using a special syntax as query language. Citrus supports the XPath syntax in the following fields:</para>
     
     <itemizedlist mark="opencircle">
         <listitem>
             <para>&lt;message&gt;&lt;element path="[XPath-Expression]"&gt;&lt;/message&gt;</para>
+        </listitem>
+        <listitem>
+            <para>&lt;validate&gt;&lt;xpath expression="[XPath-Expression]"/&gt;&lt;/validate&gt;</para>
         </listitem>
         <listitem>
             <para>&lt;extract&gt;&lt;message path="[XPath-Expression]"&gt;&lt;/extract&gt;</para>
@@ -20,56 +22,174 @@
         <listitem>
             <para>&lt;ignore path="[XPath-Expression]"/&gt;</para>
         </listitem>
-        <listitem>
-            <para>&lt;validate path="[XPath-Expression]"/&gt;</para>
-        </listitem>
     </itemizedlist>
     
     <para>The next program listing indicates the power in using XPath with Citrus:</para>
     
     <programlisting>&lt;message&gt;
-    &lt;validate path=&quot;//User/Name&quot; value=&quot;John&quot;&gt;&lt;/validate&gt;
-    &lt;validate path=&quot;//User/Address[@type='office']/Street&quot; value=&quot;Companystreet 21&quot;&gt;&lt;/validate&gt;
-    &lt;validate path =&quot;//User/Name&quot; value=&quot;${userName}&quot;&gt;&lt;/validate&gt;
-    &lt;validate path =&quot;//User/@isAdmin&quot; value=&quot;${isAdmin}&quot;&gt;&lt;/validate&gt;
-    &lt;validate path =&quot;//*[.='search-for']&quot; value=&quot;searched-for&quot;&gt;&lt;/validate&gt;
+  &lt;validate&gt;
+    &lt;xpath expression=&quot;//User/Name&quot; value=&quot;John&quot;/&gt;
+    &lt;xpath expression=&quot;//User/Address[@type='office']/Street&quot; value=&quot;Companystreet 21&quot;/&gt;
+    &lt;xpath expression=&quot;//User/Name&quot; value=&quot;${userName}&quot;/&gt;
+    &lt;xpath expression=&quot;//User/@isAdmin&quot; value=&quot;${isAdmin}&quot;/&gt;
+    &lt;xpath expression=&quot;//*[.='search-for']&quot; value=&quot;searched-for&quot;/&gt;
+  &lt;/validate&gt;
 &lt;/message&gt;</programlisting>
+
+    <para>Now we describe the XPath usage in Citrus step by step.</para>
+
+    <section id="xpath-manipulate">
+      <title>Manipulate with XPath</title>
+
+      <para>Some elements in XML message payloads might be of dynamic nature. Just think of generated identifiers or timestamps. Also we do not want to repeat the same static identifier several
+        times in our test cases. This is the time where test variables and dynamic message element overwrite come in handy. The idea is simple. We want to overwrite a specific message element in our
+        payload with a dynamic value. This can be done with XPath or inline variable declarations. Lets have a look at an example listing showing both ways:</para>
+
+      <para><emphasis>XML DSL</emphasis></para>
+      <programlisting>&lt;message&gt;
+  &lt;payload&gt;
+    &lt;TestMessage&gt;
+      &lt;MessageId&gt;${messageId}&lt;/MessageId&gt;
+      &lt;CreatedBy&gt;_&lt;/CreatedBy&gt;
+      &lt;VersionId&gt;${version}&lt;/VersionId&gt;
+    &lt;/TestMessage&gt;
+  &lt;/payload&gt;
+  &lt;element path=&quot;/TestMessage/CreatedBy&quot; value=&quot;${user}&quot;/&gt;
+&lt;/message&gt;</programlisting>
+
+      <para>The program listing above shows ways of setting variable values inside a message template. First of all you can
+        simply place variable expressions inside the message (see how ${messageId} is used). In addition to that you can also use
+        XPath expressions to explicitly overwrite message elements before validation.</para>
+
+      <para><literal>&lt;element path=&quot;/TestMessage/CreatedBy&quot; value=&quot;${user}&quot;/&gt;</literal></para>
+
+      <para>The XPath expression evaluates and searches for the right element in the message payload. The previously defined variable
+        <emphasis>${user}</emphasis> replaces the element value. Of course this works with XML attributes too.</para>
+
+      <para>Both ways via XPath or inline variable expressions are equal to each other. With respect to the complexity of XML namespaces and XPath you may
+        find the inline variable expression more comfortable to use. Anyway feel free to choose the way that fits best for you. This is how we can add dynamic variable
+        values to the control template in order to increase maintainability and robustness of message validation.</para>
+
+      <tip>Validation matchers put validation mechanisms to a new level offering dynamic assertion statements for validation. Have a look at the possibilities with
+        assertion statements in <xref linkend="validation-matchers"/></tip>
+    </section>
+
+    <section id="xpath-validate">
+      <title>Validate with XPath</title>
+
+      <para>We have already seen how to validate whole XML structures with control message templates. All elements are validated
+        and compared one after another. In some cases this approach might be too extensive. Imagine the tester only needs to validate a small subset of message elements. The definition
+        of control templates in combination with several ignore statements is not appropriate in this case. You would rather want
+        to use explicit element validation.</para>
+
+      <para><emphasis>XML DSL</emphasis></para>
+      <programlisting>&lt;message&gt;
+  &lt;validate&gt;
+    &lt;xpath expression=&quot;/TestRequest/MessageId&quot; value=&quot;${messageId}&quot;/&gt;
+    &lt;xpath expression=&quot;/TestRequest/VersionId&quot; value=&quot;2&quot;/&gt;
+  &lt;/validate&gt;
+&lt;/message&gt;</programlisting>
+
+      <para><emphasis>Java DSL designer</emphasis></para>
+      <programlisting language="java">@CitrusTest
+public void receiveMessageTest() {
+    receive("helloServiceServer")
+        .validate("/TestRequest/MessageId", "${messageId}")
+        .validate("//VersionId", "2")
+        .header("Operation", "sayHello");
+}</programlisting>
+
+      <para>Instead of comparing the whole message some message elements are validated explicitly via XPath. Citrus evaluates the XPath expression on the received message and
+        compares the result value to the control value. The basic message structure as well as all other message elements are not included into this explicit validation.</para>
+
+      <note>
+        <para>If this type of element validation is chosen neither &lt;payload&gt; nor &lt;data&gt; nor &lt;resource&gt; template definitions are allowed in Citrus XML test cases.</para>
+      </note>
+
+      <tip>
+        <para>Citrus offers an alternative dot-notated syntax in order to walk through XML trees. In case you are not
+          familiar with XPath or simply need a very easy way to find your element inside the XML tree you might use this way. Every
+          element hierarchy in the XML tree is represented with a simple dot - for example:</para>
+
+        <para><literal>TestRequest.VersionId</literal></para>
+
+        <para>The expression will search the XML tree for the respective &lt;TestRequest&gt;&lt;VersionId&gt; element. Attributes
+          are supported too. In case the last element in the dot-notated expression is a XML attribute the framework will automatically
+          find it.</para>
+
+        <para>Of course this dot-notated syntax is very simple and might not be applicable for more complex tree navigation.
+          XPath is much more powerful - no doubt. However the dot-notated syntax might help those of you that are not familiar with XPath.
+          So the dot-notation is supported wherever XPath expressions might apply.</para>
+      </tip>
+    </section>
+
+    <section id="xpath-extract">
+      <title>Extract variables with XPath</title>
+
+      <para>Imagine you receive a message in your test with some generated message identifier values. You have no chance to predict the identifier value
+        because it was generated at runtime by a foreign application. You can ignore the value in order to protect your validation. But in many cases you might need to return
+        this identifier in the respective response message or somewhat later on in the test. So we have to save the dynamic message content for reuse in later test steps.
+        The solution is simple and very powerful. We can extract dynamic values from received messages and save those to test variables. Add this code to your message receiving action.</para>
+
+      <para><emphasis>XML DSL</emphasis></para>
+      <programlisting>&lt;extract&gt;
+  &lt;header name=&quot;Operation&quot; variable=&quot;operation&quot;/&gt;
+  &lt;message path=&quot;/TestRequest/VersionId&quot; variable=&quot;versionId&quot;/&gt;
+&lt;/extract&gt;</programlisting>
+
+      <para><emphasis>Java DSL designer</emphasis></para>
+      <programlisting language="java">@CitrusTest
+public void receiveMessageTest() {
+    receive("helloServiceServer")
+        .extractFromHeader("Operation", "operation")
+        .extractFromPayload("//TestRequest/VersionId", "versionId");
+
+    echo("Extracted operation from header is: ${operation}");
+    echo("Extracted version from payload is: ${versionId}");
+}</programlisting>
+
+      <para>As you can see Citrus is able to extract both header and message payload content into test variables. It does not matter if you use new test variables
+        or existing variables as target. The extraction will automatically create a new variable in case it does not exist. The time the variable was created
+        all following test actions can access the test variables as usual. So you can reference the variable values in response messages or other test steps ahead.</para>
+    </section>
     
     <section id="xpath-namespace">
-        <title>Handling XML namespaces</title>
+        <title>XML namespaces in XPath</title>
         
         <para>When it comes to XML namespaces you have to be careful with your XPath expressions. Lets have a look at an example
         message that uses XML namespaces:</para>
       
-        <programlisting>&lt;ns1:RequestMessage xmlns:ns1=&quot;http://citrus/default&quot;&gt;
-    &lt;ns1:MessageHeader&gt;
+        <programlisting>&lt;ns1:TestMessage xmlns:ns1=&quot;http://citrus.com/namespace&quot;&gt;
+    &lt;ns1:TestHeader&gt;
         &lt;ns1:CorrelationId&gt;_&lt;/ns1:CorrelationId&gt;
         &lt;ns1:Timestamp&gt;2001-12-17T09:30:47.0Z&lt;/ns1:Timestamp&gt;
-        &lt;ns1:RequestTag&gt;_&lt;/ns1:RequestTag&gt;
         &lt;ns1:VersionId&gt;2&lt;/ns1:VersionId&gt;
-    &lt;/ns1:MessageHeader&gt;
-    &lt;ns1:MessageBody&gt;
+    &lt;/ns1:TestHeader&gt;
+    &lt;ns1:TestBody&gt;
         &lt;ns1:Customer&gt;
             &lt;ns1:Id&gt;1&lt;/ns1:Id&gt;
         &lt;/ns1:Customer&gt;
-    &lt;/ns1:MessageBody&gt;
-&lt;/ns1:RequestMessage&gt;</programlisting>
+    &lt;/ns1:TestBody&gt;
+&lt;/ns1:TestMessage&gt;</programlisting>
         
         <para>Now we would like to validate some elements in this message using XPath</para>
         
         <programlisting>&lt;message&gt;
-    &lt;validate path=&quot;//RequestMessage/MessageHeader/RequestTag&quot; value=&quot;${requestTag}&quot;/&gt;
-    &lt;validate path=&quot;//RequestMessage/MessageHeader/CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
+  &lt;validate&gt;
+    &lt;xpath expression=&quot;//TestMessage/TestHeader/VersionId&quot; value=&quot;2&quot;/&gt;
+    &lt;xpath expression=&quot;//TestMessage/TestHeader/CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
+  &lt;/validate&gt;
 &lt;/message&gt;</programlisting>
         
         <para>The validation will fail although the XPath expression looks correct regarding the XML tree. Because the message 
-        uses the namespace <literal>xmlns:ns1=&quot;http://citrus/default&quot;</literal> with its prefix <literal>ns1</literal>
+        uses the namespace <literal>xmlns:ns1=&quot;http://citrus.com/namespace&quot;</literal> with its prefix <literal>ns1</literal>
         our XPath expression is not able to find the elements. The correct XPath expression uses the namespace prefix as defined 
         in the message.</para>
         
         <programlisting>&lt;message&gt;
-    &lt;validate path=&quot;//ns1:RequestMessage/ns1:MessageHeader/ns1:RequestTag&quot; value=&quot;${requestTag}&quot;/&gt;
-    &lt;validate path=&quot;//ns1:RequestMessage/ns1:MessageHeader/ns1:CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
+  &lt;validate&gt;
+    &lt;xpath expression=&quot;//ns1:TestMessage/ns1:TestHeader/ns1:VersionId&quot; value=&quot;2&quot;/&gt;
+    &lt;xpath expression=&quot;//ns1:TestMessage/ns1:TestHeader/ns1:CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
 &lt;/message&gt;</programlisting>
         
         <para>Now the expressions work fine and the validation is successful. But this is quite error prone. This is because the test is now 
@@ -79,26 +199,24 @@
         <para>You can avoid this effect when specifying your own namespace context and your own namespace prefix during validation.</para>
         
         <programlisting>&lt;message&gt;
-    &lt;validate path=&quot;//pfx:RequestMessage/pfx:MessageHeader/pfx:RequestTag&quot; value=&quot;${requestTag}&quot;/&gt;
-    &lt;validate path=&quot;//pfx:RequestMessage/pfx:MessageHeader/pfx:CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
-    &lt;namespace prefix=&quot;pfx&quot; value=&quot;http://citrus/default&quot;/&gt;
+  &lt;validate&gt;
+    &lt;xpath expression=&quot;//pfx:TestMessage/pfx:TestHeader/pfx:VersionId&quot; value=&quot;2&quot;/&gt;
+    &lt;xpath expression=&quot;//pfx:TestMessage/pfx:TestHeader/pfx:CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
+    &lt;namespace prefix=&quot;pfx&quot; value=&quot;http://citrus.com/namespace&quot;/&gt;
+  &lt;/validate&gt;
 &lt;/message&gt;</programlisting>
         
         <para>Now the test in independent from any namespace prefix in the received message. The namespace context will resolve the namespaces and
         find the elements although the message might use different prefixes. The only thing that matters is that the namespace value 
-        (http://citrus/default) matches.</para>
+        (http://citrus.com/namespace) matches.</para>
         
         <tip>
             <para>Instead of this namespace context on validation level you can also have a global namespace context which is valid in all test cases.
             We just add a bean in the basic citrus-context configuration which defines global namespace mappings.</para>
             
-            <programlisting>&lt;bean id=&quot;namespaceContextBuilder&quot; class=&quot;com.consol.citrus.xml.namespace.NamespaceContextBuilder&quot;&gt;
-    &lt;property name=&quot;namespaceMappings&quot;&gt;
-        &lt;props&gt;
-            &lt;prop key=&quot;def&quot;&gt;http://www.consol.de/samples/sayHello&lt;/prop&gt;            
-        &lt;/props&gt;
-    &lt;/property&gt;
-&lt;/bean&gt;</programlisting>
+            <programlisting>&lt;namespace-context&gt;
+    &lt;namespace prefix=&quot;def&quot; uri=&quot;http://www.consol.de/samples/sayHello&quot;/&gt;
+&lt;/namespace-context&gt;</programlisting>
 
             <para>Once defined the <emphasis>def</emphasis> namespace prefix is valid in all test cases and all XPath expressions. This enables you to free
             your test cases from namespace prefix bindings that might be broken with time. You can use these global namespace mappings wherever XPath 
@@ -107,38 +225,41 @@
     </section>
     
     <section id="xpath-default-namespaces">
-        <title>Handling default namespaces</title>
+        <title>Default namespaces in XPath</title>
         
         <para>In the previous section we have seen that XML namespaces can get tricky with XPath validation. Default namespaces can do 
         even more! So lets look at the example with default namespaces:</para>
         
-        <programlisting>&lt;RequestMessage xmlns=&quot;http://citrus/default&quot;&gt;
-    &lt;MessageHeader&gt;
+        <programlisting>&lt;TestMessage xmlns=&quot;http://citrus.com/namespace&quot;&gt;
+    &lt;TestHeader&gt;
         &lt;CorrelationId&gt;_&lt;/CorrelationId&gt;
         &lt;Timestamp&gt;2001-12-17T09:30:47.0Z&lt;/Timestamp&gt;
-        &lt;RequestTag&gt;_&lt;/RequestTag&gt;
         &lt;VersionId&gt;2&lt;/VersionId&gt;
-    &lt;/MessageHeader&gt;
-    &lt;MessageBody&gt;
+    &lt;/TestHeader&gt;
+    &lt;TestBody&gt;
         &lt;Customer&gt;
             &lt;Id&gt;1&lt;/Id&gt;
         &lt;/Customer&gt;
-    &lt;/MessageBody&gt;
-&lt;/RequestMessage&gt;</programlisting>
+    &lt;/TestBody&gt;
+&lt;/TestMessage&gt;</programlisting>
         
         <para>The message uses default namespaces. The following approach in XPath will fail due to namespace problems.</para>
         
         <programlisting>&lt;message&gt;
-    &lt;validate path=&quot;//RequestMessage/MessageHeader/RequestTag&quot; value=&quot;${requestTag}&quot;/&gt;
-    &lt;validate path=&quot;//RequestMessage/MessageHeader/CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
+  &lt;validate&gt;
+    &lt;xpath expression=&quot;//TestMessage/TestHeader/VersionId&quot; value=&quot;2&quot;/&gt;
+    &lt;xpath expression=&quot;//TestMessage/TestHeader/CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
+  &lt;/validate&gt;
 &lt;/message&gt;</programlisting>
-        
+
         <para>Even default namespaces need to be specified in the XPath expressions. Look at the following code listing that
         works fine with default namespaces:</para>
         
         <programlisting>&lt;message&gt;
-    &lt;validate path=&quot;//:RequestMessage/:MessageHeader/:RequestTag&quot; value=&quot;${requestTag}&quot;/&gt;
-    &lt;validate path=&quot;//:RequestMessage/:MessageHeader/:CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
+  &lt;validate&gt;
+    &lt;xpath expression=&quot;//:TestMessage/:TestHeader/:VersionId&quot; value=&quot;2&quot;/&gt;
+    &lt;xpath expression=&quot;//:TestMessage/:TestHeader/:CorrelationId&quot; value=&quot;${correlationId}&quot;/&gt;
+  &lt;/validate&gt;
 &lt;/message&gt;</programlisting>
         
         <tip>

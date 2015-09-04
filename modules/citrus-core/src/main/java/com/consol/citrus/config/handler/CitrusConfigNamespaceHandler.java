@@ -16,9 +16,8 @@
 
 package com.consol.citrus.config.handler;
 
-import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
-
 import com.consol.citrus.config.xml.*;
+import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
 /**
  * Namespace handler for components in Citrus configuration.
@@ -31,20 +30,31 @@ public class CitrusConfigNamespaceHandler extends NamespaceHandlerSupport {
      * @see org.springframework.beans.factory.xml.NamespaceHandler#init()
      */
     public void init() {
+        registerBeanDefinitionParser("schema-repository", new SchemaRepositoryParser());
+        registerBeanDefinitionParser("schema", new SchemaParser());
+        registerBeanDefinitionParser("schema-collection", new SchemaCollectionParser());
         registerBeanDefinitionParser("actor", new TestActorParser());
-        registerBeanDefinitionParser("jms-message-sender", new JmsMessageSenderParser());
-        registerBeanDefinitionParser("jms-message-receiver", new JmsMessageReceiverParser());
-        registerBeanDefinitionParser("jms-sync-message-sender", new JmsSyncMessageSenderParser());
-        registerBeanDefinitionParser("jms-sync-message-receiver", new JmsSyncMessageReceiverParser());
-        registerBeanDefinitionParser("jms-reply-message-handler", new ReplyMessageReceiverParser());
-        registerBeanDefinitionParser("jms-reply-message-sender", new JmsReplyMessageSenderParser());
+        registerBeanDefinitionParser("global-variables", new GlobalVariablesParser());
+        registerBeanDefinitionParser("xml-data-dictionary", new XmlDataDictionaryParser());
+        registerBeanDefinitionParser("xpath-data-dictionary", new XpathDataDictionaryParser());
+        registerBeanDefinitionParser("json-data-dictionary", new JsonDataDictionaryParser());
+        registerBeanDefinitionParser("message-validators", new MessageValidatorRegistryParser());
+        registerBeanDefinitionParser("namespace-context", new NamespaceContextParser());
+        registerBeanDefinitionParser("function-library", new FunctionLibraryParser());
+        registerBeanDefinitionParser("validation-matcher-library", new ValidationMatcherLibraryParser());
+        registerBeanDefinitionParser("before-suite", new SequenceBeforeSuiteParser());
+        registerBeanDefinitionParser("before-test", new SequenceBeforeTestParser());
+        registerBeanDefinitionParser("after-suite", new SequenceAfterSuiteParser());
+        registerBeanDefinitionParser("after-test", new SequenceAfterTestParser());
+        registerBeanDefinitionParser("channel-endpoint", new ChannelEndpointParser());
+        registerBeanDefinitionParser("channel-sync-endpoint", new ChannelSyncEndpointParser());
+        registerBeanDefinitionParser("channel", new MessageSelectingQueueChannelParser());
         registerBeanDefinitionParser("message-channel", new MessageSelectingQueueChannelParser());
-        registerBeanDefinitionParser("message-channel-sender", new MessageChannelSenderParser());
-        registerBeanDefinitionParser("message-channel-receiver", new MessageChannelReceiverParser());
-        registerBeanDefinitionParser("sync-message-channel-sender", new SyncMessageChannelSenderParser());
-        registerBeanDefinitionParser("sync-message-channel-receiver", new SyncMessageChannelReceiverParser());
-        registerBeanDefinitionParser("message-channel-reply-handler", new ReplyMessageReceiverParser());
-        registerBeanDefinitionParser("message-channel-reply-sender", new ReplyMessageChannelSenderParser());
+        registerBeanDefinitionParser("channel-endpoint-adapter", new ChannelEndpointAdapterParser());
+        registerBeanDefinitionParser("dispatching-endpoint-adapter", new RequestDispatchingEndpointAdapterParser());
+        registerBeanDefinitionParser("static-response-adapter", new StaticResponseEndpointAdapterParser());
+        registerBeanDefinitionParser("empty-response-adapter", new EmptyResponseEndpointAdapterParser());
+        registerBeanDefinitionParser("timeout-producing-adapter", new TimeoutProducingEndpointAdapterParser());
     }
 
 }

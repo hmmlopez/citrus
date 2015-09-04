@@ -8,7 +8,7 @@
                                   http://www.citrusframework.org/schema/ws/testcase http://www.citrusframework.org/schema/ws/testcase/citrus-ws-testcase.xsd">
     <testcase name="ReceiveSoapMessageActionParserTest">
         <actions>
-            <ws:receive with="mySoapMessageReceiver">
+            <ws:receive endpoint="mySoapServer">
                 <message>
                     <data>
                         <![CDATA[
@@ -23,7 +23,7 @@
                 </ws:attachment>
             </ws:receive>
             
-            <ws:receive with="mySoapMessageReceiver">
+            <ws:receive endpoint="mySoapServer">
                 <message>
                     <data>
                         <![CDATA[
@@ -36,11 +36,30 @@
                     <ws:resource file="classpath:com/consol/citrus/ws/actions/test-attachment.txt"/>
                 </ws:attachment>
             </ws:receive>
+
+            <ws:receive endpoint="mySoapServer">
+                <message>
+                    <data>
+                        <![CDATA[
+                            <TestMessage>Hello Citrus</TestMessage>
+                        ]]>
+                    </data>
+                </message>
+                <ws:attachment content-id="FirstSoapAttachment" content-type="text/plain">
+                  <ws:data>
+                    <![CDATA[This is an attachment!]]>
+                  </ws:data>
+                </ws:attachment>
+                <ws:attachment content-id="SecondSoapAttachment" content-type="application/xml"
+                               charset-name="UTF-8">
+                    <ws:resource file="classpath:com/consol/citrus/ws/actions/test-attachment.txt"/>
+                </ws:attachment>
+            </ws:receive>
         </actions>
     </testcase>
     
-    <spring:bean id="mySoapMessageReceiver" class="org.easymock.EasyMock" factory-method="createMock">
-        <spring:constructor-arg value="com.consol.citrus.message.MessageReceiver"/>
+    <spring:bean id="mySoapServer" class="org.easymock.EasyMock" factory-method="createMock">
+        <spring:constructor-arg value="com.consol.citrus.ws.server.WebServiceServer"/>
     </spring:bean>
     
     <spring:bean id="mySoapAttachmentValidator" class="org.easymock.EasyMock" factory-method="createMock">

@@ -16,7 +16,7 @@
 
 package com.consol.citrus.validation.script;
 
-import org.springframework.integration.Message;
+import com.consol.citrus.message.Message;
 
 import com.consol.citrus.context.TestContext;
 
@@ -24,5 +24,5 @@ import com.consol.citrus.context.TestContext;
  * Executes a validation-script
  */
  public interface GroovyScriptExecutor {
-     void validate(Message<?> receivedMessage, TestContext context);
+     void validate(Message receivedMessage, TestContext context);
  }

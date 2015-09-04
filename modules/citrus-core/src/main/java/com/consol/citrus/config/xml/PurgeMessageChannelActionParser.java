@@ -16,8 +16,8 @@
 
 package com.consol.citrus.config.xml;
 
-import java.util.*;
-
+import com.consol.citrus.actions.PurgeMessageChannelAction;
+import com.consol.citrus.config.util.BeanDefinitionParserUtils;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -28,8 +28,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-import com.consol.citrus.actions.PurgeMessageChannelAction;
-import com.consol.citrus.config.util.BeanDefinitionParserUtils;
+import java.util.*;
 
 /**
  * Bean definition parser for purge-channel action in test case.
@@ -44,7 +43,6 @@ public class PurgeMessageChannelActionParser implements BeanDefinitionParser {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public BeanDefinition parse(Element element, ParserContext parserContext) {
         BeanDefinitionBuilder beanDefinition = BeanDefinitionBuilder.rootBeanDefinition(PurgeMessageChannelAction.class);
-        beanDefinition.addPropertyValue("name", element.getLocalName());
 
         DescriptionElementParser.doParse(element, beanDefinition);
 
@@ -53,7 +51,7 @@ public class PurgeMessageChannelActionParser implements BeanDefinitionParser {
         }
         
         List<String> channelNames = new ArrayList<String>();
-        ManagedList channelRefs = new ManagedList();
+        ManagedList<BeanDefinition> channelRefs = new ManagedList<BeanDefinition>();
         List<?> channelElements = DomUtils.getChildElementsByTagName(element, "channel");
         for (Iterator<?> iter = channelElements.iterator(); iter.hasNext();) {
             Element channel = (Element) iter.next();

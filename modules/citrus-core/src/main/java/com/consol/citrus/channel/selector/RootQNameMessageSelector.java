@@ -15,19 +15,18 @@
  */
 package com.consol.citrus.channel.selector;
 
-import javax.xml.namespace.QName;
-
+import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.util.XMLUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.integration.Message;
+import org.springframework.messaging.Message;
 import org.springframework.integration.core.MessageSelector;
 import org.springframework.util.StringUtils;
 import org.springframework.xml.namespace.QNameUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.ls.LSException;
 
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.util.XMLUtils;
+import javax.xml.namespace.QName;
 
 /**
  * Message selector accepts XML messages according to specified root element QName.
@@ -56,14 +55,19 @@ public class RootQNameMessageSelector implements MessageSelector {
         }
     }
     
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public boolean accept(Message<?> message) {
         Document doc;
         
         try {
-            doc = XMLUtils.parseMessagePayload(message.getPayload().toString());
+            String payload;
+            if (message.getPayload() instanceof com.consol.citrus.message.Message) {
+                payload = ((com.consol.citrus.message.Message) message.getPayload()).getPayload(String.class);
+            } else {
+                payload = message.getPayload().toString();
+            }
+
+            doc = XMLUtils.parseMessagePayload(payload);
         } catch (LSException e) {
             log.warn("Root QName message selector ignoring not well-formed XML message payload", e);
             return false; // non XML message - not accepted

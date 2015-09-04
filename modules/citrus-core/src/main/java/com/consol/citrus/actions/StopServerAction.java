@@ -16,11 +16,13 @@
 
 package com.consol.citrus.actions;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.server.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Action stopping {@link Server} instances.
@@ -32,32 +34,48 @@ public class StopServerAction extends AbstractTestAction {
     /** List of servers to stop */
     private List<Server> serverList = new ArrayList<Server>();
 
-    /** Single server isntance to stop */
+    /** Single server instance to stop */
     private Server server;
+
+    /** Logger */
+    private static Logger log = LoggerFactory.getLogger(StopServerAction.class);
+
+    /**
+     * Default constructor.
+     */
+    public StopServerAction() {
+        setName("stop-server");
+    }
 
     @Override
     public void doExecute(TestContext context) {
+        log.info("Stopping servers");
+
         for (Server actServer : serverList) {
             actServer.stop();
+            log.info("Stopped server: " + actServer.getName());
         }
 
         if (server != null) {
             server.stop();
+            log.info("Stopped server: " + server.getName());
         }
     }
 
     /**
      * @param server the server to set
      */
-    public void setServer(Server server) {
+    public StopServerAction setServer(Server server) {
         this.server = server;
+        return this;
     }
 
     /**
      * @param serverList the servers to set
      */
-    public void setServerList(List<Server> serverList) {
+    public StopServerAction setServerList(List<Server> serverList) {
         this.serverList = serverList;
+        return this;
     }
 
     /**

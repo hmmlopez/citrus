@@ -27,18 +27,22 @@
         <li>citrus-jms (JMS sender and receiver implementations)</li>
         <li>citrus-channel (message channel sender and receiver implementations)</li>
       </ul>
-  
-      <h3>citrus-adapter (JAR)</h3>
+
+      <h3>citrus-jms (JAR)</h3>
       <p>
-        Citrus talks to the world over messaging adapters. This adapter
-        module contains common utility classes for adapter implementations
-        like citrus-http or citrus-ws.
+        Module contains classes for JMS support for connection to JMS message brokers.
       </p>
   
       <h3>citrus-http (JAR)</h3>
       <p>
         This module contains special HTTP client/server implementation.
         With this adapter Citrus is able to send and receive messages over HTTP.
+      </p>
+
+      <h3>citrus-websocket (JAR)</h3>
+      <p>
+        This module contains special WebSocket client/server implementation.
+        With this adapter Citrus is able to send and receive messages over bidirectional HTTP WebSocket connections.
       </p>
   
       <h3>citrus-ws (JAR)</h3>
@@ -52,11 +56,35 @@
         SSH adapter implementation for connecting to SSH servers. The module
         contains classes for SSH client and server connectivity.
       </p>
-      
+
+      <h3>citrus-vertx (JAR)</h3>
+      <p>
+        Vert.x adapter implementation for connecting to the Vert.x event bus. The module
+        contains classes for accessing the event bus as producer or consumer.
+      </p>
+
+      <h3>citrus-camel (JAR)</h3>
+      <p>
+        Apache Camel adapter implementation for connecting to camel context and route definitions. The module
+        contains classes for sending and receiving messages both to and from Apache Camel routes.
+      </p>
+
+      <h3>citrus-ftp (JAR)</h3>
+      <p>
+        Ftp module connects to a ftp server as a client and provides full qualified ftp server for simulation. Server accepts
+        incoming commands that can be validated in a test case. Server supports user management with different home directories and
+        permissions per user.
+      </p>
+
       <h3>citrus-java-dsl (JAR)</h3>
       <p>
         Module for writing Citrus test cases with Java only. This is an alternative to writing 
         test cases in XML syntax.
+      </p>
+
+      <h3>citrus-arquillian (JAR)</h3>
+      <p>
+        Module providing utility classes and helper for Arquillian test framework integration with Citrus.
       </p>
   
       <h3>citrus-integration (JAR)</h3>
@@ -65,7 +93,7 @@
         lifecycle. The tests help to ensure the integration test quality of Citrus.
       </p>
   
-      <h3>citrus-samples (JAR)</h3>
+      <h3>citrus-samples (POM)</h3>
       <p>
         Samples module holding several self runnable sample applications
         that are tested with Citrus. Currently this module knows following
@@ -76,6 +104,19 @@
         <li>citrus-samples-flightbooking</li>
         <li>citrus-samples-greeting</li>
         <li>citrus-samples-bookstore</li>
+        <li>citrus-samples-incident</li>
+      </ul>
+
+      <h3>citrus-tools (POM)</h3>
+      <p>
+        Tool collection with Maven plugin, archetypes and ANT tasks for executing Citrus tests:
+      </p>
+
+      <ul>
+        <li>citrus-anttasks</li>
+        <li>citrus-maven-plugin</li>
+        <li>citrus-quickstart</li>
+        <li>citrus-quickstart-soap</li>
       </ul>
     </div>
   </body>

@@ -16,11 +16,11 @@
 
 package com.consol.citrus.validation.xml;
 
-import java.util.*;
-
+import com.consol.citrus.message.MessageType;
+import com.consol.citrus.validation.ControlMessageValidationContext;
 import org.springframework.core.io.Resource;
 
-import com.consol.citrus.validation.ControlMessageValidationContext;
+import java.util.*;
 
 /**
  * XML validation context holding validation specific information needed for XML 
@@ -29,9 +29,6 @@ import com.consol.citrus.validation.ControlMessageValidationContext;
  * @author Christoph Deppisch
  */
 public class XmlMessageValidationContext extends ControlMessageValidationContext {
-    /** Map holding xpath expressions as key and expected values as values */
-    private Map<String, String> pathValidationExpressions = new HashMap<String, String>();
-    
     /** Map holding xpath expressions to identify the ignored message elements */
     private Set<String> ignoreExpressions = new HashSet<String>();
 
@@ -52,22 +49,12 @@ public class XmlMessageValidationContext extends ControlMessageValidationContext
     
     /** Explicit schema instance to use for this validation */
     private String schema;
-    
-    /**
-     * Get the control message elements that have to be present in
-     * the received message. Message element values are compared as well.
-     * @return the pathValidationExpressions
-     */
-    public Map<String, String> getPathValidationExpressions() {
-        return pathValidationExpressions;
-    }
 
     /**
-     * Set the control message elements explicitly validated XPath expression validation.
-     * @param pathValidationExpressions the pathValidationExpressions to set
+     * Default constructor using message type field.
      */
-    public void setPathValidationExpressions(Map<String, String> pathValidationExpressions) {
-        this.pathValidationExpressions = pathValidationExpressions;
+    public XmlMessageValidationContext() {
+        super(MessageType.XML.toString());
     }
 
     /**
@@ -96,7 +83,7 @@ public class XmlMessageValidationContext extends ControlMessageValidationContext
 
     /**
      * Set the namespace definitions.
-     * @param namespaceContext the namespaceContext to set
+     * @param namespaces the namespaceContext to set
      */
     public void setNamespaces(Map<String, String> namespaces) {
         this.namespaces = namespaces;

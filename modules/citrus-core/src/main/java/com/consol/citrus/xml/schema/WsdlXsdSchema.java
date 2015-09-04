@@ -16,32 +16,34 @@
 
 package com.consol.citrus.xml.schema;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-
-import javax.wsdl.*;
-import javax.wsdl.factory.WSDLFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.xml.schema.locator.JarWSDLLocator;
+import com.ibm.wsdl.extensions.schema.SchemaImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.*;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.xml.validation.XmlValidator;
 import org.springframework.xml.validation.XmlValidatorFactory;
 import org.springframework.xml.xsd.SimpleXsdSchema;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.ibm.wsdl.extensions.schema.SchemaImpl;
+import javax.wsdl.*;
+import javax.wsdl.extensions.schema.*;
+import javax.wsdl.factory.WSDLFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Wrapper implementation takes care of nested WSDL schema types. Exposes those WSDL schema types as
@@ -58,7 +60,8 @@ public class WsdlXsdSchema extends SimpleXsdSchema implements InitializingBean {
     
     /** List of schemas that are loaded as single schema instance */
     private List<Resource> schemas = new ArrayList<Resource>();
-    
+    private List<String> importedSchemas = new ArrayList<>();
+
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(WsdlXsdSchema.class);
 
@@ -83,45 +86,119 @@ public class WsdlXsdSchema extends SimpleXsdSchema implements InitializingBean {
     }
     
     @Override
-    public XmlValidator createValidator() throws IOException {
-        return XmlValidatorFactory.createValidator(schemas.toArray(new Resource[schemas.size()]), W3C_XML_SCHEMA_NS_URI);
+    public XmlValidator createValidator() {
+        try {
+            return XmlValidatorFactory.createValidator(schemas.toArray(new Resource[schemas.size()]), W3C_XML_SCHEMA_NS_URI);
+        } catch (IOException e) {
+            throw new CitrusRuntimeException("Failed to create validation for WSDL schema files", e);
+        }
     }
     
     /**
      * Loads nested schema type definitions from wsdl.
      * @throws IOException 
      * @throws WSDLException 
-     * @throws TransformerFactoryConfigurationError 
-     * @throws TransformerException 
-     * @throws TransformerConfigurationException 
+     * @throws TransformerFactoryConfigurationError
+     * @throws TransformerException
      */
-    private void loadSchemas() throws WSDLException, IOException, TransformerConfigurationException, TransformerException, TransformerFactoryConfigurationError {
-        Definition definition = WSDLFactory.newInstance().newWSDLReader().readWSDL(wsdl.getFile().getAbsolutePath());
-        
+    private void loadSchemas(Definition definition) throws WSDLException, IOException, TransformerException, TransformerFactoryConfigurationError {
         Types types = definition.getTypes();
         List<?> schemaTypes = types.getExtensibilityElements();
-        
+        boolean xsdSet = false;
         for (Object schemaObject : schemaTypes) {
             if (schemaObject instanceof SchemaImpl) {
                 SchemaImpl schema = (SchemaImpl) schemaObject;
-
                 inheritNamespaces(schema, definition);
-                
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                Source source = new DOMSource(schema.getElement());
-                Result result = new StreamResult(bos);
-                
-                TransformerFactory.newInstance().newTransformer().transform(source, result);
-                Resource schemaResource = new ByteArrayResource(bos.toByteArray());
-                
-                schemas.add(schemaResource);
-                
-                if (definition.getTargetNamespace().equals(schema.getElement().getAttribute("targetNamespace"))) {
-                    setXsd(schemaResource);
+
+                if (!importedSchemas.contains(getTargetNamespace(schema))) {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    Source source = new DOMSource(schema.getElement());
+                    Result result = new StreamResult(bos);
+
+                    TransformerFactory.newInstance().newTransformer().transform(source, result);
+                    Resource schemaResource = new ByteArrayResource(bos.toByteArray());
+
+                    importedSchemas.add(getTargetNamespace(schema));
+                    schemas.add(schemaResource);
+
+                    if (definition.getTargetNamespace().equals(getTargetNamespace(schema)) && !xsdSet) {
+                        setXsd(schemaResource);
+                        xsdSet = true;
+                    }
                 }
+
+                addImportedSchemas(schema);
+                addIncludedSchemas(schema);
             } else {
                 log.warn("Found unsupported schema type implementation " + schemaObject.getClass());
             }
+        }
+
+        if (!xsdSet && schemas.size() > 0) {
+            // Obviously no schema resource in WSDL did match the targetNamespace, just use the first schema resource found as main schema
+            setXsd(schemas.get(0));
+        }
+
+        for (Object imports : definition.getImports().values()) {
+            for (Import wsdlImport : (Vector<Import>)imports) {
+                String schemaLocation;
+                URI locationURI = URI.create(wsdlImport.getLocationURI());
+                if (locationURI.isAbsolute()) {
+                    schemaLocation = wsdlImport.getLocationURI();
+                } else {
+                    schemaLocation = definition.getDocumentBaseURI().substring(0, definition.getDocumentBaseURI().lastIndexOf('/') + 1) + wsdlImport.getLocationURI();
+                }
+
+                loadSchemas(getWsdlDefinition(new FileSystemResource(schemaLocation)));
+            }
+        }
+    }
+
+    /**
+     * Recursively add all imported schemas as schema resource.
+     * This is necessary when schema import are located in jar files. If they are not added immediately the reference to them is lost.
+     *
+     * @param schema
+     */
+    private void addImportedSchemas(Schema schema) throws WSDLException, IOException, TransformerException, TransformerFactoryConfigurationError {
+        for (Object imports : schema.getImports().values()) {
+            for (SchemaImport schemaImport : (Vector<SchemaImport>)imports) {
+                // Prevent duplicate imports
+                if (!importedSchemas.contains(schemaImport.getNamespaceURI())) {
+                    importedSchemas.add(schemaImport.getNamespaceURI());
+                    Schema referencedSchema = schemaImport.getReferencedSchema();
+
+                    if (referencedSchema != null) {
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        Source source = new DOMSource(referencedSchema.getElement());
+                        Result result = new StreamResult(bos);
+
+                        TransformerFactory.newInstance().newTransformer().transform(source, result);
+                        Resource schemaResource = new ByteArrayResource(bos.toByteArray());
+
+                        addImportedSchemas(referencedSchema);
+                        schemas.add(schemaResource);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Recursively add all included schemas as schema resource.
+     */
+    private void addIncludedSchemas(Schema schema) throws WSDLException, IOException, TransformerException, TransformerFactoryConfigurationError {
+        List<SchemaReference> includes = schema.getIncludes();
+        for (SchemaReference schemaReference : includes) {
+            String schemaLocation;
+            URI locationURI = URI.create(schemaReference.getSchemaLocationURI());
+            if (locationURI.isAbsolute()) {
+                schemaLocation = schemaReference.getSchemaLocationURI();
+            } else {
+                schemaLocation = schema.getDocumentBaseURI().substring(0, schema.getDocumentBaseURI().lastIndexOf('/') + 1) + schemaReference.getSchemaLocationURI();
+            }
+
+            schemas.add(new FileSystemResource(schemaLocation));
         }
     }
     
@@ -144,7 +221,6 @@ public class WsdlXsdSchema extends SimpleXsdSchema implements InitializingBean {
                     schema.getElement().setAttributeNS(WWW_W3_ORG_2000_XMLNS, "xmlns" + nsEntry.getKey(), nsEntry.getValue());
                 }
             }
-            
         }
     }
 
@@ -154,7 +230,7 @@ public class WsdlXsdSchema extends SimpleXsdSchema implements InitializingBean {
         Assert.isTrue(wsdl.exists(), "wsdl file resource '" + wsdl + " does not exist");
         
         try {
-            loadSchemas();
+            loadSchemas(getWsdlDefinition(wsdl));
         } catch (WSDLException e) {
             throw new BeanCreationException("Failed to load schema types from WSDL file", e);
         } catch (TransformerException e) {
@@ -166,6 +242,34 @@ public class WsdlXsdSchema extends SimpleXsdSchema implements InitializingBean {
         Assert.isTrue(!schemas.isEmpty(), "no schema types found in wsdl file resource");
         
         super.afterPropertiesSet();
+    }
+
+    /**
+     * Reads WSDL definition from resource.
+     * @param wsdl
+     * @return
+     * @throws IOException
+     * @throws WSDLException
+     */
+    private Definition getWsdlDefinition(Resource wsdl) throws IOException, WSDLException {
+        Definition definition;
+        if (wsdl.getURI().toString().startsWith("jar:")) {
+            // Locate WSDL imports in Jar files
+            definition = WSDLFactory.newInstance().newWSDLReader().readWSDL(new JarWSDLLocator(wsdl));
+        } else {
+            definition = WSDLFactory.newInstance().newWSDLReader().readWSDL(wsdl.getURI().getPath(), new InputSource(wsdl.getInputStream()));
+        }
+
+        return definition;
+    }
+
+    /**
+     * Reads target namespace from schema definition element.
+     * @param schema
+     * @return
+     */
+    private String getTargetNamespace(Schema schema) {
+        return schema.getElement().getAttribute("targetNamespace");
     }
 
     /**
@@ -183,4 +287,5 @@ public class WsdlXsdSchema extends SimpleXsdSchema implements InitializingBean {
     public List<Resource> getSchemas() {
         return schemas;
     }
+
 }

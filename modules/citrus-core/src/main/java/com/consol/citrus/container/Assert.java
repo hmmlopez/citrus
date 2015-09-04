@@ -16,18 +16,15 @@
 
 package com.consol.citrus.container;
 
-import java.util.Collections;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.CollectionUtils;
-
 import com.consol.citrus.TestAction;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.exceptions.ValidationException;
 import com.consol.citrus.validation.matcher.ValidationMatcherUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Assert exception to happen in nested test action.
@@ -45,10 +42,15 @@ public class Assert extends AbstractActionContainer {
     /** Localized exception message for control */
     private String message = null;
     
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(Assert.class);
+
+    /**
+     * Default constructor.
+     */
+    public Assert() {
+        setName("assert");
+    }
 
     @Override
     public void doExecute(TestContext context) {
@@ -87,7 +89,7 @@ public class Assert extends AbstractActionContainer {
      * @param action the action to set
      */
     public void setAction(TestAction action) {
-        this.action = action;
+        addTestAction(action);
     }
     
     /**
@@ -130,37 +132,14 @@ public class Assert extends AbstractActionContainer {
         this.exception = exception;
     }
 
-    /**
-     * @see com.consol.citrus.container.TestActionContainer#addTestAction(com.consol.citrus.TestAction)
-     */
-    public void addTestAction(TestAction action) {
+    @Override
+    public Assert addTestAction(TestAction action) {
         this.action = action;
+        super.addTestAction(action);
+        return this;
     }
 
-    /**
-     * @see com.consol.citrus.container.TestActionContainer#getActionCount()
-     */
-    public long getActionCount() {
-        return 1;
-    }
-
-    /**
-     * @see com.consol.citrus.container.TestActionContainer#getActionIndex(com.consol.citrus.TestAction)
-     */
-    public int getActionIndex(TestAction action) {
-        return 0;
-    }
-
-    /**
-     * @see com.consol.citrus.container.TestActionContainer#getActions()
-     */
-    public List<TestAction> getActions() {
-        return Collections.singletonList(action);
-    }
-
-    /**
-     * @see com.consol.citrus.container.TestActionContainer#getTestAction(int)
-     */
+    @Override
     public TestAction getTestAction(int index) {
         if (index == 0) {
             return action;
@@ -169,13 +148,15 @@ public class Assert extends AbstractActionContainer {
         }
     }
 
-    /**
-     * @see com.consol.citrus.container.TestActionContainer#setActions(java.util.List)
-     */
-    public void setActions(List<TestAction> actions) {
-        if (!CollectionUtils.isEmpty(actions)) {
-            action = actions.get(0); 
+    @Override
+    public Assert setActions(List<TestAction> actions) {
+        if (actions.size() > 1) {
+            throw new CitrusRuntimeException("Invalid number of nested test actions - only one single nested action is allowed");
         }
+
+        action = actions.get(0);
+        super.setActions(actions);
+        return this;
     }
 
 }

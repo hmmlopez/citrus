@@ -16,10 +16,10 @@
 
 package com.consol.citrus.actions;
 
-import java.util.Iterator;
-
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
+
+import java.util.Iterator;
 
 /**
  * Test action execute SQL statements. Use this action when executing
@@ -34,6 +34,13 @@ import com.consol.citrus.exceptions.CitrusRuntimeException;
 public class ExecuteSQLAction extends AbstractDatabaseConnectingTestAction {
     /** boolean flag marking that possible SQL errors will be ignored */
     private boolean ignoreErrors = false;
+
+    /**
+     * Default constructor.
+     */
+    public ExecuteSQLAction() {
+        setName("sql");
+    }
 
     @Override
     public void doExecute(TestContext context) {
@@ -55,7 +62,7 @@ public class ExecuteSQLAction extends AbstractDatabaseConnectingTestAction {
 
                 stmt = context.replaceDynamicContentInString(stmt);
 
-                log.info("Found Sql statement " + stmt);
+                log.info("Executing SQL statement: " + stmt);
                 getJdbcTemplate().execute(stmt);
             } catch (Exception e) {
                 if (ignoreErrors) {
@@ -72,8 +79,9 @@ public class ExecuteSQLAction extends AbstractDatabaseConnectingTestAction {
      * Ignore errors during execution.
      * @param ignoreErrors boolean flag to set
      */
-    public void setIgnoreErrors(boolean ignoreErrors) {
+    public ExecuteSQLAction setIgnoreErrors(boolean ignoreErrors) {
         this.ignoreErrors = ignoreErrors;
+        return this;
     }
 
     /**

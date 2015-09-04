@@ -16,17 +16,16 @@
 
 package com.consol.citrus.util;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.GregorianCalendar;
-import java.util.Properties;
-
+import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.consol.citrus.CitrusConstants;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.GregorianCalendar;
+import java.util.Properties;
 
 /**
  * CLI creating a new test case from a template.
@@ -66,17 +65,13 @@ public class TestCaseCreator {
      * will create different Java classes according to the unit test framework.
      */
     public static enum UnitFramework {
-        TESTNG, JUNIT3, JUNIT4;
+        TESTNG, JUNIT;
         
         public static UnitFramework fromString(String value) {
             if (value.equalsIgnoreCase("testng")) {
                 return TESTNG;
-            } else if (value.equalsIgnoreCase("junit3")) {
-                return JUNIT3;
-            } else if (value.equalsIgnoreCase("junit4")) {
-                return JUNIT4;
             } else if (value.equalsIgnoreCase("junit")) {
-                return JUNIT3;
+                return JUNIT;
             } else {
                 throw new IllegalArgumentException("Found unsupported unit test framework '" + value + "'");
             }
@@ -197,7 +192,8 @@ public class TestCaseCreator {
             
             String line;
             while ((line = reader.readLine()) != null) {
-                contentBuilder.append(PropertyUtils.replacePropertiesInString(line, properties) + "\n");
+                contentBuilder.append(PropertyUtils.replacePropertiesInString(line, properties));
+                contentBuilder.append("\n");
             }
         } catch (FileNotFoundException e) {
             throw new CitrusRuntimeException("Failed to create test case, unable to find test case template", e);
@@ -331,7 +327,7 @@ public class TestCaseCreator {
     
     /**
      * Set the request to use.
-     * @param framework
+     * @param xmlRequest
      * @return
      */
     public TestCaseCreator withXmlRequest(String xmlRequest) {
@@ -341,7 +337,7 @@ public class TestCaseCreator {
     
     /**
      * Set the response to use.
-     * @param framework
+     * @param xmlResponse
      * @return
      */
     public TestCaseCreator withXmlResponse(String xmlResponse) {

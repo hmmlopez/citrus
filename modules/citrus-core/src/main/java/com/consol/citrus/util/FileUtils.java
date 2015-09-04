@@ -16,14 +16,18 @@
 
 package com.consol.citrus.util;
 
-import java.io.*;
-import java.util.*;
-
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
+import com.consol.citrus.CitrusConstants;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.util.FileCopyUtils;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.*;
 
 /**
  * Class to provide general file utilities, such as listing all XML files in a directory, 
@@ -34,49 +38,100 @@ import com.consol.citrus.exceptions.CitrusRuntimeException;
  */
 public abstract class FileUtils {
 
+    /** Logger */
+    private static Logger log = LoggerFactory.getLogger(FileUtils.class);
+
     /**
      * Prevent instantiation.
      */
     private FileUtils() {
     }
-    
+
     /**
-     * Read file resource to string value.
+     * Read file resource to string value with default charset settings.
      * @param resource
      * @return
      * @throws IOException
      */
     public static String readToString(Resource resource) throws IOException {
-        return readToString(resource.getInputStream());
+        return readToString(resource.getInputStream(), getDefaultCharset());
     }
-    
+
     /**
-     * Read file input stream to string value.
+     * Read file input stream to string value with default charset settings.
      * @param inputStream
      * @return
      * @throws IOException
      */
     public static String readToString(InputStream inputStream) throws IOException {
-        BufferedInputStream reader = null;
-        StringBuilder builder = new StringBuilder();
-        
-        try {
-            reader = new BufferedInputStream(inputStream);
-            
-            byte[] contents = new byte[1024];
-            int bytesRead=0;
-            while( (bytesRead = reader.read(contents)) != -1){
-                builder.append(new String(contents, 0, bytesRead));
-            }
-        } finally {
-            if (reader != null) {
-                reader.close();
-            }
-        }
-        
-        return builder.toString();
+         return readToString(inputStream, getDefaultCharset());
     }
     
+    /**
+     * Read file resource to string value.
+     * @param resource
+     * @param charset
+     * @return
+     * @throws IOException
+     */
+    public static String readToString(Resource resource, Charset charset) throws IOException {
+        return readToString(resource.getInputStream(), charset);
+    }
+    
+    /**
+     * Read file input stream to string value.
+     * @param inputStream
+     * @param charset
+     * @return
+     * @throws IOException
+     */
+    public static String readToString(InputStream inputStream, Charset charset) throws IOException {
+        if (log.isDebugEnabled()) {
+            log.debug("Reading file resource (encoding is '" + charset.displayName() + "')");
+        }
+
+        return new String(FileCopyUtils.copyToByteArray(inputStream), charset);
+    }
+
+    /**
+     * Writes String content to file. Uses default charset encoding.
+     * @param content
+     * @param file
+     */
+    public static void writeToFile(String content, File file) {
+        writeToFile(content, file, getDefaultCharset());
+    }
+
+    /**
+     * Writes String content to file with given charset encoding. Automatically closes file output streams when done.
+     * @param content
+     * @param file
+     */
+    public static void writeToFile(String content, File file, Charset charset) {
+        if (log.isDebugEnabled()) {
+            log.debug("Writing file resource (encoding is '" + charset.displayName() + "')");
+        }
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(file);
+            fos.write(content.getBytes(charset));
+            fos.flush();
+        } catch (FileNotFoundException e) {
+            throw new CitrusRuntimeException("Failed to write file", e);
+        } catch (IOException e) {
+            throw new CitrusRuntimeException("Failed to write file", e);
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    log.warn("Unable to close file output stream", e);
+                }
+            }
+        }
+    }
+
     /**
      * Method to retrieve all test defining XML files in given directory.
      * Hierarchy of folders is supported.
@@ -135,5 +190,15 @@ public abstract class FileUtils {
     public static Resource getFileResource(String filePath, TestContext context) {
         return new PathMatchingResourcePatternResolver().getResource(
                 context.replaceDynamicContentInString(filePath));
+    }
+
+    /**
+     * Gets the default charset. If set by Citrus system property (citrus.file.encoding) use
+     * this one otherwise use system default.
+     * @return
+     */
+    private static Charset getDefaultCharset() {
+        return Charset.forName(System.getProperty(CitrusConstants.CITRUS_FILE_ENCODING,
+                    Charset.defaultCharset().displayName()));
     }
 }

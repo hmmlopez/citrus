@@ -16,9 +16,8 @@
 
 package com.consol.citrus.validation.interceptor;
 
-import org.springframework.integration.Message;
-
 import com.consol.citrus.context.TestContext;
+import com.consol.citrus.message.Message;
 
 
 /**
@@ -27,19 +26,22 @@ import com.consol.citrus.context.TestContext;
  * 
  * @author Christoph Deppisch
  */
-public interface MessageConstructionInterceptor<T> {
+public interface MessageConstructionInterceptor {
 
     /**
      * Intercept the message construction.
      * @param message the message to be modified.
-     * @param context the current test context
+     * @param messageType the message type.
+     * @param context the current test context.
      */
-    Message<T> interceptMessageConstruction(Message<T> message, TestContext context);
-    
+    Message interceptMessageConstruction(Message message, String messageType, TestContext context);
+
     /**
-     * Intercept the message payload construction.
-     * @param messagePayload the payload
-     * @param context the current test context
+     * Checks if this message interceptor is capable of this message type. XML message interceptors may only apply to this message
+     * type while JSON message interceptor implementations do not and vice versa.
+     *
+     * @param messageType the message type representation as String (e.g. xml, json, csv, plaintext).
+     * @return true if this message interceptor supports the message type.
      */
-    T interceptMessageConstruction(T messagePayload, TestContext context);
+    boolean supportsMessageType(String messageType);
 }

@@ -16,78 +16,89 @@
 
 package com.consol.citrus.dsl.definition;
 
-import java.io.IOException;
-
-import org.springframework.core.io.Resource;
-
-import com.consol.citrus.actions.SendMessageAction;
-import com.consol.citrus.dsl.PositionHandle;
+import com.consol.citrus.endpoint.Endpoint;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.util.FileUtils;
-import com.consol.citrus.ws.message.builder.SoapFaultAwareMessageBuilder;
+import com.consol.citrus.ws.actions.SendSoapFaultAction;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.Resource;
+
+import java.io.IOException;
 
 /**
  * Action definition creates a send message action with several message payload and header 
  * constructing build methods.
  * 
  * @author Christoph Deppisch
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.SendSoapFaultBuilder}
  */
-public class SendSoapFaultActionDefinition extends SendMessageActionDefinition {
+public class SendSoapFaultActionDefinition extends SendSoapMessageActionDefinition {
 
-    private SoapFaultAwareMessageBuilder soapFaultMessageBuilder = new SoapFaultAwareMessageBuilder();
-    
     /**
      * Default constructor with test action.
      * @param action
-     * @param positionHandle
      */
-    public SendSoapFaultActionDefinition(SendMessageAction action, PositionHandle positionHandle) {
-        super(action, positionHandle);
-        
-        action.setMessageBuilder(soapFaultMessageBuilder);
+    public SendSoapFaultActionDefinition(SendSoapFaultAction action) {
+        super(action);
     }
-    
+
+    /**
+     * Default constructor.
+     */
+    public SendSoapFaultActionDefinition() {
+        super(new SendSoapFaultAction());
+    }
+
+    @Override
+    public SendSoapFaultActionDefinition endpoint(Endpoint messageEndpoint) {
+        return (SendSoapFaultActionDefinition) super.endpoint(messageEndpoint);
+    }
+
+    @Override
+    public SendSoapFaultActionDefinition endpoint(String messageEndpointUri) {
+        return (SendSoapFaultActionDefinition) super.endpoint(messageEndpointUri);
+    }
+
     /**
      * Adds custom SOAP fault code definition.
      * @param code
      * @return
      */
     public SendSoapFaultActionDefinition faultCode(String code) {
-        soapFaultMessageBuilder.setFaultCode(code);
-        
+        getAction().setFaultCode(code);
         return this;
     }
-    
+
     /**
      * Add custom fault string to SOAP fault message.
      * @param faultString
      * @return
      */
     public SendSoapFaultActionDefinition faultString(String faultString) {
-        soapFaultMessageBuilder.setFaultString(faultString);
+        getAction().setFaultString(faultString);
         return this;
     }
-    
+
     /**
      * Add custom fault string to SOAP fault message.
      * @param faultActor
      * @return
      */
     public SendSoapFaultActionDefinition faultActor(String faultActor) {
-        soapFaultMessageBuilder.setFaultActor(faultActor);
+        getAction().setFaultActor(faultActor);
         return this;
     }
-    
+
     /**
      * Adds a fault detail to SOAP fault message.
      * @param faultDetail
      * @return
      */
     public SendSoapFaultActionDefinition faultDetail(String faultDetail) {
-        soapFaultMessageBuilder.getFaultDetails().add(faultDetail);
+        getAction().getFaultDetails().add(faultDetail);
         return this;
     }
-    
+
     /**
      * Adds a fault detail from file resource.
      * @param resource
@@ -95,46 +106,30 @@ public class SendSoapFaultActionDefinition extends SendMessageActionDefinition {
      */
     public SendSoapFaultActionDefinition faultDetailResource(Resource resource) {
         try {
-            soapFaultMessageBuilder.getFaultDetails().add(FileUtils.readToString(resource));
+            getAction().getFaultDetails().add(FileUtils.readToString(resource));
         } catch (IOException e) {
             throw new CitrusRuntimeException("Failed to read fault detail resource", e);
         }
         return this;
     }
-    
+
     /**
-     * Adds message header name value pair.
-     * @param name
-     * @param value
+     * Adds a fault detail from file resource path.
+     * @param filePath
+     * @return
      */
-    public SendMessageActionDefinition header(String name, Object value) {
-        soapFaultMessageBuilder.getMessageHeaders().put(name, value);
+    public SendSoapFaultActionDefinition faultDetailResource(String filePath) {
+        getAction().getFaultDetailResourcePaths().add(filePath);
         return this;
     }
-    
-    /**
-     * Adds message header data. Message header data is used in SOAP
-     * messages for instance as header XML fragment.
-     * @param data
-     */
-    public SendMessageActionDefinition header(String data) {
-        soapFaultMessageBuilder.setMessageHeaderData(data);
-        return this;
+
+    @Override
+    public SendSoapFaultActionDefinition withApplicationContext(ApplicationContext applicationContext) {
+        return (SendSoapFaultActionDefinition) super.withApplicationContext(applicationContext);
     }
-    
-    /**
-     * Adds message header data as file resource. Message header data is used in SOAP
-     * messages for instance as header XML fragment.
-     * @param resource
-     */
-    public SendMessageActionDefinition header(Resource resource) {
-        try {
-            soapFaultMessageBuilder.setMessageHeaderData(FileUtils.readToString(resource));
-        } catch (IOException e) {
-            throw new CitrusRuntimeException("Failed to read header resource", e);
-        }
-        
-        return this;
+
+    @Override
+    public SendSoapFaultAction getAction() {
+        return (SendSoapFaultAction) super.getAction();
     }
-    
 }

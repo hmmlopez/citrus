@@ -16,236 +16,219 @@
 
 package com.consol.citrus;
 
-import java.io.*;
-import java.util.*;
-
-import org.apache.commons.cli.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.TestNG;
-import org.testng.xml.*;
-
+import com.consol.citrus.config.CitrusBaseConfig;
+import com.consol.citrus.config.CitrusSpringConfig;
+import com.consol.citrus.container.SequenceAfterSuite;
+import com.consol.citrus.container.SequenceBeforeSuite;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.context.TestContextFactory;
+import com.consol.citrus.endpoint.Endpoint;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.exceptions.TestEngineFailedException;
+import com.consol.citrus.report.TestSuiteListeners;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.CollectionUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Properties;
 
 /**
- * Citrus command line application.
+ * Citrus main class initializes a new Citrus runtime environment with a Spring application context. Provides before/after suite action execution
+ * and test execution methods.
  *
  * @author Christoph Deppisch
- * @since 2008
+ * @since 2.1
  */
 public final class Citrus {
-    /**
-     * Logger
-     */
-    private static Logger log = LoggerFactory.getLogger(Citrus.class);
-    
-    /** XML file extension */
-    private static final String XML_FILE_EXTENSION = ".xml";
 
-    /** Command line arguments */
-    private CommandLine cmdArgs;
-    
-    /** TestNG */
-    private TestNG testng = new TestNG(true);
-    
-    /**
-     * Default constructor.
-     * @param cmdArgs the command line arguments.
-     */
-    public Citrus(CommandLine cmdArgs) {
-        this.cmdArgs = cmdArgs;
-    }
-    
-    /**
-     * Main CLI method.
-     * @param args
-     */
-    public static void main(String[] args) {
-        Options options = new CitrusCliOptions();
-        HelpFormatter formatter = new HelpFormatter();
-        
-        try {
-            CommandLine cmd = new GnuParser().parse(options, args);
+    /** Citrus version */
+    private static String version;
 
-            if (cmd.hasOption("help")) {
-                formatter.printHelp("CITRUS TestFramework", options);
-                return;
-            }
-            
-            Citrus citrus = new Citrus(cmd);
-            citrus.run();
-        } catch (ParseException e) {
-            log.error("Failed to parse command line arguments", e);
-            formatter.printHelp("CITRUS TestFramework", options);
-        }
-    }
-    
-    /**
-     * Runs all tests using TestNG.
-     */
-    public void run() {
-        log.info("CITRUS TESTFRAMEWORK ");
-        log.info("");
-        
-        String testDirectory = cmdArgs.getOptionValue("testdir", CitrusConstants.DEFAULT_TEST_DIRECTORY);
-        
-        if (!testDirectory.endsWith(File.separator)) {
-            testDirectory = testDirectory + File.separator;
-        }
-        
-        XmlSuite suite = new XmlSuite();
-        suite.setName(cmdArgs.getOptionValue("suitename", "citrus-test-suite"));
-        
-        if (cmdArgs.hasOption("test")) {
-            for (String testName : cmdArgs.getOptionValues("test")) {
-                addTest(testName, testDirectory, suite);
-            }
-        }
-        
-        if (cmdArgs.hasOption("package")) {
-            for (String packageName : cmdArgs.getOptionValues("package")) {
-                addTest(packageName, suite);
-            }
+    /** Test context factory **/
+    private TestContextFactory testContextFactory;
+    private TestSuiteListeners testSuiteListener;
+
+    private Collection<SequenceBeforeSuite> beforeSuite;
+    private Collection<SequenceAfterSuite> afterSuite;
+
+    /** Basic Spring application context */
+    private ApplicationContext applicationContext;
+
+    /** Load Citrus version */
+    static {
+        Properties versionProperties = new Properties();
+
+        try (final InputStream in = new ClassPathResource("META-INF/citrus.version").getInputStream()) {
+            versionProperties.load(in);
+        } catch (IOException e) {
+            version = "";
         }
 
-        if (cmdArgs.getArgList().size() > 0) {
-            testng.setTestSuites(getTestSuites(cmdArgs.getArgs()));
-        }
-        
-        List<XmlSuite> suites = new ArrayList<XmlSuite>();
-        suites.add(suite);
-        testng.setXmlSuites(suites);
-        testng.run();
-        
-        if (testng.hasFailure()) {
-            throw new TestEngineFailedException("Citrus test run failed!");
-        }
+        version = versionProperties.get("citrus.version").toString();
     }
-    
+
     /**
-     * Get suites defined in external testng files.
-     * @param testNgXmlArgs
+     * Private constructor with Spring bean application context that holds all basic Citrus
+     * components needed to run a Citrus project.
+     * @param applicationContext
+     */
+    private Citrus(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+
+        this.testSuiteListener = applicationContext.getBean(TestSuiteListeners.class);
+        this.testContextFactory = applicationContext.getBean(TestContextFactory.class);
+        this.beforeSuite = applicationContext.getBeansOfType(SequenceBeforeSuite.class).values();
+        this.afterSuite = applicationContext.getBeansOfType(SequenceAfterSuite.class).values();
+    }
+
+    /**
+     * Initializing method loads Spring application context and reads bean definitions
+     * such as test listeners and test context factory.
      * @return
      */
-    private List<String> getTestSuites(String[] testNgXmlArgs) {
-        List<String> suites = new ArrayList<String>(); 
-        for (String testNgXmlFile : testNgXmlArgs) {
-            if (testNgXmlFile.endsWith(XML_FILE_EXTENSION)) {
-                suites.add(testNgXmlFile);
-            } else {
-                log.warn("Unrecognized argument '" + testNgXmlFile + "'");
-            }
-        }
-        
-        return suites;
+    public static Citrus newInstance() {
+        return newInstance(new AnnotationConfigApplicationContext(CitrusSpringConfig.class));
     }
 
     /**
-     * Adds all tests in package to test suite.
-     * @param packageName the test package.
-     * @param suite the XML suite.
+     * Initializing method with Spring application context Java configuration class
+     * that gets loaded as application context.
+     * @return
      */
-    private void addTest(String packageName, XmlSuite suite) {
-        XmlTest test = new XmlTest(suite);
-        test.setName(packageName);
-        
-        XmlPackage xmlPackage = new XmlPackage();
-        xmlPackage.setName(packageName);
-        test.setXmlPackages(Collections.singletonList(xmlPackage));
+    public static Citrus newInstance(Class<? extends CitrusBaseConfig> configClass) {
+        return newInstance(new AnnotationConfigApplicationContext(configClass));
     }
 
     /**
-     * Adds a new XML class to test suite.
-     * @param testName the test name.
-     * @param testDirectory the test directory.
-     * @param suite the XML suite.
+     * Create new Citrus instance with given Spring bean application context.
+     * @param applicationContext
+     * @return
      */
-    private void addTest(String testName, String testDirectory, XmlSuite suite) {
-        XmlTest test = new XmlTest(suite);
-        test.setName(testName);
-        try {
-            test.setXmlClasses(Collections.singletonList(
-                    new XmlClass(getClassNameForTest(testDirectory, testName.trim()))));
-        } catch (FileNotFoundException e) {
-            throw new TestEngineFailedException("TestSuite failed with error", e);
-        }
+    public static Citrus newInstance(ApplicationContext applicationContext) {
+        return new Citrus(applicationContext);
     }
 
     /**
-     * Method to retrieve the full class name for a test.
-     * Hierarchy of folders is supported, too.
-     *
-     * @param startDir directory where to start the search
-     * @param testName test name to search for
-     * @throws CitrusRuntimeException
-     * @return the class name of the test
+     * Performs before suite test actions.
+     * @param suiteName
+     * @param testGroups
      */
-    private String getClassNameForTest(final String startDir, final String testName)
-        throws FileNotFoundException {
-        /* Stack to hold potential sub directories */
-        final Stack<File> dirs = new Stack<File>();
-        /* start directory */
-        final File startdir = new File(startDir);
-
-        if (startdir.isDirectory()) {
-            dirs.push(startdir);
-        }
-
-        log.info("Starting test search in dir: " + startdir.getAbsolutePath());
-        
-        /* walk through the directories */
-        while (dirs.size() > 0) {
-            File file = dirs.pop();
-            File[] found = file.listFiles(new TestCaseFileNameFilter());
-
-            for (int i = 0; i < found.length; i++) {
-                /* Subfolder support */
-                if (found[i].isDirectory()) {
-                    dirs.push(found[i]);
-                } else {
-                    if ((testName + XML_FILE_EXTENSION).equalsIgnoreCase(found[i].getName())) {
-                        String fileName = found[i].getPath();
-                        fileName = fileName.substring(0, (fileName.length() - XML_FILE_EXTENSION.length()));
-
-                        if (fileName.startsWith(File.separator)) {
-                            fileName = fileName.substring(File.separator.length());
-                        }
-                        
-                        //replace operating system path separator and translate to class package string
-                        fileName = fileName.substring(startDir.startsWith(File.separator) ? startDir.length()-1 : startDir.length()).replace(File.separatorChar, '.');
-                        
-                        if (log.isDebugEnabled()) {
-                            log.debug("Found test '" + fileName + "'");
-                        }
-                        
-                        return fileName;
+    public void beforeSuite(String suiteName, String ... testGroups) {
+        if (!CollectionUtils.isEmpty(beforeSuite)) {
+            for (SequenceBeforeSuite sequenceBeforeSuite : beforeSuite) {
+                try {
+                    if (sequenceBeforeSuite.shouldExecute(suiteName, testGroups)) {
+                        sequenceBeforeSuite.execute(createTestContext());
                     }
+                } catch (Exception e) {
+                    org.testng.Assert.fail("Before suite failed with errors", e);
                 }
             }
-        }
-        
-        throw new CitrusRuntimeException("Could not find test with name '"
-                + testName + "'. Test directory is: " + startDir);
-    }
-    
-    /**
-     * Filter for test case files (usually .xml files)
-     */
-    private static final class TestCaseFileNameFilter implements FilenameFilter {
-        public boolean accept(File dir, String name) {
-            File tmp = new File(dir.getPath() + File.separator + name);
-
-            /* Only allowing XML files as spring configuration files */
-            return (name.endsWith(XML_FILE_EXTENSION) || tmp.isDirectory()) && !name.startsWith("CVS") && !name.startsWith(".svn");
+        } else {
+            testSuiteListener.onStart();
+            testSuiteListener.onStartSuccess();
         }
     }
 
     /**
-     * Sets the testng.
-     * @param testng the testng to set
+     * Performs after suite test actions.
+     * @param suiteName
+     * @param testGroups
      */
-    public void setTestNG(TestNG testng) {
-        this.testng = testng;
+    public void afterSuite(String suiteName, String ... testGroups) {
+        if (!CollectionUtils.isEmpty(afterSuite)) {
+            for (SequenceAfterSuite sequenceAfterSuite : afterSuite) {
+                try {
+                    if (sequenceAfterSuite.shouldExecute(suiteName, testGroups)) {
+                        sequenceAfterSuite.execute(createTestContext());
+                    }
+                } catch (Exception e) {
+                    org.testng.Assert.fail("After suite failed with errors", e);
+                }
+            }
+        } else {
+            testSuiteListener.onFinish();
+            testSuiteListener.onFinishSuccess();
+        }
+    }
+
+    /**
+     * Gets the endpoint from Spring application context.
+     * @param name
+     * @return
+     */
+    public Endpoint getEndpoint(String name) {
+        return getEndpoint(name, Endpoint.class);
+    }
+
+    /**
+     * Gets the endpoint from Spring application context with given type.
+     * @param requiredType
+     * @return
+     */
+    public <T extends Endpoint> T getEndpoint(Class<T> requiredType) {
+        try {
+            return getApplicationContext().getBean(requiredType);
+        } catch (NoSuchBeanDefinitionException e) {
+            throw new CitrusRuntimeException(String.format("Unable to find endpoint for type '%s'", requiredType));
+        }
+    }
+
+    /**
+     * Gets the endpoint from Spring application context with given type.
+     * @param name
+     * @param requiredType
+     * @return
+     */
+    public <T extends Endpoint> T getEndpoint(String name, Class<T> requiredType) {
+        try {
+            return getApplicationContext().getBean(name, requiredType);
+        } catch (NoSuchBeanDefinitionException e) {
+            throw new CitrusRuntimeException(String.format("Unable to find endpoint for name '%s'", name));
+        }
+    }
+
+    /**
+     * Runs a test action which can also be a whole test case.
+     */
+    public void run(TestAction action) {
+        run(action, createTestContext());
+    }
+
+    /**
+     * Runs test action with given test context. Test action can also be a whole test case.
+     * @param action
+     * @param testContext
+     */
+    public void run(TestAction action, TestContext testContext) {
+        action.execute(testContext);
+    }
+
+    /**
+     * Creates a new test context.
+     * @return the new citrus test context.
+     */
+    public TestContext createTestContext() {
+        return testContextFactory.getObject();
+    }
+
+    /**
+     * Gets the basic Citrus Spring bean application context.
+     * @return
+     */
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    /**
+     * Gets the Citrus version from classpath resource properties.
+     * @return
+     */
+    public static String getVersion() {
+        return version;
     }
 }

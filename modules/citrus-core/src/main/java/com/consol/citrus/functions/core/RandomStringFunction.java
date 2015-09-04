@@ -16,11 +16,13 @@
 
 package com.consol.citrus.functions.core;
 
-import java.util.List;
-import java.util.Random;
-
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.InvalidFunctionUsageException;
 import com.consol.citrus.functions.Function;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
+import java.util.Random;
 
 /**
  * Function generating a random string containing alphabetic characters. Arguments specify
@@ -48,24 +50,24 @@ public class RandomStringFunction implements Function {
     private static final char[] NUMBERS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', };
 
     /** Mode upper case */
-    private static final String UPPERCASE = "UPPERCASE";
+    public static final String UPPERCASE = "UPPERCASE";
 
     /** Mode lower case */
-    private static final String LOWERCASE = "LOWERCASE";
+    public static final String LOWERCASE = "LOWERCASE";
 
     /** Mode mixed (upper and lower case characters) */
-    private static final String MIXED = "MIXED";
+    public static final String MIXED = "MIXED";
 
     /**
-     * @see com.consol.citrus.functions.Function#execute(java.util.List)
+     * @see com.consol.citrus.functions.Function#execute(java.util.List, com.consol.citrus.context.TestContext)
      * @throws InvalidFunctionUsageException
      */
-    public String execute(List<String> parameterList) {
+    public String execute(List<String> parameterList, TestContext context) {
         int numberOfLetters;
         String notationMethod = MIXED;
         boolean includeNumbers = false;
 
-        if (parameterList == null || parameterList.isEmpty()) {
+        if (CollectionUtils.isEmpty(parameterList)) {
             throw new InvalidFunctionUsageException("Function parameters must not be empty");
         }
 
@@ -123,8 +125,6 @@ public class RandomStringFunction implements Function {
                 builder.append(alphabet[letterIndex]);
             }
         }
-        
-        System.out.println(builder.toString());
         
         return builder.toString();
     }

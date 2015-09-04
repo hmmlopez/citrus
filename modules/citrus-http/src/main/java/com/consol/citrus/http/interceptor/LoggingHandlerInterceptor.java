@@ -16,22 +16,22 @@
 
 package com.consol.citrus.http.interceptor;
 
-import java.io.IOException;
-import java.util.Enumeration;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.consol.citrus.http.controller.HttpMessageController;
+import com.consol.citrus.message.RawMessage;
+import com.consol.citrus.report.MessageListeners;
+import com.consol.citrus.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.consol.citrus.http.controller.HttpMessageController;
-import com.consol.citrus.report.MessageTracingTestListener;
-import com.consol.citrus.util.FileUtils;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Enumeration;
 
 /**
  * Logging interceptor called by Spring MVC for each controller handling a RESTful Http request 
@@ -46,13 +46,13 @@ import com.consol.citrus.util.FileUtils;
 public class LoggingHandlerInterceptor implements HandlerInterceptor {
     
     /** New line characters in log files */
-    private static final String NEWLINE = "\n";
+    private static final String NEWLINE = System.getProperty("line.separator");
 
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(LoggingHandlerInterceptor.class);
     
-    @Autowired(required=false)
-    private MessageTracingTestListener messageTracingTestListener;
+    @Autowired(required = false)
+    private MessageListeners messageListener;
 
     /**
      * {@inheritDoc}
@@ -83,12 +83,11 @@ public class LoggingHandlerInterceptor implements HandlerInterceptor {
      * @param request
      */
     public void handleRequest(String request) {
-        if (log.isDebugEnabled()) {
-            log.debug("Received Http request:\n" + request);
-        }
-        
-        if (messageTracingTestListener != null) {
-            messageTracingTestListener.traceMessage("Received Http request:\n" + request);
+        if (messageListener != null) {
+            log.info("Received Http request");
+            messageListener.onInboundMessage(new RawMessage(request), null);
+        } else {
+            log.info("Received Http request:" + NEWLINE + request);
         }
     }
     
@@ -97,12 +96,11 @@ public class LoggingHandlerInterceptor implements HandlerInterceptor {
      * @param response
      */
     public void handleResponse(String response) {
-        if (log.isDebugEnabled()) {
-            log.debug("Send Http response:\n" + response);
-        }
-        
-        if (messageTracingTestListener != null) {
-            messageTracingTestListener.traceMessage("Send Http response:\n" + response);
+        if (messageListener != null) {
+            log.info("Sending Http response");
+            messageListener.onOutboundMessage(new RawMessage(response), null);
+        } else {
+            log.info("Sending Http response:" + NEWLINE + response);
         }
     }
     
@@ -135,7 +133,8 @@ public class LoggingHandlerInterceptor implements HandlerInterceptor {
             }
             
             while (headerValues.hasMoreElements()) {
-                builder.append("," + headerValues.nextElement());
+                builder.append(",");
+                builder.append(headerValues.nextElement());
             }
             
             builder.append(NEWLINE);
@@ -153,17 +152,21 @@ public class LoggingHandlerInterceptor implements HandlerInterceptor {
      */
     private String getResponseContent(HttpServletResponse response, Object handler) {
         StringBuilder builder = new StringBuilder();
-        
+
         builder.append(response);
-        
-        if (handler instanceof HttpMessageController) {
-            ResponseEntity<String> responseEntity = ((HttpMessageController)handler).getResponseCache();
-            if (responseEntity != null) {
-                builder.append(NEWLINE);
-                builder.append(responseEntity.getBody());
+
+        if (handler instanceof HandlerMethod) {
+            HandlerMethod handlerMethod = (HandlerMethod) handler;
+            if (handlerMethod.getBean() instanceof HttpMessageController) {
+                ResponseEntity<String> responseEntity =
+                        ((HttpMessageController) handlerMethod.getBean()).getResponseCache();
+                if (responseEntity != null) {
+                    builder.append(NEWLINE);
+                    builder.append(responseEntity.getBody());
+                }
             }
         }
-        
+
         return builder.toString();
     }
 

@@ -16,26 +16,25 @@
 
 package com.consol.citrus.actions;
 
-import java.util.*;
-
+import com.consol.citrus.context.TestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.*;
-import org.springframework.integration.Message;
-import org.springframework.integration.MessageChannel;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.core.MessageSelector;
 import org.springframework.integration.support.channel.BeanFactoryChannelResolver;
-import org.springframework.integration.support.channel.ChannelResolver;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.core.DestinationResolver;
 
-import com.consol.citrus.actions.AbstractTestAction;
-import com.consol.citrus.context.TestContext;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Action purges all messages from a message channel instance. Message channel must be
- * of type {@link QueueChannel}. Action receives a list of channel objects or a list of channel names
- * that are resolved dynamically at runtime.
+ * of type {@link org.springframework.integration.channel.QueueChannel}. Action receives
+ * a list of channel objects or a list of channel names that are resolved dynamically at runtime.
  * 
  * @author Christoph Deppisch
  */
@@ -50,7 +49,7 @@ public class PurgeMessageChannelAction extends AbstractTestAction implements Ini
     private BeanFactory beanFactory;
     
     /** Channel resolver instance */
-    private ChannelResolver channelResolver;
+    private DestinationResolver<MessageChannel> channelResolver;
     
     /** Selector filter messages to be purged on channels */
     private MessageSelector messageSelector;
@@ -59,7 +58,14 @@ public class PurgeMessageChannelAction extends AbstractTestAction implements Ini
      * Logger
      */
     private static Logger log = LoggerFactory.getLogger(PurgeMessageChannelAction.class);
-    
+
+    /**
+     * Default constructor.
+     */
+    public PurgeMessageChannelAction() {
+        setName("purge-channel");
+    }
+
     @Override
     public void doExecute(TestContext context) {
         log.info("Purging message channels ...");
@@ -105,7 +111,7 @@ public class PurgeMessageChannelAction extends AbstractTestAction implements Ini
             channelResolver = new BeanFactoryChannelResolver(beanFactory);
         }
         
-        return channelResolver.resolveChannelName(channelName);
+        return channelResolver.resolveDestination(channelName);
     }
     
     /**
@@ -146,8 +152,9 @@ public class PurgeMessageChannelAction extends AbstractTestAction implements Ini
      * Sets the channelNames.
      * @param channelNames the channelNames to set
      */
-    public void setChannelNames(List<String> channelNames) {
+    public PurgeMessageChannelAction setChannelNames(List<String> channelNames) {
         this.channelNames = channelNames;
+        return this;
     }
 
     /**
@@ -162,8 +169,9 @@ public class PurgeMessageChannelAction extends AbstractTestAction implements Ini
      * Sets the channels.
      * @param channels the channels to set
      */
-    public void setChannels(List<MessageChannel> channels) {
+    public PurgeMessageChannelAction setChannels(List<MessageChannel> channels) {
         this.channels = channels;
+        return this;
     }
 
     /**
@@ -178,15 +186,16 @@ public class PurgeMessageChannelAction extends AbstractTestAction implements Ini
      * Sets the messageSelector.
      * @param messageSelector the messageSelector to set
      */
-    public void setMessageSelector(MessageSelector messageSelector) {
+    public PurgeMessageChannelAction setMessageSelector(MessageSelector messageSelector) {
         this.messageSelector = messageSelector;
+        return this;
     }
 
     /**
      * Gets the channelResolver.
      * @return the channelResolver the channelResolver to get.
      */
-    public ChannelResolver getChannelResolver() {
+    public DestinationResolver<MessageChannel> getChannelResolver() {
         return channelResolver;
     }
 
@@ -194,8 +203,9 @@ public class PurgeMessageChannelAction extends AbstractTestAction implements Ini
      * Sets the channelResolver.
      * @param channelResolver the channelResolver to set
      */
-    public void setChannelResolver(ChannelResolver channelResolver) {
+    public PurgeMessageChannelAction setChannelResolver(DestinationResolver<MessageChannel> channelResolver) {
         this.channelResolver = channelResolver;
+        return this;
     }
 
 }

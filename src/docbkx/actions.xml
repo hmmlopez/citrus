@@ -6,12 +6,14 @@
   Besides sending and receiving messages the tester may access these actions in order to build a more complex test scenario
   that fits the desired use case.</para>
 
+  <xi:include href='actions-send.xml'/>
+  <xi:include href='actions-receive.xml'/>
   <xi:include href='actions-database.xml'/>
   <xi:include href='actions-sleep.xml'/>
   <xi:include href='actions-java.xml'/>
   <xi:include href='actions-timeout.xml'/>
   <xi:include href='actions-echo.xml'/>
-  <xi:include href='actions-measure-time.xml'/>
+  <xi:include href='actions-stop-time.xml'/>
   <xi:include href='actions-create-variables.xml'/>
   <xi:include href='actions-trace.xml'/>
   <xi:include href='actions-transform.xml'/>
@@ -24,6 +26,7 @@
   <xi:include href='actions-assert.xml'/>
   <xi:include href='actions-catch.xml'/>
   <xi:include href='actions-antrun.xml'/>
+  <xi:include href='actions-manage-server.xml'/>
   <xi:include href='actions-generic-action.xml'/>
   
 </chapter>

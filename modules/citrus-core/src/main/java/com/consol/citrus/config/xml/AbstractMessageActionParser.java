@@ -16,21 +16,21 @@
 
 package com.consol.citrus.config.xml;
 
-import java.util.*;
-
+import com.consol.citrus.message.MessageHeaderType;
+import com.consol.citrus.validation.builder.AbstractMessageContentBuilder;
+import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
+import com.consol.citrus.validation.json.*;
+import com.consol.citrus.validation.xml.XpathMessageConstructionInterceptor;
+import com.consol.citrus.validation.script.GroovyScriptMessageBuilder;
+import com.consol.citrus.variable.MessageHeaderVariableExtractor;
+import com.consol.citrus.variable.VariableExtractor;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.util.StringUtils;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-import com.consol.citrus.message.MessageHeaderType;
-import com.consol.citrus.validation.builder.AbstractMessageContentBuilder;
-import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
-import com.consol.citrus.validation.interceptor.XpathMessageConstructionInterceptor;
-import com.consol.citrus.validation.script.GroovyScriptMessageBuilder;
-import com.consol.citrus.variable.MessageHeaderVariableExtractor;
-import com.consol.citrus.variable.VariableExtractor;
+import java.util.*;
 
 /**
  * Parser providing basic message element configurations used in send and receive actions.
@@ -44,8 +44,8 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
      * 
      * @param messageElement
      */
-    public AbstractMessageContentBuilder<?> constructMessageBuilder(Element messageElement) {
-        AbstractMessageContentBuilder<?> messageBuilder = null;
+    public AbstractMessageContentBuilder constructMessageBuilder(Element messageElement) {
+        AbstractMessageContentBuilder messageBuilder = null;
         
         if (messageElement != null) {
             messageBuilder = parsePayloadTemplateBuilder(messageElement);
@@ -54,8 +54,12 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
                 messageBuilder = parseScriptBuilder(messageElement);
             }
         }
-        
-        return messageBuilder != null ? messageBuilder : new PayloadTemplateMessageBuilder();
+
+        if (messageBuilder != null) {
+            return messageBuilder;
+        } else {
+            return new PayloadTemplateMessageBuilder();
+        }
     }
     
     /**
@@ -94,7 +98,7 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
      * @param messageElement
      */
     private PayloadTemplateMessageBuilder parsePayloadTemplateBuilder(Element messageElement) {
-        PayloadTemplateMessageBuilder messageBuilder = null;
+        PayloadTemplateMessageBuilder messageBuilder;
         
         messageBuilder = parsePayloadElement(messageElement);
         
@@ -111,16 +115,28 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
         }
         
         if (messageBuilder != null) {
-            Map<String, String> overwriteMessageValues = new HashMap<String, String>();
+            Map<String, String> overwriteXpath = new HashMap<>();
+            Map<String, String> overwriteJsonPath = new HashMap<>();
             List<?> messageValueElements = DomUtils.getChildElementsByTagName(messageElement, "element");
             for (Iterator<?> iter = messageValueElements.iterator(); iter.hasNext();) {
                 Element messageValue = (Element) iter.next();
-                overwriteMessageValues.put(messageValue.getAttribute("path"), messageValue.getAttribute("value"));
+                String pathExpression = messageValue.getAttribute("path");
+
+                if (JsonPathMessageValidationContext.isJsonPathExpression(pathExpression)) {
+                    overwriteJsonPath.put(pathExpression, messageValue.getAttribute("value"));
+                } else {
+                    overwriteXpath.put(pathExpression, messageValue.getAttribute("value"));
+                }
             }
             
-            if (!overwriteMessageValues.isEmpty()) {
-                XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteMessageValues);
-                messageBuilder.addMessageConstructingInterceptor(interceptor);
+            if (!overwriteXpath.isEmpty()) {
+                XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteXpath);
+                messageBuilder.add(interceptor);
+            }
+
+            if (!overwriteJsonPath.isEmpty()) {
+                JsonPathMessageConstructionInterceptor interceptor = new JsonPathMessageConstructionInterceptor(overwriteJsonPath);
+                messageBuilder.add(interceptor);
             }
         } 
         
@@ -151,7 +167,7 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
      * @param actionElement the action DOM element.
      * @param messageBuilder the message content builder.
      */
-    protected void parseHeaderElements(Element actionElement, AbstractMessageContentBuilder<?> messageBuilder) {
+    protected void parseHeaderElements(Element actionElement, AbstractMessageContentBuilder messageBuilder) {
         Element headerElement = DomUtils.getChildElementByTagName(actionElement, "header");
         Map<String, Object> messageHeaders = new HashMap<String, Object>();
 
@@ -171,14 +187,14 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
                 messageHeaders.put(name, value);
             }
             
-            Element headerDataElement = DomUtils.getChildElementByTagName(headerElement, "data");
-            if (headerDataElement != null) {
-                messageBuilder.setMessageHeaderData(DomUtils.getTextValue(headerDataElement));
+            List<Element> headerDataElements = DomUtils.getChildElementsByTagName(headerElement, "data");
+            for (Element headerDataElement : headerDataElements) {
+                messageBuilder.getHeaderData().add(DomUtils.getTextValue(headerDataElement));
             }
 
-            Element headerResourceElement = DomUtils.getChildElementByTagName(headerElement, "resource");
-            if (headerResourceElement != null) {
-                messageBuilder.setMessageHeaderResourcePath(headerResourceElement.getAttribute("file"));
+            List<Element> headerResourceElements = DomUtils.getChildElementsByTagName(headerElement, "resource");
+            for (Element headerResourceElement : headerResourceElements) {
+                messageBuilder.getHeaderResources().add(headerResourceElement.getAttribute("file"));
             }
             
             messageBuilder.setMessageHeaders(messageHeaders);

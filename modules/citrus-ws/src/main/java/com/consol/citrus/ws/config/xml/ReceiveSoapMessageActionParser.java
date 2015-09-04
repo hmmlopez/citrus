@@ -16,13 +16,17 @@
 
 package com.consol.citrus.ws.config.xml;
 
+import com.consol.citrus.config.util.BeanDefinitionParserUtils;
+import com.consol.citrus.config.xml.ReceiveMessageActionParser;
+import com.consol.citrus.ws.actions.ReceiveSoapMessageAction;
+import com.consol.citrus.ws.message.SoapAttachment;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-import com.consol.citrus.config.util.BeanDefinitionParserUtils;
-import com.consol.citrus.config.xml.ReceiveMessageActionParser;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Parser for SOAP message receiver component in Citrus ws namespace.
@@ -33,13 +37,18 @@ public class ReceiveSoapMessageActionParser extends ReceiveMessageActionParser {
 
     @Override
     protected BeanDefinitionBuilder parseComponent(Element element, ParserContext parserContext) {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition("com.consol.citrus.ws.actions.ReceiveSoapMessageAction");
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(ReceiveSoapMessageAction.class);
+
+        List<Element> attachmentElements = DomUtils.getChildElementsByTagName(element, "attachment");
+        List<SoapAttachment> attachments = new ArrayList<SoapAttachment>();
+        for (Element attachment : attachmentElements) {
+            attachments.add(SoapAttachmentParser.parseAttachment(attachment));
+        }
+
+        builder.addPropertyValue("attachments", attachments);
         
-        SoapAttachmentParser.parseAttachment(builder, element, parserContext);
-        
-        Element attachmentElement = DomUtils.getChildElementByTagName(element, "attachment");
-        if (attachmentElement != null) {
-            BeanDefinitionParserUtils.setPropertyReference(builder, attachmentElement.getAttribute("validator"), 
+        if (!attachments.isEmpty()) {
+            BeanDefinitionParserUtils.setPropertyReference(builder, attachmentElements.get(0).getAttribute("validator"),
                     "attachmentValidator", "soapAttachmentValidator");
         }
         

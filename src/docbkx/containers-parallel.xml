@@ -37,19 +37,21 @@
     &lt;/actions&gt;
 &lt;/testcase&gt;</programlisting>
     
-    <para><emphasis>Java DSL</emphasis></para>
-    <programlisting language="java">protected void configure() {
-    parallel(
-        sleep(), 
-        sequential(
+    <para><emphasis>Java DSL designer and runner</emphasis></para>
+    <programlisting language="java">@CitrusTest
+public void paralletTest() {
+    parallel().actions(
+        sleep(),
+        sequential().actions(
             sleep(),
             echo("1")
         ),
         echo("2"),
         echo("3"),
-        iterate(
-            echo("10")
-        ).condition("i lt= 5").index("i")
+        iterate().condition("i lt= 5").index("i"))
+            .actions(
+                echo("10")
+            )
     );
 }</programlisting>
 

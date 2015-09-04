@@ -16,26 +16,21 @@
 
 package com.consol.citrus.admin.controller;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.http.*;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-
 import com.consol.citrus.admin.executor.ApplicationContextHolder;
-import com.consol.citrus.admin.model.*;
-import com.consol.citrus.message.MessageReceiver;
-import com.consol.citrus.message.MessageSender;
-import com.consol.citrus.server.Server;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * @author Christoph Deppisch
  */
 @Controller
-@RequestMapping("/context")
+@RequestMapping("/appcontext")
 public class AppContextController {
 
     @Autowired
@@ -47,44 +42,15 @@ public class AppContextController {
         return appContextHolder.isApplicationContextLoaded();
     }
 
-    @RequestMapping(method = { RequestMethod.GET })
-    @ResponseBody
-    public AppContextInfo startContext(HttpEntity<String> requestEntity) {
-        AppContextInfo appContextInfo = new AppContextInfo();
-
-        ApplicationContext ctx = appContextHolder.getApplicationContext();
-        Map<String, MessageSender> senders = ctx.getBeansOfType(MessageSender.class);
-        
-        for (Entry<String, MessageSender> sender : senders.entrySet()) {
-            MessageSenderType senderType = new MessageSenderType();
-            senderType.setName(sender.getKey());
-            appContextInfo.getMessageSenders().add(senderType);
-        }
-        
-        Map<String, MessageReceiver> receivers = ctx.getBeansOfType(MessageReceiver.class);
-        
-        for (Entry<String, MessageReceiver> receiver : receivers.entrySet()) {
-            MessageReceiverType receiverType = new MessageReceiverType();
-            receiverType.setName(receiver.getKey());
-            appContextInfo.getMessageReceivers().add(receiverType);
-        }
-        
-        Map<String, Server> servers = ctx.getBeansOfType(Server.class);
-        
-        for (Entry<String, Server> server : servers.entrySet()) {
-            ServerInstanceType serverType = new ServerInstanceType();
-            serverType.setName(server.getKey());
-            appContextInfo.getServerInstances().add(serverType);
-        }
-        
-        return appContextInfo;
+    @RequestMapping(value="/start", method = { RequestMethod.GET })
+    public ResponseEntity<String> startContext(HttpEntity<String> requestEntity) {
+        appContextHolder.loadApplicationContext();
+        return new ResponseEntity<String>(HttpStatus.OK);
     }
-    
-    @RequestMapping(method = { RequestMethod.DELETE })
-    @ResponseBody
-    public ResponseEntity<?> stopContext(HttpEntity<String> requestEntity) {
+
+    @RequestMapping(value="/stop", method = { RequestMethod.GET })
+    public ResponseEntity<String> stopContext(HttpEntity<String> requestEntity) {
         appContextHolder.destroyApplicationContext();
-        
         return new ResponseEntity<String>(HttpStatus.OK);
     }
 }

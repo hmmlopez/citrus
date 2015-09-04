@@ -16,8 +16,12 @@
 
 package com.consol.citrus.ws.config.xml;
 
-import java.util.*;
-
+import com.consol.citrus.config.TestActionRegistry;
+import com.consol.citrus.config.util.BeanDefinitionParserUtils;
+import com.consol.citrus.config.xml.DescriptionElementParser;
+import com.consol.citrus.validation.xml.XmlMessageValidationContext;
+import com.consol.citrus.ws.actions.AssertSoapFault;
+import com.consol.citrus.ws.validation.SoapFaultDetailValidationContext;
 import org.apache.xerces.util.DOMUtil;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -29,13 +33,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-import com.consol.citrus.config.TestActionRegistry;
-import com.consol.citrus.config.util.BeanDefinitionParserUtils;
-import com.consol.citrus.config.xml.DescriptionElementParser;
-import com.consol.citrus.validation.xml.XmlMessageValidationContext;
-import com.consol.citrus.ws.actions.AssertSoapFault;
-import com.consol.citrus.ws.message.CitrusSoapMessageHeaders;
-import com.consol.citrus.ws.validation.SoapFaultDetailValidationContext;
+import java.util.*;
 
 /**
  * Parser for SOAP fault assert action.
@@ -49,7 +47,6 @@ public class AssertSoapFaultParser implements BeanDefinitionParser {
 
         beanDefinition = BeanDefinitionBuilder.rootBeanDefinition(AssertSoapFault.class);
 
-        beanDefinition.addPropertyValue("name", element.getLocalName());
         DescriptionElementParser.doParse(element, beanDefinition);
 
         BeanDefinitionParserUtils.setPropertyValue(beanDefinition, element.getAttribute("fault-code"), "faultCode");
@@ -59,6 +56,7 @@ public class AssertSoapFaultParser implements BeanDefinitionParser {
         List<Element> faultDetails = DomUtils.getChildElementsByTagName(element, "fault-detail");
         SoapFaultDetailValidationContext validationContext = new SoapFaultDetailValidationContext();
         List<String> soapFaultDetails = new ArrayList<String>();
+        List<String> soapFaultDetailPaths = new ArrayList<String>();
         for (Element faultDetailElement : faultDetails) {
             if (faultDetailElement.hasAttribute("file")) {
                 if (StringUtils.hasText(DomUtils.getTextValue(faultDetailElement).trim())) {
@@ -67,7 +65,7 @@ public class AssertSoapFaultParser implements BeanDefinitionParser {
                 }
                 
                 String filePath = faultDetailElement.getAttribute("file");
-                soapFaultDetails.add(CitrusSoapMessageHeaders.SOAP_FAULT_DETAIL_RESOURCE + "(" + filePath + ")");
+                soapFaultDetailPaths.add(filePath);
             } else {
                 String faultDetailData = DomUtils.getTextValue(faultDetailElement).trim();
                 if (StringUtils.hasText(faultDetailData)) {
@@ -95,8 +93,9 @@ public class AssertSoapFaultParser implements BeanDefinitionParser {
             validationContext.addValidationContext(context);
         }
         
-        if (!soapFaultDetails.isEmpty()) {
+        if (!soapFaultDetails.isEmpty() || !soapFaultDetailPaths.isEmpty()) {
             beanDefinition.addPropertyValue("faultDetails", soapFaultDetails);
+            beanDefinition.addPropertyValue("faultDetailResourcePaths", soapFaultDetailPaths);
             beanDefinition.addPropertyValue("validationContext", validationContext);
         }
         
@@ -123,8 +122,7 @@ public class AssertSoapFaultParser implements BeanDefinitionParser {
         }
 
         BeanDefinitionParserUtils.setPropertyReference(beanDefinition, element.getAttribute("fault-validator"), "validator", "soapFaultValidator");
-        BeanDefinitionParserUtils.setPropertyReference(beanDefinition, element.getAttribute("message-factory"), "messageFactory", "messageFactory");
-        
+
         return beanDefinition.getBeanDefinition();
     }
 }

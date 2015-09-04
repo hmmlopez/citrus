@@ -16,34 +16,70 @@
 
 package com.consol.citrus.dsl.definition;
 
-import java.io.IOException;
-
-import org.springframework.core.io.Resource;
-
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.script.GroovyAction;
+import com.consol.citrus.util.FileUtils;
+import org.springframework.core.io.Resource;
+
+import java.io.IOException;
 
 /**
  * Action executes groovy scripts either specified inline or from external file resource.
  * 
  * @author Max Argyo, Giulia DelBravo
  * @since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.GroovyActionBuilder}
  */
 public class GroovyActionDefinition extends AbstractActionDefinition<GroovyAction> {
 
+	/**
+	 * Constructor using action field.
+	 * @param action
+	 */
 	public GroovyActionDefinition(GroovyAction action) {
 	    super(action);
     }
-	
+
+	/**
+	 * Default constructor.
+	 */
+	public GroovyActionDefinition() {
+		super(new GroovyAction());
+	}
+
 	/**
      * Use a script template from file path.
-     * @param scriptTemplate the scriptTemplate to set
+     * @param scriptTemplatePath the scriptTemplate to set
      */
     public GroovyActionDefinition template(String scriptTemplatePath) {
         action.setScriptTemplatePath(scriptTemplatePath);
         return this;
     }
-	
+
+	/**
+	 * Sets the Groovy script to execute.
+	 * @param script
+	 * @return
+	 */
+	public GroovyActionDefinition script(String script) {
+		action.setScript(script);
+		return this;
+	}
+
+	/**
+	 * Sets the Groovy script to execute.
+	 * @param scriptResource
+	 * @return
+	 */
+	public GroovyActionDefinition script(Resource scriptResource) {
+		try {
+			action.setScript(FileUtils.readToString(scriptResource));
+		} catch (IOException e) {
+			throw new CitrusRuntimeException("Failed to read script resource file", e);
+		}
+		return this;
+	}
+
 	/**
      * Use a script template resource.
      * @param scriptTemplate the scriptTemplate to set
@@ -56,10 +92,9 @@ public class GroovyActionDefinition extends AbstractActionDefinition<GroovyActio
         }
 		return this;
 	}
-	
+
 	/**
      * Prevent script template usage.
-     * @param useScriptTemplate the useScriptTemplate to set
      */
 	public GroovyActionDefinition skipTemplate() {
 		action.setUseScriptTemplate(false);

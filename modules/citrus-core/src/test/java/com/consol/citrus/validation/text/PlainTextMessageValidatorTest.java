@@ -16,13 +16,12 @@
 
 package com.consol.citrus.validation.text;
 
-import org.springframework.integration.Message;
-import org.springframework.integration.support.MessageBuilder;
+import com.consol.citrus.exceptions.ValidationException;
+import com.consol.citrus.message.*;
+import com.consol.citrus.testng.AbstractTestNGUnitTest;
+import com.consol.citrus.validation.ControlMessageValidationContext;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import com.consol.citrus.exceptions.ValidationException;
-import com.consol.citrus.testng.AbstractTestNGUnitTest;
 
 /**
  * @author Christoph Deppisch
@@ -33,33 +32,42 @@ public class PlainTextMessageValidatorTest extends AbstractTestNGUnitTest {
     public void testPlainTextValidation() {
         PlainTextMessageValidator validator = new PlainTextMessageValidator();
         
-        Message<String> receivedMessage = MessageBuilder.withPayload("Hello World!").build();
-        Message<String> controlMessage = MessageBuilder.withPayload("Hello World!").build();
+        Message receivedMessage = new DefaultMessage("Hello World!");
+        Message controlMessage = new DefaultMessage("Hello World!");
+
+        ControlMessageValidationContext validationContext = new ControlMessageValidationContext(MessageType.PLAINTEXT.toString());
+        validationContext.setControlMessage(controlMessage);
         
-        validator.validateMessagePayload(receivedMessage, controlMessage, context);
+        validator.validateMessagePayload(receivedMessage, controlMessage, validationContext, context);
     }
     
     @Test
     public void testPlainTextValidationVariableSupport() {
         PlainTextMessageValidator validator = new PlainTextMessageValidator();
         
-        Message<String> receivedMessage = MessageBuilder.withPayload("Hello World!").build();
-        Message<String> controlMessage = MessageBuilder.withPayload("Hello ${world}!").build();
+        Message receivedMessage = new DefaultMessage("Hello World!");
+        Message controlMessage = new DefaultMessage("Hello ${world}!");
         
         context.setVariable("world", "World");
+
+        ControlMessageValidationContext validationContext = new ControlMessageValidationContext(MessageType.PLAINTEXT.toString());
+        validationContext.setControlMessage(controlMessage);
         
-        validator.validateMessagePayload(receivedMessage, controlMessage, context);
+        validator.validateMessagePayload(receivedMessage, controlMessage, validationContext, context);
     }
     
     @Test
     public void testPlainTextValidationWrongValue() {
         PlainTextMessageValidator validator = new PlainTextMessageValidator();
         
-        Message<String> receivedMessage = MessageBuilder.withPayload("Hello World!").build();
-        Message<String> controlMessage = MessageBuilder.withPayload("Hello Citrus!").build();
+        Message receivedMessage = new DefaultMessage("Hello World!");
+        Message controlMessage = new DefaultMessage("Hello Citrus!");
+
+        ControlMessageValidationContext validationContext = new ControlMessageValidationContext(MessageType.PLAINTEXT.toString());
+        validationContext.setControlMessage(controlMessage);
         
         try {
-            validator.validateMessagePayload(receivedMessage, controlMessage, context);
+            validator.validateMessagePayload(receivedMessage, controlMessage, validationContext, context);
         } catch (ValidationException e) {
             Assert.assertTrue(e.getMessage().contains("expected 'Hello Citrus!'"));
             Assert.assertTrue(e.getMessage().contains("but was 'Hello World!'"));

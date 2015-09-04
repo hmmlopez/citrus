@@ -16,14 +16,15 @@
 
 package com.consol.citrus.dsl.definition;
 
-import java.io.IOException;
-import java.util.List;
-
-import org.springframework.core.io.Resource;
-
 import com.consol.citrus.actions.ExecutePLSQLAction;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.util.FileUtils;
+import org.springframework.core.io.Resource;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Creates an ExecutePLSQLAction, which executes PLSQL statements either declared inline as 
@@ -31,22 +32,54 @@ import com.consol.citrus.util.FileUtils;
  * 
  * @author Max Argyo, Giulia DelBravo
  * @since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.ExecutePLSQLBuilder}
  */
 public class ExecutePLSQLActionDefinition extends AbstractActionDefinition<ExecutePLSQLAction> {
 
+	/**
+	 * Constructor using action field.
+	 * @param action
+	 */
 	public ExecutePLSQLActionDefinition(ExecutePLSQLAction action) {
 	    super(action);
     }
 
 	/**
-     * Adds a list of statements to execute. 
+	 * Default constructor.
+	 */
+	public ExecutePLSQLActionDefinition() {
+		super(new ExecutePLSQLAction());
+	}
+
+	/**
+	 * Sets the Spring JDBC template to use.
+	 * @param jdbcTemplate
+	 * @return
+	 */
+	public ExecutePLSQLActionDefinition jdbcTemplate(JdbcTemplate jdbcTemplate) {
+		action.setJdbcTemplate(jdbcTemplate);
+		return this;
+	}
+
+	/**
+	 * Sets the SQL data source.
+	 * @param dataSource
+	 * @return
+	 */
+	public ExecutePLSQLActionDefinition dataSource(DataSource dataSource) {
+		action.setDataSource(dataSource);
+		return this;
+	}
+
+	/**
+     * Adds a list of statements to execute.
      * @param statements
      */
 	public ExecutePLSQLActionDefinition statements(List<String> statements) {
 	    action.getStatements().addAll(statements);
 		return this;
 	}
-	
+
 	/**
 	 * Adds a new statement tp the list of SQL executions.
 	 * @param sql
@@ -56,7 +89,7 @@ public class ExecutePLSQLActionDefinition extends AbstractActionDefinition<Execu
 	    action.getStatements().add(sql);
 		return this;
 	}
-	
+
 	/**
      * Setter for external file resource containing the SQL statements to execute.
      * @param filePath
@@ -65,7 +98,7 @@ public class ExecutePLSQLActionDefinition extends AbstractActionDefinition<Execu
 		action.setSqlResourcePath(filePath);
 		return this;
 	}
-	
+
 	/**
      * Setter for external file resource containing the SQL statements to execute.
      * @param sqlResource
@@ -78,7 +111,7 @@ public class ExecutePLSQLActionDefinition extends AbstractActionDefinition<Execu
         }
         return this;
     }
-    
+
 	/**
      * Setter for inline script.
      * @param script
@@ -87,7 +120,7 @@ public class ExecutePLSQLActionDefinition extends AbstractActionDefinition<Execu
 		action.setScript(script);
 		return this;
 	}
-	
+
 	/**
      * Ignore errors during execution.
      * @param ignoreErrors boolean flag to set

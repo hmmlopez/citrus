@@ -16,7 +16,8 @@
 
 package com.consol.citrus.validation.text;
 
-import org.springframework.integration.Message;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.validation.ControlMessageValidationContext;
 import org.springframework.util.Assert;
 
 import com.consol.citrus.context.TestContext;
@@ -32,9 +33,8 @@ import com.consol.citrus.validation.ControlMessageValidator;
 public class PlainTextMessageValidator extends ControlMessageValidator {
 
     @Override
-    public void validateMessagePayload(Message<?> receivedMessage,
-            Message<?> controlMessage,
-            TestContext context) throws ValidationException {
+    public void validateMessagePayload(Message receivedMessage, Message controlMessage,
+                                       ControlMessageValidationContext validationContext, TestContext context) throws ValidationException {
         log.info("Start plain text message validation");
         
         if (log.isDebugEnabled()) {
@@ -43,8 +43,8 @@ public class PlainTextMessageValidator extends ControlMessageValidator {
         }
         
         try {
-            validateText(receivedMessage.getPayload().toString().trim(), 
-                    context.replaceDynamicContentInString(controlMessage.getPayload().toString().trim()));
+            validateText(receivedMessage.getPayload(String.class).trim(),
+                    context.replaceDynamicContentInString(controlMessage.getPayload(String.class).trim()));
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Failed to validate plain text", e);
         }
@@ -65,7 +65,7 @@ public class PlainTextMessageValidator extends ControlMessageValidator {
     }
 
     @Override
-    public boolean supportsMessageType(String messageType) {
+    public boolean supportsMessageType(String messageType, Message message) {
         return messageType.equalsIgnoreCase(MessageType.PLAINTEXT.toString());
     }
 }

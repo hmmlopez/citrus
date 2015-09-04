@@ -24,12 +24,24 @@ import com.consol.citrus.container.RepeatUntilTrue;
  * 
  * @author Max Argyo, Giulia DelBravo
  * @since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.RepeatBuilder}
  */
-public class RepeatUntilTrueDefinition extends AbstractActionDefinition<RepeatUntilTrue> {
+public class RepeatUntilTrueDefinition extends AbstractActionContainerDefinition<RepeatUntilTrue> {
 
+	/**
+	 * Constructor using action field.
+	 * @param action
+	 */
 	public RepeatUntilTrueDefinition(RepeatUntilTrue action) {
 	    super(action);
     }
+
+	/**
+	 * Default constructor.
+	 */
+	public RepeatUntilTrueDefinition() {
+		super(new RepeatUntilTrue());
+	}
 
 	/**
      * Sets Name of index variable.
@@ -39,16 +51,16 @@ public class RepeatUntilTrueDefinition extends AbstractActionDefinition<RepeatUn
 		action.setIndexName(indexName);
 		return this;
 	}
-	
+
 	/**
      * Setter for looping index.
      * @param index the index to set
      */
 	public RepeatUntilTrueDefinition startsWith(int index) {
-		action.setIndex(index);
+		action.setStart(index);
 		return this;
 	}
-	
+
 	/**
      * Aborting condition.
      * @param condition

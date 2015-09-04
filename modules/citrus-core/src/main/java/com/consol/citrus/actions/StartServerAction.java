@@ -16,14 +16,13 @@
 
 package com.consol.citrus.actions;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.server.Server;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Action starting a {@link Server} instance.
@@ -38,10 +37,15 @@ public class StartServerAction extends AbstractTestAction {
     /** Single server instance to start */
     private Server server;
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(StartServerAction.class);
+
+    /**
+     * Default constructor.
+     */
+    public StartServerAction() {
+        setName("start-server");
+    }
 
     @Override
     public void doExecute(TestContext context) {
@@ -61,15 +65,17 @@ public class StartServerAction extends AbstractTestAction {
     /**
      * @param server the server to set
      */
-    public void setServer(Server server) {
+    public StartServerAction setServer(Server server) {
         this.server = server;
+        return this;
     }
 
     /**
      * @param serverList the servers to set
      */
-    public void setServerList(List<Server> serverList) {
+    public StartServerAction setServerList(List<Server> serverList) {
         this.serverList = serverList;
+        return this;
     }
 
     /**

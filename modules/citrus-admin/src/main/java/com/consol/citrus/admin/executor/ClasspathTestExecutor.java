@@ -16,126 +16,129 @@
 
 package com.consol.citrus.admin.executor;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.ParseException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.type.ClassMetadata;
-import org.springframework.core.type.filter.AbstractClassTestingTypeFilter;
-import org.springframework.web.context.support.StandardServletEnvironment;
-
-import com.consol.citrus.Citrus;
-import com.consol.citrus.CitrusCliOptions;
-import com.consol.citrus.admin.model.TestCaseType;
-import com.consol.citrus.admin.service.ConfigService;
-import com.consol.citrus.dsl.TestNGCitrusTestBuilder;
+import com.consol.citrus.admin.configuration.ClasspathRunConfiguration;
+import com.consol.citrus.admin.exception.CitrusAdminRuntimeException;
+import com.consol.citrus.admin.websocket.WebSocketLoggingAppender;
+import com.consol.citrus.dsl.testng.TestNGCitrusTestDesigner;
+import com.consol.citrus.annotations.CitrusTest;
+import com.consol.citrus.dsl.testng.TestNGCitrusTestRunner;
 import com.consol.citrus.report.TestReporter;
 import com.consol.citrus.testng.AbstractTestNGCitrusTest;
-import com.consol.citrus.util.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
+import org.testng.TestNG;
+import org.testng.xml.*;
+
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
- *
+ * Executes a test case from direct classpath using same JVM in which this server web application is running.
  * @author Christoph Deppisch
  */
-public class ClasspathTestExecutor implements TestExecutor {
+public class ClasspathTestExecutor implements TestExecutor<ClasspathRunConfiguration> {
 
     @Autowired
-    private ApplicationContextHolder appContextHolder;
+    private ApplicationContextHolder applicationContextHolder;
     
     @Autowired
-    private ConfigService configService;
-    
-    /** Base package for test cases to look for */
-    private static final String BASE_PACKAGE = "test.base.package";
+    private WebSocketLoggingAppender webSocketLoggingAppender;
 
-    /**
-     * {@inheritDoc}
-     */
-    public List<TestCaseType> getTests() {
-        List<TestCaseType> tests = new ArrayList<TestCaseType>();
-        
-        List<String> testFiles = findTestsInClasspath(System.getProperty(BASE_PACKAGE, "com.consol.citrus"));
-        
-        for (String file : testFiles) {
-            String testName = file.substring(file.lastIndexOf(".") + 1);
-            String testPackageName = file.substring(0, file.length() - testName.length() - 1)
-                    .replace(File.separatorChar, '.');
-            
-            TestCaseType testCase = new TestCaseType();
-            testCase.setName(testName);
-            testCase.setPackageName(testPackageName);
-            
-            tests.add(testCase);
-        }
-        
-        return tests;
-    }
+    @Override
+    public void execute(String packageName, String testName, ClasspathRunConfiguration configuration) {
+        String methodName = null;
+        String testClassName;
 
-    /**
-     * {@inheritDoc}
-     */
-    public void execute(String testName) throws ParseException {
-        Citrus citrus = new Citrus(new GnuParser().parse(new CitrusCliOptions(), 
-                new String[] { "-test", testName, "-testdir", new File(configService.getProjectHome()).getAbsolutePath() }));
-        citrus.run();
-        
-        Map<String, TestReporter> reporters = appContextHolder.getApplicationContext().getBeansOfType(TestReporter.class);
-        for (TestReporter reporter : reporters.values()) {
-            reporter.clearTestResults();
+        int methodSeparatorIndex = testName.indexOf('.');
+        if (methodSeparatorIndex > 0) {
+            methodName = testName.substring(methodSeparatorIndex + 1);
+            testClassName = testName.substring(0, methodSeparatorIndex);
+        } else {
+            testClassName = testName;
         }
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    public String getSourceCode(String testPackage, String testName, String type) {
-        Resource testFile = new PathMatchingResourcePatternResolver().getResource(testPackage.replaceAll("\\.", "/") + "/" + testName + "." + type);
-        
+
         try {
-            return FileUtils.readToString(testFile);
-        } catch (IOException e) {
-            return "Failed to load test case file: " + e.getMessage();
+            Class<?> testClass = Class.forName(packageName + "." + testClassName);
+
+            webSocketLoggingAppender.setProcessId(testClassName);
+
+            if (!applicationContextHolder.isApplicationContextLoaded()) {
+                applicationContextHolder.loadApplicationContext();
+            }
+
+            if (TestNGCitrusTestDesigner.class.isAssignableFrom(testClass) ||
+                    TestNGCitrusTestRunner.class.isAssignableFrom(testClass) ||
+                    AbstractTestNGCitrusTest.class.isAssignableFrom(testClass)) {
+                runTest(testClassName, methodName, testClass);
+            }
+        } catch (ClassNotFoundException e) {
+            throw new CitrusAdminRuntimeException("Failed to execute test case as it is not part of classpath: " + packageName + "." + testClassName, e);
+        } catch (Exception e) {
+            throw new CitrusAdminRuntimeException("Failed to load Java source " + packageName + "." + testClassName, e);
+        } finally {
+            Map<String, TestReporter> reporters = applicationContextHolder.getApplicationContext().getBeansOfType(TestReporter.class);
+            for (TestReporter reporter : reporters.values()) {
+                reporter.clearTestResults();
+            }
+
+            webSocketLoggingAppender.setProcessId(null);
         }
     }
-    
+
     /**
-     * Finds all test cases in classpath starting in given base package. Searches for 
-     * **.class files extending AbstractTestNGCitrusTest superclass.
-     * 
-     * @param basePackage
+     * Instantiates and runs Citrus test class.
+     * @param testName
+     * @param methodName
+     * @param testClass
+     */
+    private void runTest(String testName, String methodName, Class<?> testClass) {
+        TestNG testng = new TestNG(true);
+
+        XmlSuite suite = new XmlSuite();
+        suite.setName("citrus-test-suite");
+
+        XmlTest test = new XmlTest(suite);
+        test.setName(testName);
+
+        XmlClass xmlClass = new XmlClass(testClass);
+        if (StringUtils.hasText(methodName)) {
+            xmlClass.getIncludedMethods().add(new XmlInclude(getMethodName(methodName, testClass)));
+        }
+
+        test.setXmlClasses(Collections.singletonList(xmlClass));
+
+        List<XmlSuite> suites = new ArrayList<XmlSuite>();
+        suites.add(suite);
+        testng.setXmlSuites(suites);
+        testng.run();
+
+        if (testng.hasFailure()) {
+            throw new CitrusAdminRuntimeException("Citrus test run failed!");
+        }
+    }
+
+    /**
+     * Finds test method name in test class - either method with name or other method with test annotation
+     * named accordingly.
+     * @param methodName
+     * @param testClass
      * @return
      */
-    private List<String> findTestsInClasspath(String basePackage) {
-        List<String> testCaseNames = new ArrayList<String>();
-        
-        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false, new StandardServletEnvironment());
-        
-        scanner.addIncludeFilter(new CitrusTestTypeFilter());
-        
-        Set<BeanDefinition> findings = scanner.findCandidateComponents(basePackage);
-        
-        for (BeanDefinition bean : findings) {
-            testCaseNames.add(bean.getBeanClassName());
+    private String getMethodName(String methodName, Class<?> testClass) {
+        if (ReflectionUtils.findMethod(testClass, methodName) != null) {
+            return methodName;
+        } else {
+            for (Method method : ReflectionUtils.getAllDeclaredMethods(testClass)) {
+                CitrusTest citrusTestAnnotation = method.getAnnotation(CitrusTest.class);
+                if (citrusTestAnnotation != null
+                        && StringUtils.hasText(citrusTestAnnotation.name())
+                        && citrusTestAnnotation.name().equals(methodName)) {
+                    return method.getName();
+                }
+            }
         }
-        
-        return testCaseNames;
-    }
-    
-    /**
-     * Class type filter searches for subclasses of {@link AbstractTestNGCitrusTest}
-     */
-    private static final class CitrusTestTypeFilter extends AbstractClassTestingTypeFilter {
-        @Override
-        protected boolean match(ClassMetadata metadata) {
-            return !metadata.getClassName().equals(TestNGCitrusTestBuilder.class.getName()) && 
-                    metadata.getSuperClassName().equals(AbstractTestNGCitrusTest.class.getName());
-        }
+
+        throw new CitrusAdminRuntimeException("Could not find method with name or Citrus annotation name: " + methodName);
     }
 }

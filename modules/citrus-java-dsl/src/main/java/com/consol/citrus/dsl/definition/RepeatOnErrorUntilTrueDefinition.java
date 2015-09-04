@@ -21,8 +21,9 @@ import com.consol.citrus.container.RepeatOnErrorUntilTrue;
 /**
  * @author Max Argyo, Giulia DelBravo
  * @since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.RepeatOnErrorBuilder}
  */
-public class RepeatOnErrorUntilTrueDefinition extends AbstractActionDefinition<RepeatOnErrorUntilTrue> {
+public class RepeatOnErrorUntilTrueDefinition extends AbstractActionContainerDefinition<RepeatOnErrorUntilTrue> {
 
 	/**
      * Default constructor using action container.
@@ -33,6 +34,13 @@ public class RepeatOnErrorUntilTrueDefinition extends AbstractActionDefinition<R
     }
 
 	/**
+	 * Default constructor.
+	 */
+	public RepeatOnErrorUntilTrueDefinition() {
+		super(new RepeatOnErrorUntilTrue());
+	}
+
+	/**
      * Adds a condition to this iterate container.
      * @param condition
      * @return
@@ -41,29 +49,29 @@ public class RepeatOnErrorUntilTrueDefinition extends AbstractActionDefinition<R
 		action.setCondition(condition);
 		return this;
 	}
-	
+
 	/**
      * Sets the index variable name.
-     * @param name
+     * @param indexName
      * @return
      */
 	public RepeatOnErrorUntilTrueDefinition index(String indexName) {
 		action.setIndexName(indexName);
 		return this;
 	}
-	
+
 	/**
      * Sets the index start value.
      * @param index
      * @return
      */
 	public RepeatOnErrorUntilTrueDefinition startsWith(int index) {
-		action.setIndex(index);
+		action.setStart(index);
 		return this;
 	}
-	
+
 	/**
-	 * Sets the auto sleep time in between repeats.
+	 * Sets the auto sleep time in between repeats in milliseconds.
 	 * @param autoSleep
 	 * @return
 	 */

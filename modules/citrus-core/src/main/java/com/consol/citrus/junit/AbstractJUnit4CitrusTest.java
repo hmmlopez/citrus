@@ -16,19 +16,17 @@
 
 package com.consol.citrus.junit;
 
-import org.junit.Before;
+import com.consol.citrus.Citrus;
+import com.consol.citrus.TestCase;
+import com.consol.citrus.common.TestLoader;
+import com.consol.citrus.common.XmlTestLoader;
+import com.consol.citrus.config.CitrusSpringConfig;
+import com.consol.citrus.context.TestContext;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
-
-import com.consol.citrus.container.SequenceBeforeTest;
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.context.TestContextFactoryBean;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.report.TestListeners;
 
 /**
  * Abstract base test implementation for test cases that rather use JUnit testing framework. Class also provides 
@@ -36,46 +34,46 @@ import com.consol.citrus.report.TestListeners;
  * 
  * @author Christoph Deppisch
  */
-@TestExecutionListeners({TestSuiteAwareExecutionListener.class})
-@ContextConfiguration(locations = {"classpath:com/consol/citrus/spring/root-application-ctx.xml", 
-                                   "classpath:citrus-context.xml", 
-                                   "classpath:com/consol/citrus/functions/citrus-function-ctx.xml",
-                                   "classpath:com/consol/citrus/validation/citrus-validationmatcher-ctx.xml"})
+@RunWith(CitrusJUnit4Runner.class)
+@ContextConfiguration(classes = CitrusSpringConfig.class)
 public abstract class AbstractJUnit4CitrusTest extends AbstractJUnit4SpringContextTests {
-    /**
-     * Logger
-     */
+
+    /** Logger */
     protected final Logger log = LoggerFactory.getLogger(getClass());
-    
-    /** Test listeners */
-    @Autowired
-    private TestListeners testListener;
-    
-    @Autowired
-    private TestContextFactoryBean testContextFactory;
-    
-    @Autowired(required = false)
-    private SequenceBeforeTest beforeTest;
-    
-    /** Delegate test execution to this executor */
-    private JUnitTestExecutor testExecutor;
-    
+
+    /** Citrus instance */
+    protected Citrus citrus;
+
     /**
-     * Run tasks before each test case.
+     * Reads Citrus test annotation from framework method and executes test case.
+     * @param frameworkMethod
      */
-    @Before
-    public void beforeTest() {
-        testExecutor  = new JUnitTestExecutor(applicationContext, getClass(), testListener);
-        testExecutor.beforeTest(beforeTest, createTestContext());
+    protected void run(CitrusJUnit4Runner.CitrusFrameworkMethod frameworkMethod) {
+        if (citrus == null) {
+            citrus = Citrus.newInstance(applicationContext);
+        }
+
+        TestContext ctx = prepareTestContext(citrus.createTestContext());
+        TestLoader testLoader = createTestLoader(frameworkMethod.getTestName(), frameworkMethod.getPackageName());
+        TestCase testCase = testLoader.load();
+
+        citrus.run(testCase, ctx);
     }
-    
+
     /**
      * Execute the test case.
      */
     protected void executeTest() {
-        testExecutor.executeTest(prepareTestContext(createTestContext()));
+        if (citrus == null) {
+            citrus = Citrus.newInstance(applicationContext);
+        }
+
+        TestContext ctx = prepareTestContext(citrus.createTestContext());
+        TestCase testCase = getTestCase();
+
+        citrus.run(testCase, ctx);
     }
-    
+
     /**
      * Prepares the test context.
      *
@@ -87,17 +85,24 @@ public abstract class AbstractJUnit4CitrusTest extends AbstractJUnit4SpringConte
     protected TestContext prepareTestContext(final TestContext testContext) {
         return testContext;
     }
-    
+
     /**
-     * Creates a new test context.
-     * @return the new citrus test context.
-     * @throws Exception on error.
+     * Creates new test loader which has TestNG test annotations set for test execution. Only
+     * suitable for tests that get created at runtime through factory method. Subclasses
+     * may overwrite this in order to provide custom test loader with custom test annotations set.
+     * @param testName
+     * @param packageName
+     * @return
      */
-    protected TestContext createTestContext() {
-        try {
-            return (TestContext)testContextFactory.getObject();
-        } catch (Exception e) {
-            throw new CitrusRuntimeException("Failed to create test context", e);
-        }
+    protected TestLoader createTestLoader(String testName, String packageName) {
+        return new XmlTestLoader(testName, packageName, applicationContext);
+    }
+
+    /**
+     * Constructs the test case to execute.
+     * @return
+     */
+    protected TestCase getTestCase() {
+        return createTestLoader(this.getClass().getSimpleName(), this.getClass().getPackage().getName()).load();
     }
 }

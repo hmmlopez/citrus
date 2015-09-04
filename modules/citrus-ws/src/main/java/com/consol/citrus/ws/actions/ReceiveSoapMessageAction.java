@@ -16,17 +16,18 @@
 
 package com.consol.citrus.ws.actions;
 
-import java.io.IOException;
-
-import org.springframework.integration.Message;
-
 import com.consol.citrus.actions.ReceiveMessageAction;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.util.FileUtils;
-import com.consol.citrus.ws.SoapAttachment;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.ws.message.SoapAttachment;
+import com.consol.citrus.ws.message.SoapMessage;
 import com.consol.citrus.ws.validation.SimpleSoapAttachmentValidator;
 import com.consol.citrus.ws.validation.SoapAttachmentValidator;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Message receiver for SOAP messaging.
@@ -37,120 +38,65 @@ import com.consol.citrus.ws.validation.SoapAttachmentValidator;
  * @author Christoph Deppisch
  */
 public class ReceiveSoapMessageAction extends ReceiveMessageAction {
-    /** Attachment body content data */
-    private String attachmentData;
-    
-    /** Attachment body content in external file resource path */
-    private String attachmentResourcePath;
-    
     /** Control attachment */
-    private SoapAttachment controlAttachment = new SoapAttachment();
+    private List<SoapAttachment> attachments = new ArrayList<SoapAttachment>();
     
     /** SOAP attachment validator */
     private SoapAttachmentValidator attachmentValidator = new SimpleSoapAttachmentValidator();
-    
+
     /**
-     * @see com.consol.citrus.actions.ReceiveMessageAction#validateMessage(org.springframework.integration.Message, com.consol.citrus.context.TestContext)
+     * Default constructor.
      */
+    public ReceiveSoapMessageAction() {
+        setName("receive");
+    }
+
     @Override
-    protected void validateMessage(Message<?> receivedMessage, TestContext context) {
+    protected void validateMessage(Message receivedMessage, TestContext context) {
         try {
             super.validateMessage(receivedMessage, context);
-            
-            if (attachmentData != null) {
-                controlAttachment.setContent(context.replaceDynamicContentInString(attachmentData));
-            } else if (attachmentResourcePath != null) {
-                controlAttachment.setContent(context.replaceDynamicContentInString(FileUtils.readToString(FileUtils.getFileResource(attachmentResourcePath, context))));
-            } else {
-                return; //no attachment expected, no validation
+
+            if (!attachments.isEmpty() && !(receivedMessage instanceof SoapMessage)) {
+                throw new CitrusRuntimeException(String.format("Unable to perform SOAP attachment validation on message type '%s'", receivedMessage.getClass()));
             }
-            
-            // handle variables in content id
-            if (controlAttachment.getContentId() != null) {
-            	controlAttachment.setContentId(context.replaceDynamicContentInString(controlAttachment.getContentId()));
+
+            for (SoapAttachment attachment : attachments) {
+                attachment.resolveDynamicContent(context);
             }
-            
-            // handle variables in content type
-            if (controlAttachment.getContentType() != null) {
-                controlAttachment.setContentType(context.replaceDynamicContentInString(controlAttachment.getContentType()));
+
+            if (!attachments.isEmpty()) {
+                attachmentValidator.validateAttachment((SoapMessage) receivedMessage, attachments);
             }
-            
-            attachmentValidator.validateAttachment(receivedMessage, controlAttachment);
+
         } catch (IOException e) {
             throw new CitrusRuntimeException(e);
         }
     }
 
     /**
-     * Set the attachment data as string value.
-     * @param attachmentData the attachmentData to set
+     * Gets the control attachments.
+     * @return the control attachments
      */
-    public void setAttachmentData(String attachmentData) {
-        this.attachmentData = attachmentData;
+    public List<SoapAttachment> getAttachments() {
+        return attachments;
     }
 
     /**
-     * Set the attachment data from external file resource. 
-     * @param attachmentResource the attachmentResource to set
+     * Sets the control attachments.
+     * @param attachments the control attachments
      */
-    public void setAttachmentResourcePath(String attachmentResource) {
-        this.attachmentResourcePath = attachmentResource;
-    }
-
-    /**
-     * Set the content type, delegates to control attachment.
-     * @param contentType the contentType to set
-     */
-    public void setContentType(String contentType) {
-        controlAttachment.setContentType(contentType);
-    }
-
-    /**
-     * Set the content id, delegates to control attachment.
-     * @param contentId the contentId to set
-     */
-    public void setContentId(String contentId) {
-        controlAttachment.setContentId(contentId);
-    }
-
-    /**
-     * Set the charset name, delegates to control attachment.
-     * @param charsetName the charsetName to set
-     */
-    public void setCharsetName(String charsetName) {
-        controlAttachment.setCharsetName(charsetName);
+    public ReceiveSoapMessageAction setAttachments(List<SoapAttachment> attachments) {
+        this.attachments = attachments;
+        return this;
     }
 
     /**
      * Set the attachment validator.
      * @param attachmentValidator the attachmentValidator to set
      */
-    public void setAttachmentValidator(SoapAttachmentValidator attachmentValidator) {
+    public ReceiveSoapMessageAction setAttachmentValidator(SoapAttachmentValidator attachmentValidator) {
         this.attachmentValidator = attachmentValidator;
-    }
-
-    /**
-     * Gets the controlAttachment.
-     * @return the controlAttachment
-     */
-    public SoapAttachment getControlAttachment() {
-        return controlAttachment;
-    }
-
-    /**
-     * Gets the attachmentData.
-     * @return the attachmentData
-     */
-    public String getAttachmentData() {
-        return attachmentData;
-    }
-
-    /**
-     * Gets the attachmentResource.
-     * @return the attachmentResource
-     */
-    public String getAttachmentResourcePath() {
-        return attachmentResourcePath;
+        return this;
     }
 
     /**

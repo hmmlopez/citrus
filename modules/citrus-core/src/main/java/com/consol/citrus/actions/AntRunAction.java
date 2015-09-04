@@ -16,11 +16,8 @@
 
 package com.consol.citrus.actions;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Map.Entry;
-import java.util.*;
-
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.apache.tools.ant.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +25,11 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.util.StringUtils;
 
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Map.Entry;
+import java.util.Properties;
+import java.util.Stack;
 
 /**
  * Action calls Apache ANT with given build file and runs ANT targets
@@ -62,7 +62,14 @@ public class AntRunAction extends AbstractTestAction {
     
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(AntRunAction.class);
-    
+
+    /**
+     * Default constructor.
+     */
+    public AntRunAction() {
+        setName("antrun");
+    }
+
     @Override
     public void doExecute(TestContext context) {
         Project project = new Project();
@@ -169,8 +176,9 @@ public class AntRunAction extends AbstractTestAction {
      * Sets the buildFilePath.
      * @param buildFilePath the buildFilePath to set
      */
-    public void setBuildFilePath(String buildFilePath) {
+    public AntRunAction setBuildFilePath(String buildFilePath) {
         this.buildFilePath = buildFilePath;
+        return this;
     }
 
     /**
@@ -185,8 +193,9 @@ public class AntRunAction extends AbstractTestAction {
      * Sets the target.
      * @param target the target to set
      */
-    public void setTarget(String target) {
+    public AntRunAction setTarget(String target) {
         this.target = target;
+        return this;
     }
 
     /**
@@ -201,8 +210,9 @@ public class AntRunAction extends AbstractTestAction {
      * Sets the targets.
      * @param targets the targets to set
      */
-    public void setTargets(String targets) {
+    public AntRunAction setTargets(String targets) {
         this.targets = targets;
+        return this;
     }
 
     /**
@@ -217,8 +227,9 @@ public class AntRunAction extends AbstractTestAction {
      * Sets the properties.
      * @param properties the properties to set
      */
-    public void setProperties(Properties properties) {
+    public AntRunAction setProperties(Properties properties) {
         this.properties = properties;
+        return this;
     }
 
     /**
@@ -233,8 +244,9 @@ public class AntRunAction extends AbstractTestAction {
      * Sets the propertyFilePath.
      * @param propertyFilePath the propertyFilePath to set
      */
-    public void setPropertyFilePath(String propertyFilePath) {
+    public AntRunAction setPropertyFilePath(String propertyFilePath) {
         this.propertyFilePath = propertyFilePath;
+        return this;
     }
 
     /**
@@ -249,8 +261,9 @@ public class AntRunAction extends AbstractTestAction {
      * Sets the buildListener.
      * @param buildListener the buildListener to set
      */
-    public void setBuildListener(BuildListener buildListener) {
+    public AntRunAction setBuildListener(BuildListener buildListener) {
         this.buildListener = buildListener;
+        return this;
     }
 
 }

@@ -15,6 +15,7 @@
                         auto-start="false"
                         port="8082"
                         context-config-location="classpath:com/consol/citrus/http/servlet-context.xml"
+                        message-converter="messageConverter"
                         connector="connector"
                         resource-base="src/citrus/resources"
                         root-parent-context="true"
@@ -35,7 +36,17 @@
     <citrus-http:server id="httpServer5"
                         auto-start="false"
                         port="8085"
-                        security-handler="securityHandler"/>                    
+                        security-handler="securityHandler"
+                        interceptors="interceptors"/>
+
+    <util:list id="interceptors">
+      <bean id="interceptor1" class="org.easymock.EasyMock" factory-method="createMock">
+        <constructor-arg value="org.springframework.web.servlet.HandlerInterceptor"/>
+      </bean>
+      <bean id="interceptor2" class="org.easymock.EasyMock" factory-method="createMock">
+        <constructor-arg value="org.springframework.web.servlet.HandlerInterceptor"/>
+      </bean>
+    </util:list>
     
     <util:list id="connectors">
         <bean id="connector1" class="org.easymock.EasyMock" factory-method="createMock">
@@ -46,6 +57,10 @@
         </bean>
     </util:list>
   
+    <bean id="messageConverter" class="org.easymock.EasyMock" factory-method="createMock">
+        <constructor-arg value="com.consol.citrus.http.message.HttpMessageConverter"/>
+    </bean>
+
     <bean id="connector" class="org.easymock.EasyMock" factory-method="createMock">
         <constructor-arg value="org.eclipse.jetty.server.Connector"/>
     </bean>

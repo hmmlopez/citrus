@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright 2006-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,121 +16,61 @@
 
 package com.consol.citrus.admin.service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import com.consol.citrus.admin.model.*;
+
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.util.xml.SimpleNamespaceContext;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-
-import com.consol.citrus.admin.executor.TestExecutor;
-import com.consol.citrus.admin.model.TestCaseType;
-import com.consol.citrus.admin.model.TestResult;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.util.XMLUtils;
-import com.consol.citrus.xml.xpath.XPathUtils;
-
 /**
+ * Test case related activities get bundled in this service implementation. Service lists all test cases,
+ * executes tests and provides test case information.
+ * 
  * @author Christoph Deppisch
+ * @since 1.3
  */
-@Component
-public class TestCaseService {
+public interface TestCaseService {
     
-    /** Logger */
-    private static Logger log = LoggerFactory.getLogger(TestCaseService.class);
-    
-    /** Test executor depends on type of project classpath or filesystem */
-    @Autowired
-    private TestExecutor testExecutor;
-
     /**
-     * Lists all available Citrus test cases from classpath.
+     * Lists all available Citrus test cases.
+     * @param project
      * @return
      */
-    public List<TestCaseType> getAllTests() {
-        List<TestCaseType> tests = testExecutor.getTests();
-        
-        for (TestCaseType test : tests) {
-            addTestCaseInfo(test);
-        }
-        
-        return tests;
-    }
-    
+    List<TestCaseData> getTests(Project project);
+
     /**
-     * Runs a test case and returns result outcome (success or failure).
-     * @param testName
+     * Gets number of test cases for the active project. This includes XML test cases as well as
+     * Java Citrus test methods.
+     * @param project
      * @return
      */
-    public TestResult executeTest(String testName) {
-        TestResult result = new TestResult();
-        TestCaseType testCase = new TestCaseType();
-        testCase.setName(testName);
-        result.setTestCase(testCase);
-        
-        try {
-            testExecutor.execute(testName);
-            
-            result.setSuccess(true);
-        } catch (Exception e) {
-            log.warn("Failed to execute Citrus test case '" + testName + "'", e);
+    Long getTestCount(Project project);
 
-            result.setSuccess(false);
-            
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            e.printStackTrace(new PrintStream(os));
-            result.setStackTrace("Caused by: " + os.toString());
-            
-            if (e instanceof CitrusRuntimeException) {
-                result.setFailureStack(((CitrusRuntimeException)e).getFailureStackAsString());
-            }
-        }
-        
-        return result;
-    }
-    
     /**
-     * Gets the source code for the given test.
+     * Gets test case details such as status, description, author.
+     * @param project
      * @param packageName
-     * @param name
+     * @param testName
      * @param type
      * @return
      */
-    public String getTestSources(String packageName, String name, String type) {
-        return testExecutor.getSourceCode(packageName, name, type);
-    }
+    TestCaseData getTestDetail(Project project, String packageName, String testName, TestCaseType type);
     
     /**
-     * Finds test case related information and adds it to the test case type.
-     * @param testCase
+     * Runs a test case and returns result outcome (success or failure).
+     * @param project
+     * @param packageName
+     * @param testName
+     * @param runConfigurationId
+     * @return
      */
-    private void addTestCaseInfo(TestCaseType testCase) {
-        // TODO also get testng groups from java part
-        String xmlPart = testExecutor.getSourceCode(testCase.getPackageName(), testCase.getName(), "xml");
-        
-        SimpleNamespaceContext nsContext = new SimpleNamespaceContext();
-        nsContext.bindNamespaceUri("spring", "http://www.springframework.org/schema/beans"); //TODO: remove hard coded namespace uri
-        nsContext.bindNamespaceUri("citrus", "http://www.citrusframework.org/schema/testcase"); //TODO: remove hard coded namespace uri
-        
-        Document testCaseDocument = XMLUtils.parseMessagePayload(xmlPart);
-        Node metaInfoNode = XPathUtils.evaluateAsNode(testCaseDocument, "/spring:beans/citrus:testcase/citrus:meta-info", nsContext);
-        
-        testCase.setAuthor(XPathUtils.evaluateAsString(metaInfoNode, "citrus:author", nsContext));
-        testCase.setCreationDate(XPathUtils.evaluateAsString(metaInfoNode, "citrus:creationdate", nsContext));
-        testCase.setLastUpdatedBy(XPathUtils.evaluateAsString(metaInfoNode, "citrus:last-updated-by", nsContext));
-        testCase.setLastUpdated(XPathUtils.evaluateAsString(metaInfoNode, "citrus:last-updated-on", nsContext));
-        testCase.setStatus(XPathUtils.evaluateAsString(metaInfoNode, "citrus:status", nsContext));
-        
-        try {
-            testCase.setDescription(XPathUtils.evaluateAsString(testCaseDocument, "/spring:beans/citrus:testcase/citrus:description", nsContext));
-        } catch (CitrusRuntimeException e) {
-            testCase.setDescription("");
-        }
-    }
+    TestResult executeTest(Project project, String packageName, String testName, String runConfigurationId);
     
+    /**
+     * Gets the source code for the given test.
+     * @param project
+     * @param packageName
+     * @param testName
+     * @param type
+     * @return
+     */
+    String getSourceCode(Project project, String packageName, String testName, TestCaseType type);
 }

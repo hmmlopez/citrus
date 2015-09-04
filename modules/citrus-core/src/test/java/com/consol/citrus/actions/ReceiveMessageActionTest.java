@@ -16,140 +16,139 @@
 
 package com.consol.citrus.actions;
 
-import static org.easymock.EasyMock.*;
-
-import java.util.*;
-
+import com.consol.citrus.*;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.endpoint.Endpoint;
+import com.consol.citrus.endpoint.EndpointConfiguration;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.exceptions.ValidationException;
+import com.consol.citrus.message.*;
+import com.consol.citrus.messaging.SelectiveConsumer;
+import com.consol.citrus.script.ScriptTypes;
+import com.consol.citrus.testng.AbstractTestNGUnitTest;
+import com.consol.citrus.validation.*;
+import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
+import com.consol.citrus.validation.context.ValidationContext;
+import com.consol.citrus.validation.json.*;
+import com.consol.citrus.validation.xml.XpathMessageConstructionInterceptor;
+import com.consol.citrus.validation.script.*;
+import com.consol.citrus.validation.xml.*;
+import com.consol.citrus.variable.*;
 import org.easymock.EasyMock;
-import org.springframework.integration.Message;
-import org.springframework.integration.support.MessageBuilder;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.consol.citrus.TestActor;
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.message.MessageReceiver;
-import com.consol.citrus.script.ScriptTypes;
-import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import com.consol.citrus.validation.MessageValidator;
-import com.consol.citrus.validation.MessageValidatorRegistry;
-import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
-import com.consol.citrus.validation.context.ValidationContext;
-import com.consol.citrus.validation.interceptor.XpathMessageConstructionInterceptor;
-import com.consol.citrus.validation.script.*;
-import com.consol.citrus.validation.xml.DomXmlMessageValidator;
-import com.consol.citrus.validation.xml.XmlMessageValidationContext;
-import com.consol.citrus.variable.*;
+import java.util.*;
+
+import static org.easymock.EasyMock.*;
 
 /**
  * @author Christoph Deppisch
  */
 public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
 
-    private MessageReceiver messageReceiver = EasyMock.createMock(MessageReceiver.class);
-    
-    private DomXmlMessageValidator validator = new DomXmlMessageValidator();
+    private Endpoint endpoint = EasyMock.createMock(Endpoint.class);
+    private SelectiveConsumer consumer = EasyMock.createMock(SelectiveConsumer.class);
+    private EndpointConfiguration endpointConfiguration = EasyMock.createMock(EndpointConfiguration.class);
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
 	public void testReceiveMessageWithMessagePayloadData() {
 		ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-		receiveAction.setMessageReceiver(messageReceiver);
+		receiveAction.setEndpoint(endpoint);
 		
 		TestActor testActor = new TestActor();
         testActor.setName("TESTACTOR");
         
         receiveAction.setActor(testActor);
         
-		receiveAction.setValidator(validator);
 		PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
 		
-		Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-		reset(messageReceiver);
-		expect(messageReceiver.receive()).andReturn(controlMessage).once();
-		expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-		replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
 		
 		List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
 		
-		verify(messageReceiver);
+		verify(endpoint, consumer, endpointConfiguration);
 	}
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithMessagePayloadResource() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
         
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadResourcePath("classpath:com/consol/citrus/actions/test-request-payload.xml");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithMessageBuilderScriptData() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         StringBuilder sb = new StringBuilder();
         sb.append("markupBuilder.TestRequest(){\n");
         sb.append("Message('Hello World!')\n");
         sb.append("}");
         
-        receiveAction.setValidator(validator);
         GroovyScriptMessageBuilder controlMessageBuilder = new GroovyScriptMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setScriptData(sb.toString());
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
@@ -158,76 +157,73 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         context.setVariable("text", "Hello World!");
         
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         StringBuilder sb = new StringBuilder();
         sb.append("markupBuilder.TestRequest(){\n");
         sb.append("Message('${text}')\n");
         sb.append("}");
         
-        receiveAction.setValidator(validator);
         GroovyScriptMessageBuilder controlMessageBuilder = new GroovyScriptMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setScriptData(sb.toString());
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithMessageBuilderScriptResource() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
-        receiveAction.setValidator(validator);
         GroovyScriptMessageBuilder controlMessageBuilder = new GroovyScriptMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setScriptResourcePath("classpath:com/consol/citrus/actions/test-request-payload.groovy");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithMessagePayloadDataVariablesSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -235,32 +231,31 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         context.setVariable("myText", "Hello World!");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithMessagePayloadResourceVariablesSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -268,62 +263,61 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         context.setVariable("myText", "Hello World!");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithMessagePayloadResourceFunctionsSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadResourcePath("classpath:com/consol/citrus/actions/test-request-payload-with-functions.xml");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageOverwriteMessageElementsXPath() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -333,33 +327,70 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         overwriteElements.put("/TestRequest/Message", "Hello World!");
         
         XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteElements);
-        controlMessageBuilder.addMessageConstructingInterceptor(interceptor);
+        controlMessageBuilder.add(interceptor);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
+    }
+
+    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void testReceiveMessageOverwriteMessageElementsJsonPath() {
+        ReceiveMessageAction receiveAction = new ReceiveMessageAction();
+        receiveAction.setMessageType(MessageType.JSON.toString());
+        receiveAction.setEndpoint(endpoint);
+
+        PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
+        JsonMessageValidationContext validationContext = new JsonMessageValidationContext();
+        validationContext.setMessageBuilder(controlMessageBuilder);
+        controlMessageBuilder.setPayloadData("{ \"TestRequest\": { \"Message\": \"?\" }}");
+
+        Map<String, String> overwriteElements = new HashMap<String, String>();
+        overwriteElements.put("$.TestRequest.Message", "Hello World!");
+
+        JsonPathMessageConstructionInterceptor interceptor = new JsonPathMessageConstructionInterceptor(overwriteElements);
+        controlMessageBuilder.add(interceptor);
+
+        Message controlMessage = new DefaultMessage("{ \"TestRequest\": { \"Message\": \"Hello World!\" }}");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
+
+        List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
+        validationContexts.add(validationContext);
+        receiveAction.setValidationContexts(validationContexts);
+        receiveAction.execute(context);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageOverwriteMessageElementsDotNotation() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -369,34 +400,34 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         overwriteElements.put("TestRequest.Message", "Hello World!");
         
         XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteElements);
-        controlMessageBuilder.addMessageConstructingInterceptor(interceptor);
+        controlMessageBuilder.add(interceptor);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageOverwriteMessageElementsXPathWithNamespaces() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
-        
+
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -407,18 +438,19 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         overwriteElements.put("/ns0:TestRequest/ns0:Message", "Hello World!");
 
         XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteElements);
-        controlMessageBuilder.addMessageConstructingInterceptor(interceptor);
+        controlMessageBuilder.add(interceptor);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
-                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
+                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
 
         validationContext.setSchemaValidation(false);
         
@@ -426,18 +458,16 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageOverwriteMessageElementsXPathWithNestedNamespaces() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
-        
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -448,18 +478,19 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         overwriteElements.put("/ns0:TestRequest/ns1:Message", "Hello World!");
 
         XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteElements);
-        controlMessageBuilder.addMessageConstructingInterceptor(interceptor);
+        controlMessageBuilder.add(interceptor);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
-                "<ns1:Message xmlns:ns1=\"http://citrusframework.org/unittest/message\">Hello World!</ns1:Message></ns0:TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
+                "<ns1:Message xmlns:ns1=\"http://citrusframework.org/unittest/message\">Hello World!</ns1:Message></ns0:TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
 
         validationContext.setSchemaValidation(false);
         
@@ -467,18 +498,16 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageOverwriteMessageElementsXPathWithDefaultNamespaces() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
-        
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -489,17 +518,18 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         overwriteElements.put("/:TestRequest/:Message", "Hello World!");
 
         XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteElements);
-        controlMessageBuilder.addMessageConstructingInterceptor(interceptor);
+        controlMessageBuilder.add(interceptor);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest xmlns=\"http://citrusframework.org/unittest\"><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest xmlns=\"http://citrusframework.org/unittest\"><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
 
         validationContext.setSchemaValidation(false);
         
@@ -507,17 +537,16 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithMessageHeaders() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -526,33 +555,34 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
         controlMessageBuilder.setMessageHeaders(headers);
-        
+
         Map<String, Object> controlHeaders = new HashMap<String, Object>();
         controlHeaders.put("Operation", "sayHello");
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", controlHeaders);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithMessageHeadersVariablesSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -566,30 +596,31 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Map<String, Object> controlHeaders = new HashMap<String, Object>();
         controlHeaders.put("Operation", "sayHello");
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", controlHeaders);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithUnknownVariablesInMessageHeaders() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -601,14 +632,16 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Map<String, Object> controlHeaders = new HashMap<String, Object>();
         controlHeaders.put("Operation", "sayHello");
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", controlHeaders);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
@@ -619,31 +652,31 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
             Assert.assertEquals(e.getMessage(), "Unknown variable 'myOperation'");
             return;
         }
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithUnknownVariableInMessagePayload() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>${myText}</Message></TestRequest>");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
@@ -654,17 +687,16 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
             Assert.assertEquals(e.getMessage(), "Unknown variable 'myText'");
             return;
         }
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithExtractVariablesFromHeaders() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -681,14 +713,16 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Map<String, Object> controlHeaders = new HashMap<String, Object>();
         controlHeaders.put("Operation", "sayHello");
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", controlHeaders);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
@@ -697,68 +731,68 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Assert.assertNotNull(context.getVariable("myOperation"));
         Assert.assertEquals(context.getVariable("myOperation"), "sayHello");
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithValidateMessageElementsFromMessageXPath() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
 
         Map<String, String> messageElements = new HashMap<String, String>();
         messageElements.put("/TestRequest/Message", "Hello World!");
-        validationContext.setPathValidationExpressions(messageElements);
+        validationContext.setXpathExpressions(messageElements);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithValidateMessageElementsXPathDefaultNamespaceSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
 
         Map<String, String> messageElements = new HashMap<String, String>();
         messageElements.put("/:TestRequest/:Message", "Hello World!");
-        validationContext.setPathValidationExpressions(messageElements);
+        validationContext.setXpathExpressions(messageElements);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest  xmlns=\"http://citrusframework.org/unittest\">" +
-                "<Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest  xmlns=\"http://citrusframework.org/unittest\">" +
+                "<Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
 
         validationContext.setSchemaValidation(false);
         
@@ -766,35 +800,35 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithValidateMessageElementsXPathNamespaceSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
 
         Map<String, String> messageElements = new HashMap<String, String>();
         messageElements.put("/ns0:TestRequest/ns0:Message", "Hello World!");
-        validationContext.setPathValidationExpressions(messageElements);
+        validationContext.setXpathExpressions(messageElements);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
-                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
+                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
 
         validationContext.setSchemaValidation(false);
         
@@ -802,35 +836,35 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithValidateMessageElementsXPathNestedNamespaceSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
 
         Map<String, String> messageElements = new HashMap<String, String>();
         messageElements.put("/ns0:TestRequest/ns1:Message", "Hello World!");
-        validationContext.setPathValidationExpressions(messageElements);
+        validationContext.setXpathExpressions(messageElements);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
-                "<ns1:Message xmlns:ns1=\"http://citrusframework.org/unittest/message\">Hello World!</ns1:Message></ns0:TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
+                "<ns1:Message xmlns:ns1=\"http://citrusframework.org/unittest/message\">Hello World!</ns1:Message></ns0:TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
 
         validationContext.setSchemaValidation(false);
         
@@ -838,39 +872,39 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithValidateMessageElementsXPathNamespaceBindings() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         
         Map<String, String> messageElements = new HashMap<String, String>();
         messageElements.put("/pfx:TestRequest/pfx:Message", "Hello World!");
-        validationContext.setPathValidationExpressions(messageElements);
+        validationContext.setXpathExpressions(messageElements);
         
         Map<String, String> namespaces = new HashMap<String, String>();
         namespaces.put("pfx", "http://citrusframework.org/unittest");
         validationContext.setNamespaces(namespaces);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
-                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
+                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
 
         validationContext.setSchemaValidation(false);
         
@@ -878,17 +912,60 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
+    }
+
+    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void testReceiveMessageWithExtractVariablesFromMessageJsonPath() {
+        ReceiveMessageAction receiveAction = new ReceiveMessageAction();
+        receiveAction.setEndpoint(endpoint);
+
+        PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
+        JsonMessageValidationContext validationContext = new JsonMessageValidationContext();
+        validationContext.setMessageBuilder(controlMessageBuilder);
+        controlMessageBuilder.setPayloadData("{\"text\":\"Hello World!\", \"person\":{\"name\":\"John\",\"surname\":\"Doe\"}, \"index\":5, \"id\":\"x123456789x\"}");
+
+        Map<String, String> extractMessageElements = new HashMap<String, String>();
+        extractMessageElements.put("$.text", "messageVar");
+        extractMessageElements.put("$.person", "person");
+
+        JsonPathVariableExtractor variableExtractor = new JsonPathVariableExtractor();
+        variableExtractor.setJsonPathExpressions(extractMessageElements);
+        receiveAction.addVariableExtractors(variableExtractor);
+
+        Message controlMessage = new DefaultMessage("{\"text\":\"Hello World!\", \"person\":{\"name\":\"John\",\"surname\":\"Doe\"}, \"index\":5, \"id\":\"x123456789x\"}");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
+
+        List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
+        validationContexts.add(validationContext);
+        receiveAction.setValidationContexts(validationContexts);
+        receiveAction.execute(context);
+
+        Assert.assertNotNull(context.getVariable("messageVar"));
+        Assert.assertEquals(context.getVariable("messageVar"), "Hello World!");
+
+        Assert.assertNotNull(context.getVariable("person"));
+        Assert.assertTrue(context.getVariable("person").contains("\"John\""));
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithExtractVariablesFromMessageXPath() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -898,18 +975,19 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         extractMessageElements.put("/TestRequest/Message", "messageVar");
         
         XpathPayloadVariableExtractor variableExtractor = new XpathPayloadVariableExtractor();
-        variableExtractor.setxPathExpressions(extractMessageElements);
+        variableExtractor.setXpathExpressions(extractMessageElements);
         receiveAction.addVariableExtractors(variableExtractor);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
@@ -918,18 +996,16 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Assert.assertNotNull(context.getVariable("messageVar"));
         Assert.assertEquals(context.getVariable("messageVar"), "Hello World!");
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
-    
+
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithExtractVariablesFromMessageXPathDefaultNamespaceSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
-        
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -940,19 +1016,20 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         extractMessageElements.put("/:TestRequest/:Message", "messageVar");
         
         XpathPayloadVariableExtractor variableExtractor = new XpathPayloadVariableExtractor();
-        variableExtractor.setxPathExpressions(extractMessageElements);
+        variableExtractor.setXpathExpressions(extractMessageElements);
         receiveAction.addVariableExtractors(variableExtractor);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest  xmlns=\"http://citrusframework.org/unittest\">" +
-                "<Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest  xmlns=\"http://citrusframework.org/unittest\">" +
+                "<Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         validationContext.setSchemaValidation(false);
         
@@ -963,17 +1040,15 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Assert.assertNotNull(context.getVariable("messageVar"));
         Assert.assertEquals(context.getVariable("messageVar"), "Hello World!");
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithExtractVariablesFromMessageXPathNamespaceSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
-
-        receiveAction.setValidator(validator);
+        receiveAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
@@ -985,19 +1060,20 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         extractMessageElements.put("/ns0:TestRequest/ns0:Message", "messageVar");
 
         XpathPayloadVariableExtractor variableExtractor = new XpathPayloadVariableExtractor();
-        variableExtractor.setxPathExpressions(extractMessageElements);
+        variableExtractor.setXpathExpressions(extractMessageElements);
         receiveAction.addVariableExtractors(variableExtractor);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
-                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
+                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         validationContext.setSchemaValidation(false);
         
@@ -1008,18 +1084,16 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Assert.assertNotNull(context.getVariable("messageVar"));
         Assert.assertEquals(context.getVariable("messageVar"), "Hello World!");
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithExtractVariablesFromMessageXPathNestedNamespaceSupport() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
-        
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -1030,19 +1104,20 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         extractMessageElements.put("/ns0:TestRequest/ns1:Message", "messageVar");
         
         XpathPayloadVariableExtractor variableExtractor = new XpathPayloadVariableExtractor();
-        variableExtractor.setxPathExpressions(extractMessageElements);
+        variableExtractor.setXpathExpressions(extractMessageElements);
         receiveAction.addVariableExtractors(variableExtractor);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
-                "<ns1:Message xmlns:ns1=\"http://citrusframework.org/unittest/message\">Hello World!</ns1:Message></ns0:TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
+                "<ns1:Message xmlns:ns1=\"http://citrusframework.org/unittest/message\">Hello World!</ns1:Message></ns0:TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         validationContext.setSchemaValidation(false);
         
@@ -1053,18 +1128,16 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Assert.assertNotNull(context.getVariable("messageVar"));
         Assert.assertEquals(context.getVariable("messageVar"), "Hello World!");
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithExtractVariablesFromMessageXPathNamespaceBindings() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
-        
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -1075,23 +1148,24 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         extractMessageElements.put("/pfx:TestRequest/pfx:Message", "messageVar");
         
         XpathPayloadVariableExtractor variableExtractor = new XpathPayloadVariableExtractor();
-        variableExtractor.setxPathExpressions(extractMessageElements);
+        variableExtractor.setXpathExpressions(extractMessageElements);
         receiveAction.addVariableExtractors(variableExtractor);
         
         Map<String, String> namespaces = new HashMap<String, String>();
         namespaces.put("pfx", "http://citrusframework.org/unittest");
         variableExtractor.setNamespaces(namespaces);
         
-        Map<String, Object> controlHeaders = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
-                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>")
-                                    .copyHeaders(controlHeaders)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
+                "<ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         validationContext.setSchemaValidation(false);
         
@@ -1102,49 +1176,156 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Assert.assertNotNull(context.getVariable("messageVar"));
         Assert.assertEquals(context.getVariable("messageVar"), "Hello World!");
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
+    }
+
+    @Test
+    public void testReceiveMessageWithJsonPathValidation() {
+        ReceiveMessageAction receiveAction = new ReceiveMessageAction();
+        receiveAction.setEndpoint(endpoint);
+        receiveAction.setMessageType(MessageType.JSON.toString());
+
+        PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
+        JsonPathMessageValidationContext validationContext = new JsonPathMessageValidationContext();
+        validationContext.setMessageBuilder(controlMessageBuilder);
+
+        Map<String, String> jsonPathExpressions = new HashMap<String, String>();
+        jsonPathExpressions.put("$..text", "Hello World!");
+        jsonPathExpressions.put("$.person.name", "John");
+        jsonPathExpressions.put("$.person.surname", "Doe");
+        jsonPathExpressions.put("$.index", "5");
+        validationContext.setJsonPathExpressions(jsonPathExpressions);
+
+        Message controlMessage = new DefaultMessage("{\"text\":\"Hello World!\", \"person\":{\"name\":\"John\",\"surname\":\"Doe\"}, \"index\":5, \"id\":\"x123456789x\"}");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
+
+        List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
+        validationContexts.add(validationContext);
+        receiveAction.setValidationContexts(validationContexts);
+        receiveAction.execute(context);
+
+        verify(endpoint, consumer, endpointConfiguration);
+    }
+
+    @Test(expectedExceptions = ValidationException.class)
+    public void testReceiveMessageWithJsonPathValidationFailure() {
+        ReceiveMessageAction receiveAction = new ReceiveMessageAction();
+        receiveAction.setEndpoint(endpoint);
+        receiveAction.setMessageType(MessageType.JSON.toString());
+
+        PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
+        JsonPathMessageValidationContext validationContext = new JsonPathMessageValidationContext();
+        validationContext.setMessageBuilder(controlMessageBuilder);
+
+        Map<String, String> jsonPathExpressions = new HashMap<String, String>();
+        jsonPathExpressions.put("$..text", "Hello Citrus!");
+        validationContext.setJsonPathExpressions(jsonPathExpressions);
+
+        Message controlMessage = new DefaultMessage("{\"text\":\"Hello World!\", \"person\":{\"name\":\"John\",\"surname\":\"Doe\"}, \"index\":5, \"id\":\"x123456789x\"}");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
+
+        List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
+        validationContexts.add(validationContext);
+        receiveAction.setValidationContexts(validationContexts);
+
+        try {
+            receiveAction.execute(context);
+        } finally {
+            verify(endpoint, consumer, endpointConfiguration);
+        }
+    }
+
+    @Test(expectedExceptions = ValidationException.class)
+    public void testReceiveMessageWithJsonPathValidationNoPathResult() {
+        ReceiveMessageAction receiveAction = new ReceiveMessageAction();
+        receiveAction.setEndpoint(endpoint);
+        receiveAction.setMessageType(MessageType.JSON.toString());
+
+        PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
+        JsonPathMessageValidationContext validationContext = new JsonPathMessageValidationContext();
+        validationContext.setMessageBuilder(controlMessageBuilder);
+
+        Map<String, String> jsonPathExpressions = new HashMap<String, String>();
+        jsonPathExpressions.put("$.person.age", "50");
+        validationContext.setJsonPathExpressions(jsonPathExpressions);
+
+        Message controlMessage = new DefaultMessage("{\"text\":\"Hello World!\", \"person\":{\"name\":\"John\",\"surname\":\"Doe\"}, \"index\":5, \"id\":\"x123456789x\"}");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
+
+        List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
+        validationContexts.add(validationContext);
+        receiveAction.setValidationContexts(validationContexts);
+
+        try {
+            receiveAction.execute(context);
+        } finally {
+            verify(endpoint, consumer, endpointConfiguration);
+        }
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithTimeout() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
         
-        receiveAction.setReceiveTimeout(5000L);
+        receiveAction.setReceiveTimeout(3000L);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive(5000L)).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(context, 3000L)).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveSelectedWithMessageSelectorString() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -1155,30 +1336,31 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receiveSelected(messageSelectorString)).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", headers);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(messageSelectorString, context, 5000L)).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveSelectedWithMessageSelectorStringAndTimeout() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -1191,65 +1373,67 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receiveSelected(messageSelectorString, 5000L)).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", headers);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(messageSelectorString, context, 5000L)).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveSelectedWithMessageSelectorMap() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
         
-        Map<String, String> messageSelector = new HashMap<String, String>();
+        Map<String, Object> messageSelector = new HashMap<>();
         messageSelector.put("Operation", "sayHello");
         receiveAction.setMessageSelector(messageSelector);
         
         Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receiveSelected("Operation = 'sayHello'")).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", headers);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive("Operation = 'sayHello'", context, 5000L)).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveSelectedWithMessageSelectorMapAndTimeout() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
@@ -1257,44 +1441,49 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         receiveAction.setReceiveTimeout(5000L);
         
-        Map<String, String> messageSelector = new HashMap<String, String>();
+        Map<String, Object> messageSelector = new HashMap<>();
         messageSelector.put("Operation", "sayHello");
         receiveAction.setMessageSelector(messageSelector);
         
         Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receiveSelected("Operation = 'sayHello'", 5000L)).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", headers);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive("Operation = 'sayHello'", context, 5000L)).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     public void testMessageTimeout() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
         
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(null).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(null).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
 
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
@@ -1303,7 +1492,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
             receiveAction.execute(context);
         } catch(CitrusRuntimeException e) {
             Assert.assertEquals(e.getMessage(), "Failed to receive message - message is not available");
-            verify(messageReceiver);
+            verify(endpoint, consumer, endpointConfiguration);
             return;
         }
         
@@ -1314,53 +1503,53 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveEmptyMessagePayloadAsExpected() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveEmptyMessagePayloadUnexpected() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(validator);
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
@@ -1369,7 +1558,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
             receiveAction.execute(context);
         } catch(CitrusRuntimeException e) {
             Assert.assertEquals(e.getMessage(), "Validation failed: Unable to validate message payload - received message payload was empty, control message payload is not");
-            verify(messageReceiver);
+            verify(endpoint, consumer, endpointConfiguration);
             return;
         }
         
@@ -1380,7 +1569,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithValidationScript() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
         receiveAction.setValidator(new GroovyXmlMessageValidator());
         
@@ -1388,72 +1577,75 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         validationContext.setValidationScript("assert root.Message.name() == 'Message'\n" + 
                 "assert root.Message.text() == 'Hello World!'");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testReceiveMessageWithValidationScriptResource() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
 
         receiveAction.setValidator(new GroovyXmlMessageValidator());
         ScriptValidationContext validationContext = new ScriptValidationContext(ScriptTypes.GROOVY);
         validationContext.setValidationScriptResourcePath("classpath:com/consol/citrus/actions/test-validation-script.groovy");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).once();
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testInjectedMessageValidators() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                    .copyHeaders(headers)
-                                    .build();
-        
-        reset(messageReceiver);
-        expect(messageReceiver.receive()).andReturn(controlMessage).times(2);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(controlMessage).times(2);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
@@ -1473,22 +1665,22 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         validationContexts = new ArrayList<ValidationContext>();
         validationContexts.add(validationContext);
-        ScriptValidationContext scriptValidationContext = new ScriptValidationContext();
+        ScriptValidationContext scriptValidationContext = new ScriptValidationContext(CitrusConstants.DEFAULT_MESSAGE_TYPE);
         validationContexts.add(scriptValidationContext);
 
         receiveAction.setValidationContexts(validationContexts);
         receiveAction.execute(newContext);
-        
-        verify(messageReceiver);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
     public void testDisabledReceiveMessage() {
+        TestCase testCase = new TestCase();
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
+        receiveAction.setEndpoint(endpoint);
         
-        receiveAction.setValidator(validator);
-        
+
         TestActor disabledActor = new TestActor();
         disabledActor.setDisabled(true);
         receiveAction.setActor(disabledActor);
@@ -1497,25 +1689,30 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
-        
-        reset(messageReceiver);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
-        receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        testCase.addTestAction(receiveAction);
+        testCase.execute(context);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
     
     @Test
-    public void testDisabledReceiveMessageByMessageReceiver() {
+    public void testDisabledReceiveMessageByEndpointActor() {
+        TestCase testCase = new TestCase();
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
-        receiveAction.setMessageReceiver(messageReceiver);
-        
-        receiveAction.setValidator(validator);
+        receiveAction.setEndpoint(endpoint);
         
         TestActor disabledActor = new TestActor();
         disabledActor.setDisabled(true);
@@ -1524,16 +1721,23 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
-        
-        reset(messageReceiver);
-        expect(messageReceiver.getActor()).andReturn(disabledActor).times(2);
-        replay(messageReceiver);
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(endpoint.getActor()).andReturn(disabledActor).times(2);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
         receiveAction.setValidationContexts(validationContexts);
-        receiveAction.execute(context);
-        
-        verify(messageReceiver);
+
+        testCase.addTestAction(receiveAction);
+        testCase.execute(context);
+
+        verify(endpoint, consumer, endpointConfiguration);
     }
 }

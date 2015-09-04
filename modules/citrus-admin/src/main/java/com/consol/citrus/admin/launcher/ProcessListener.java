@@ -21,8 +21,7 @@ package com.consol.citrus.admin.launcher;
  * using the {@link com.consol.citrus.admin.launcher.ProcessLauncher}.
  *
  * @author Martin.Maher@consol.de
- * @version $Id$
- * @since 2012.11.30
+ * @since 1.3
  */
 public interface ProcessListener {
 
@@ -31,14 +30,14 @@ public interface ProcessListener {
      *
      * @param processId the id of the process
      */
-    void start(String processId);
+    void onProcessStart(String processId);
 
     /**
      * Invoked on successful completion event
      *
      * @param processId the id of the completed process
      */
-    void success(String processId);
+    void onProcessSuccess(String processId);
 
     /**
      * Invoked on failed completion event, with the process exit code
@@ -46,7 +45,7 @@ public interface ProcessListener {
      * @param processId the id of the process
      * @param exitCode the exitcode returned from the process
      */
-    void fail(String processId, int exitCode);
+    void onProcessFail(String processId, int exitCode);
 
     /**
      * Invoked on failed completion event, with the exception that was caught
@@ -54,13 +53,25 @@ public interface ProcessListener {
      * @param processId the id of the process
      * @param e the exception caught within the ProcessLauncher
      */
-    void fail(String processId, Exception e);
+    void onProcessFail(String processId, Throwable e);
 
     /**
-     * Invoked on output message event with output data from process
+     * Invoked on process output with output data from process. This method is called
+     * in cache mode. In contrast to process activity which is called immediately after
+     * process output was detected (@see onProcessActivity).
      *
      * @param processId the id of the process
      * @param output
      */
-    void output(String processId, String output);
+    void onProcessOutput(String processId, String output);
+
+    /**
+     * Invoked on process activity with output data from process. Called immediately
+     * after process activity was detected. In contrast to process output which is cached
+     * first and notified separately with less frequency (@see onProcessOutput).
+     *
+     * @param processId the id of the process
+     * @param output
+     */
+    void onProcessActivity(String processId, String output);
 }

@@ -27,8 +27,12 @@
   <!-- ================ -->
 
   <!-- Our own classes-->
-  <logger name="com.consol">
+  <logger name="com.consol.citrus">
     <level value="DEBUG"/>
+  </logger>
+
+  <logger name="com.consol.citrus.channel.MessageSelectingQueueChannel">
+    <level value="INFO"/>
   </logger>
 
   <logger name="org.springframework">
@@ -36,7 +40,7 @@
   </logger>
   
   <logger name="org.eclipse.jetty">
-    <level value="INFO"/>
+    <level value="WARN"/>
   </logger>
 
   <logger name="org.apache">

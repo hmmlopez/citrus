@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <spring:beans xmlns="http://www.citrusframework.org/schema/testcase" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.citrusframework.org/schema/testcase http://www.citrusframework.org/schema/testcase/citrus-testcase.xsd">
     <testcase name="SyncJmsTopicCommunicationITest">
-		<meta-info>
-			<author>Christoph Deppisch</author>
-			<creationdate>2009-11-03</creationdate>
-			<status>FINAL</status>
-			<last-updated-by>Christoph Deppisch</last-updated-by>
-			<last-updated-on>2009-11-03T00:00:00</last-updated-on>
-		</meta-info>
-		
+    <meta-info>
+      <author>Christoph Deppisch</author>
+      <creationdate>2009-11-03</creationdate>
+      <status>FINAL</status>
+      <last-updated-by>Christoph Deppisch</last-updated-by>
+      <last-updated-on>2009-11-03T00:00:00</last-updated-on>
+    </meta-info>
+
         <description>
-			JMS topic support in synchronous JMS communication.
-		</description>
+      JMS topic support in synchronous JMS communication.
+    </description>
         <variables>
             <variable name="correlationId" value="citrus:randomNumber(10)"></variable>      
             <variable name="messageId" value="citrus:randomNumber(10)"></variable>
@@ -20,22 +20,22 @@
         <actions>
             <parallel>
                 <sequential>
-                    <sleep time="1"/>
-                    <send with="syncHelloTopicRequestSender">
-                    	<description>
-                    		Send synchronous hello request to jms topic
-                    	</description>
+                    <sleep seconds="1"/>
+                    <send endpoint="syncJmsTopicEndpoint">
+                      <description>
+                        Send synchronous hello request to jms topic
+                      </description>
                         <message>
                             <data>
-                                <![CDATA[
-        					       <HelloRequest xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
-                                       <MessageId>${messageId}</MessageId>
-                                       <CorrelationId>${correlationId}</CorrelationId>
-                                       <User>${user}</User>
-                                       <Text>Hello TestFramework</Text>
-                                   </HelloRequest>								
-        						]]>
-        				    </data>
+                              <![CDATA[
+                                <HelloRequest xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
+                                    <MessageId>${messageId}</MessageId>
+                                    <CorrelationId>${correlationId}</CorrelationId>
+                                    <User>${user}</User>
+                                    <Text>Hello TestFramework</Text>
+                                </HelloRequest>
+                              ]]>
+                            </data>
                         </message>
                         <header>
                             <element name="Operation" value="sayHello"/>
@@ -46,19 +46,19 @@
                 
                 <sequential>
                     <parallel>
-                        <receive with="syncHelloTopicRequestReceiver">
+                        <receive endpoint="syncJmsTopicSubscriberEndpoint">
                             <description>
                                 Receive sync hello request from jms topic
                             </description>
                             <message>
                                 <data>
                                     <![CDATA[
-                                       <HelloRequest xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
-                                           <MessageId>${messageId}</MessageId>
-                                           <CorrelationId>${correlationId}</CorrelationId>
-                                           <User>${user}</User>
-                                           <Text>Hello TestFramework</Text>
-                                       </HelloRequest>                              
+                                      <HelloRequest xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
+                                          <MessageId>${messageId}</MessageId>
+                                          <CorrelationId>${correlationId}</CorrelationId>
+                                          <User>${user}</User>
+                                          <Text>Hello TestFramework</Text>
+                                      </HelloRequest>
                                     ]]>
                                 </data>
                             </message>
@@ -66,24 +66,21 @@
                                 <element name="Operation" value="sayHello"/>
                                 <element name="CorrelationId" value="${correlationId}"/>
                             </header>
-                            <extract>
-                                <header name="id" variable="syncMessageCorrelatorId"></header>
-                            </extract>
                         </receive>
                         
-                        <receive with="syncHelloTopicRequestReceiver">
+                        <receive endpoint="syncJmsTopicSubscriberEndpoint">
                             <description>
                                 Receive sync hello request from jms topic
                             </description>
                             <message>
                                 <data>
                                     <![CDATA[
-                                       <HelloRequest xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
-                                           <MessageId>${messageId}</MessageId>
-                                           <CorrelationId>${correlationId}</CorrelationId>
-                                           <User>${user}</User>
-                                           <Text>Hello TestFramework</Text>
-                                       </HelloRequest>                              
+                                      <HelloRequest xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
+                                          <MessageId>${messageId}</MessageId>
+                                          <CorrelationId>${correlationId}</CorrelationId>
+                                          <User>${user}</User>
+                                          <Text>Hello TestFramework</Text>
+                                      </HelloRequest>
                                     ]]>
                                 </data>
                             </message>
@@ -94,46 +91,45 @@
                         </receive>
                     </parallel>
                     
-                    <send with="syncHelloTopicReplySender">
+                    <send endpoint="syncJmsTopicSubscriberEndpoint">
                         <description>
                             Send synchronous hello response to jms reply destination
                         </description>
                         <message>
                             <data>
                                 <![CDATA[
-                                    <HelloResponse xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
-                                        <MessageId>${messageId}</MessageId>
-                                        <CorrelationId>${correlationId}</CorrelationId>
-                                        <User>HelloService</User>
-                                        <Text>Hello ${user}</Text>
-                                    </HelloResponse>
+                                  <HelloResponse xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
+                                      <MessageId>${messageId}</MessageId>
+                                      <CorrelationId>${correlationId}</CorrelationId>
+                                      <User>HelloService</User>
+                                      <Text>Hello ${user}</Text>
+                                  </HelloResponse>
                                 ]]>
                             </data>
                         </message>
                         <header>
                             <element name="Operation" value="sayHello"/>
                             <element name="CorrelationId" value="${correlationId}"/>
-                            <element name="citrus_sync_message_correlator" value="${syncMessageCorrelatorId}"/>
                         </header>
                     </send> 
                 </sequential>
             </parallel>
             
-            <receive with="syncHelloResponseHandler">
-            	<description>
-            		Receive sync hello response from jms reply destination
-            	</description>
+            <receive endpoint="syncJmsTopicEndpoint">
+              <description>
+                Receive sync hello response from jms reply destination
+              </description>
                 <message>
                     <data>
-                        <![CDATA[
-                            <HelloResponse xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
-                                <MessageId>${messageId}</MessageId>
-                                <CorrelationId>${correlationId}</CorrelationId>
-                                <User>HelloService</User>
-                                <Text>Hello ${user}</Text>
-                            </HelloResponse>
-						]]>
-				    </data>
+                      <![CDATA[
+                        <HelloResponse xmlns="http://www.consol.de/schemas/samples/sayHello.xsd">
+                            <MessageId>${messageId}</MessageId>
+                            <CorrelationId>${correlationId}</CorrelationId>
+                            <User>HelloService</User>
+                            <Text>Hello ${user}</Text>
+                        </HelloResponse>
+                      ]]>
+                    </data>
                 </message>
                 <header>
                     <element name="Operation" value="sayHello"/>

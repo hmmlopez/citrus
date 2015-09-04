@@ -16,11 +16,8 @@
 
 package com.consol.citrus.http.interceptor;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map.Entry;
-
+import com.consol.citrus.message.RawMessage;
+import com.consol.citrus.report.MessageListeners;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +26,10 @@ import org.springframework.http.client.*;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StringUtils;
 
-import com.consol.citrus.report.MessageTracingTestListener;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map.Entry;
 
 /**
  * Simple logging interceptor writes Http request and response messages to the console.
@@ -39,15 +39,16 @@ import com.consol.citrus.report.MessageTracingTestListener;
  */
 public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
 
+    /** New line characters in log files */
+    private static final String NEWLINE = System.getProperty("line.separator");
+
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(LoggingClientInterceptor.class);
     
-    @Autowired(required=false)
-    private MessageTracingTestListener messageTracingTestListener;
+    @Autowired(required = false)
+    private MessageListeners messageListener;
     
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, 
         ClientHttpRequestExecution execution) throws IOException {
         handleRequest(getRequestContent(request, new String(body)));
@@ -64,12 +65,11 @@ public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
      * @param request
      */
     public void handleRequest(String request) {
-        if (log.isDebugEnabled()) {
-            log.debug("Send Http request:\n" + request);
-        }
-        
-        if (messageTracingTestListener != null) {
-            messageTracingTestListener.traceMessage("Send Http request:\n" + request);
+        if (messageListener != null) {
+            log.info("Sending Http request message");
+            messageListener.onOutboundMessage(new RawMessage(request), null);
+        } else {
+            log.info("Sending Http request message:" + NEWLINE + request);
         }
     }
     
@@ -78,12 +78,11 @@ public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
      * @param response
      */
     public void handleResponse(String response) {
-        if (log.isDebugEnabled()) {
-            log.debug("Received Http response:\n" + response);
-        }
-        
-        if (messageTracingTestListener != null) {
-            messageTracingTestListener.traceMessage("Received Http response:\n" + response);
+        if (messageListener != null) {
+            log.info("Received Http response message");
+            messageListener.onInboundMessage(new RawMessage(response), null);
+        } else {
+            log.info("Received Http response message:" + NEWLINE + response);
         }
     }
     
@@ -99,11 +98,11 @@ public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
         builder.append(request.getMethod());
         builder.append(" ");
         builder.append(request.getURI());
-        builder.append("\n");
+        builder.append(NEWLINE);
         
         appendHeaders(request.getHeaders(), builder);
         
-        builder.append("\n");
+        builder.append(NEWLINE);
         builder.append(body);
         
         return builder.toString(); 
@@ -119,15 +118,15 @@ public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
         if (response != null) {
             StringBuilder builder = new StringBuilder();
             
-            builder.append("HTTP/1.1 ");
+            builder.append("HTTP/1.1 "); // TODO get Http version from message
             builder.append(response.getStatusCode());
             builder.append(" ");
             builder.append(response.getStatusText());
-            builder.append("\n");
+            builder.append(NEWLINE);
             
             appendHeaders(response.getHeaders(), builder);
             
-            builder.append("\n");
+            builder.append(NEWLINE);
             builder.append(response.getBodyContent());
             
             return builder.toString();
@@ -146,7 +145,7 @@ public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
             builder.append(headerEntry.getKey());
             builder.append(":");
             builder.append(StringUtils.arrayToCommaDelimitedString(headerEntry.getValue().toArray()));
-            builder.append("\n");
+            builder.append(NEWLINE);
         }
     }
     
@@ -154,7 +153,7 @@ public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
      * Response wrapper implementation of {@link ClientHttpResponse} that reads the message body 
      * into memory for caching, thus allowing for multiple invocations of {@link #getBody()}.
      */
-    private final static class CachingClientHttpResponseWrapper implements ClientHttpResponse {
+    private static final class CachingClientHttpResponseWrapper implements ClientHttpResponse {
 
         private final ClientHttpResponse response;
 
@@ -204,4 +203,11 @@ public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
         }
     }
 
+    /**
+     * Sets the message listener.
+     * @param messageListener
+     */
+    public void setMessageListener(MessageListeners messageListener) {
+        this.messageListener = messageListener;
+    }
 }

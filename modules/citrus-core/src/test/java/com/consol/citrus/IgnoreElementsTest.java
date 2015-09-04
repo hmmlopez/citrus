@@ -16,62 +16,61 @@
 
 package com.consol.citrus;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-
-import java.util.*;
-
-import org.easymock.EasyMock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.integration.Message;
-import org.springframework.integration.support.MessageBuilder;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.consol.citrus.actions.ReceiveMessageAction;
-import com.consol.citrus.message.MessageReceiver;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.endpoint.Endpoint;
+import com.consol.citrus.endpoint.EndpointConfiguration;
+import com.consol.citrus.message.DefaultMessage;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.messaging.Consumer;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import com.consol.citrus.validation.MessageValidator;
 import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
 import com.consol.citrus.validation.context.ValidationContext;
 import com.consol.citrus.validation.xml.XmlMessageValidationContext;
+import com.consol.citrus.validation.xml.XpathMessageValidationContext;
+import org.easymock.EasyMock;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.*;
+
+import static org.easymock.EasyMock.*;
 
 /**
  * @author Christoph Deppisch
  */
 public class IgnoreElementsTest extends AbstractTestNGUnitTest {
-    @Autowired
-    MessageValidator<ValidationContext> validator;
+    private Endpoint endpoint = EasyMock.createMock(Endpoint.class);
+    private Consumer consumer = EasyMock.createMock(Consumer.class);
+    private EndpointConfiguration endpointConfiguration = EasyMock.createMock(EndpointConfiguration.class);
     
-    MessageReceiver messageReceiver = EasyMock.createMock(MessageReceiver.class);
-    
-    ReceiveMessageAction receiveMessageBean;
+    private ReceiveMessageAction receiveMessageBean;
     
     @Override
     @BeforeMethod
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void prepareTest() {
         super.prepareTest();
+
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        reset(messageReceiver);
-        
-        Message message = MessageBuilder.withPayload("<root>"
-                        + "<element attributeA='attribute-value' attributeB='attribute-value' >"
-                            + "<sub-elementA attribute='A'>text-value</sub-elementA>"
-                            + "<sub-elementB attribute='B'>text-value</sub-elementB>"
-                            + "<sub-elementC attribute='C'>text-value</sub-elementC>"
-                        + "</element>" 
-                        + "</root>").build();
-        
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message message = new DefaultMessage("<root>"
+                + "<element attributeA='attribute-value' attributeB='attribute-value' >"
+                + "<sub-elementA attribute='A'>text-value</sub-elementA>"
+                + "<sub-elementB attribute='B'>text-value</sub-elementB>"
+                + "<sub-elementC attribute='C'>text-value</sub-elementC>"
+                + "</element>"
+                + "</root>");
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         receiveMessageBean = new ReceiveMessageAction();
-        receiveMessageBean.setMessageReceiver(messageReceiver);
-
-        receiveMessageBean.setValidator(validator);
+        receiveMessageBean.setEndpoint(endpoint);
     }
 
     @Test
@@ -151,19 +150,22 @@ public class IgnoreElementsTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testIgnoreAttributesUsingArrays() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<root>"
+        Message message = new DefaultMessage("<root>"
                         + "<element attributeA='attribute-value' attributeB='attribute-value' >"
                             + "<sub-element attribute='A'>text-value</sub-element>"
                             + "<sub-element attribute='B'>text-value</sub-element>"
                             + "<sub-element attribute='C'>text-value</sub-element>"
                         + "</element>" 
-                        + "</root>").build();
-        
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+                        + "</root>");
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
@@ -191,15 +193,18 @@ public class IgnoreElementsTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testIgnoreRootElement() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<root>"
-                        + "<element>Text</element>" 
-                        + "</root>").build();
-        
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        Message message = new DefaultMessage("<root>"
+                + "<element>Text</element>"
+                + "</root>");
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
@@ -222,7 +227,7 @@ public class IgnoreElementsTest extends AbstractTestNGUnitTest {
     @Test
     public void testIgnoreElementsAndValidate() {
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<root>"
                 + "<element attributeA='attribute-value' attributeB='attribute-value' >"
@@ -244,7 +249,7 @@ public class IgnoreElementsTest extends AbstractTestNGUnitTest {
         Map<String, String> validateElements = new HashMap<String, String>();
         validateElements.put("//root/element/sub-elementA", "wrong value");
         validateElements.put("//sub-elementB", "wrong value");
-        validationContext.setPathValidationExpressions(validateElements);
+        validationContext.setXpathExpressions(validateElements);
         
         receiveMessageBean.execute(context);
     }

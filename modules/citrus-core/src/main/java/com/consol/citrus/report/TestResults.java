@@ -16,59 +16,52 @@
 
 package com.consol.citrus.report;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import com.consol.citrus.TestResult;
 
-import com.consol.citrus.report.TestResult.RESULT;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.*;
 
 /**
- * Multiple {@link TestResult} instances combined to a {@link TestResults}.
+ * Multiple {@link com.consol.citrus.TestResult} instances combined to a {@link TestResults}.
  * 
  * @author Christoph Deppisch
  */
-public class TestResults extends ArrayList<TestResult> {
+public class TestResults {
 
     private static final long serialVersionUID = 1L;
 
-    /** Is result cached right now */
-    private boolean cached = false;
-    
-    /** Success, failure and skipped counter */
-    private int cntSuccess = 0;
-    private int cntFailed = 0;
-    private int cntSkipped = 0;
-    
-    /** Monitor for caching logic */
-    private final Object cacheLock = new Object();
-    
+    /** Common decimal format for percentage calculation in report **/
+    private static DecimalFormat decFormat = new DecimalFormat("0.0");
+    private static final String ZERO_PERCENTAGE = "0.0";
+
+    /** Collected test results */
+    private List<TestResult> results = Collections.synchronizedList(new ArrayList<TestResult>());
+
+    static {
+        DecimalFormatSymbols symbol = new DecimalFormatSymbols();
+        symbol.setDecimalSeparator('.');
+        decFormat.setDecimalFormatSymbols(symbol);
+    }
+
     /**
      * Adds a test result to the result list.
      * @param result
      * @return
      */
     public boolean addResult(TestResult result) {
-        synchronized (cacheLock) {
-            cached = false;
-            
-            return add(result);
-        }
+        return results.add(result);
     }
-    
-    @Override
-    public boolean add(TestResult o) {
-        synchronized (cacheLock) {
-            cached = false;
-            
-            return super.add(o);
-        }
-    }
-    
-    @Override
-    public boolean addAll(Collection<? extends TestResult> c) {
-        synchronized (cacheLock) {
-            cached = false;
-            
-            return super.addAll(c);
+
+    /**
+     * Provides synchronized access to all test results in iteration.
+     * @param callback
+     */
+    public void doWithResults(ResultCallback callback) {
+        synchronized (results) {
+            for (TestResult result : results) {
+                callback.doWithResult(result);
+            }
         }
     }
 
@@ -77,13 +70,25 @@ public class TestResults extends ArrayList<TestResult> {
      * @return
      */
     public int getSuccess() {
-        synchronized (cacheLock) {
-            if (!cached) {
-                cntSuccess = getCountForResult(RESULT.SUCCESS);
+        int count = 0;
+
+        synchronized (results) {
+            for (TestResult testResult : results) {
+                if (testResult.isSuccess()) {
+                    count++;
+                }
             }
-            
-            return cntSuccess;
         }
+
+        return count;
+    }
+
+    /**
+     * Calculates percentage of success tests.
+     * @return
+     */
+    public String getSuccessPercentage() {
+        return results.size() > 0 ? decFormat.format((double)getSuccess() / (getFailed() + getSuccess())*100) : ZERO_PERCENTAGE;
     }
     
     /**
@@ -91,13 +96,25 @@ public class TestResults extends ArrayList<TestResult> {
      * @return
      */
     public int getFailed() {
-        synchronized (cacheLock) {
-            if (!cached) {
-                cntFailed = getCountForResult(RESULT.FAILURE);
+        int count = 0;
+
+        synchronized (results) {
+            for (TestResult testResult : results) {
+                if (testResult.isFailed()) {
+                    count++;
+                }
             }
-            
-            return cntFailed;
         }
+
+        return count;
+    }
+
+    /**
+     * Calculates percentage of failed tests.
+     * @return
+     */
+    public String getFailedPercentage() {
+        return results.size() > 0 ? decFormat.format((double)getFailed() / (getFailed() + getSuccess())*100) : ZERO_PERCENTAGE;
     }
     
     /**
@@ -105,29 +122,43 @@ public class TestResults extends ArrayList<TestResult> {
      * @return
      */
     public int getSkipped() {
-        synchronized (cacheLock) {
-            if (!cached) {
-                cntSkipped = getCountForResult(RESULT.SKIP);
+        int count = 0;
+
+        synchronized (results) {
+            for (TestResult testResult : results) {
+                if (testResult.isSkipped()) {
+                    count++;
+                }
             }
-            
-            return cntSkipped;
         }
+
+        return count;
     }
-    
+
     /**
-     * Get number of tests matching a {@link RESULT}.
-     * @param result
+     * Calculates percentage of skipped tests.
      * @return
      */
-    private int getCountForResult(RESULT result) {
-        int count = 0;
-        
-        for (TestResult testResult : this) {
-            if (testResult.getResult().equals(result)) {
-                count++;
-            }
-        }
-        
-        return count;
+    public String getSkippedPercentage() {
+        return results.size() > 0 ? decFormat.format((double)getSkipped() / (results.size())*100) : ZERO_PERCENTAGE;
+    }
+
+    /**
+     * Callback interface for synchronized access to test results in iteration.
+     */
+    public static interface ResultCallback {
+        /**
+         * Do something with the result.
+         * @param result
+         */
+        public void doWithResult(TestResult result);
+    }
+
+    /**
+     * Gets the total amount of test results.
+     * @return
+     */
+    public int getSize() {
+        return results.size();
     }
 }

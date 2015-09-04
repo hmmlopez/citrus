@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <spring:beans xmlns="http://www.citrusframework.org/schema/testcase" 
+              xmlns:jms="http://www.citrusframework.org/schema/jms/testcase"
               xmlns:ws="http://www.citrusframework.org/schema/ws/testcase"
-              xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+              xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd 
-                  http://www.citrusframework.org/schema/ws/testcase http://www.citrusframework.org/schema/ws/testcase/citrus-ws-testcase.xsd 
+                  http://www.citrusframework.org/schema/jms/testcase http://www.citrusframework.org/schema/jms/testcase/citrus-jms-testcase.xsd
+                  http://www.citrusframework.org/schema/ws/testcase http://www.citrusframework.org/schema/ws/testcase/citrus-ws-testcase.xsd
                   http://www.citrusframework.org/schema/testcase http://www.citrusframework.org/schema/testcase/citrus-testcase.xsd">
     
     <testcase name="@test.name@">
@@ -22,7 +24,7 @@
                 <message>TODO: Code the test @test.name@</message>
             </echo>
 
-			<send with="TODO:request-sender">
+			<send endpoint="TODO:request-sender">
 				<message>
 					<data>
 					 <![CDATA[
@@ -32,7 +34,7 @@
 				</message>
 			</send>
 			
-			<receive with="TODO:response-handler">
+			<receive endpoint="TODO:response-handler">
 				<message>
 					<data>
 					 <![CDATA[

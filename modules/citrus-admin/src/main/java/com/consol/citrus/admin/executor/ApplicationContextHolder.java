@@ -16,48 +16,36 @@
 
 package com.consol.citrus.admin.executor;
 
+import com.consol.citrus.admin.websocket.WebSocketTestListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestContextManager;
 
-import com.consol.citrus.admin.listener.TestEventListener;
 import com.consol.citrus.report.*;
 import com.consol.citrus.testng.AbstractTestNGCitrusTest;
 
 /**
- * Singleton bean holding the application context for this Citrus project. Singleton in applciation context so all participating
+ * Singleton bean holding the application context for this Citrus project. Singleton in application context so all participating
  * beans can autowire this class and application context is only loaded once.
  * 
  * @author Christoph Deppisch
  * @since 1.3
  */
-public class ApplicationContextHolder {
+public class ApplicationContextHolder implements DisposableBean {
     
     /** Citrus application context */
     private ApplicationContext applicationContext;
     
     @Autowired
-    private TestEventListener testEventListener;
-    
+    private WebSocketTestListener webSocketTestEventListener;
+
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(ApplicationContextHolder.class);
     
-    /**
-     * Gets the current application context. If not loaded before we initialize the 
-     * context on the fly.
-     * 
-     * @return
-     */
-    public ApplicationContext getApplicationContext() {
-        if (applicationContext == null) {
-            loadApplicationContext();
-        }
-
-        return applicationContext;
-    }
-
     /**
      * Returns the status of the application context. If the application context hasn't been loaded already or has been
      * loaded but afterwards destroyed then false is returned. Otherwise true is returned.
@@ -71,23 +59,25 @@ public class ApplicationContextHolder {
     /**
      * Loads the basic Citrus application context with all necessary parent context files.
      */
-    private ApplicationContext loadApplicationContext() {
-        TestContextManager testContextManager = new TestContextManager(AbstractTestNGCitrusTest.class) {
-            @Override
-            public void prepareTestInstance(Object testInstance) throws Exception {
-                applicationContext = getTestContext().getApplicationContext();
-                
-                // add special admin webapp test listeners
-                applicationContext.getBean(TestListeners.class).addTestListener(testEventListener);
-                applicationContext.getBean(TestActionListeners.class).addTestActionListener(testEventListener);
-                applicationContext.getBean(TestSuiteListeners.class).addTestSuiteListener(testEventListener);
+    public ApplicationContext loadApplicationContext() {
+        if (applicationContext == null) {
+            TestContextManager testContextManager = new TestContextManager(AbstractTestNGCitrusTest.class) {
+                @Override
+                public void prepareTestInstance(Object testInstance) throws Exception {
+                    applicationContext = getTestContext().getApplicationContext();
+
+                    // add special admin webapp test listeners
+                    applicationContext.getBean(TestListeners.class).addTestListener(webSocketTestEventListener);
+                    applicationContext.getBean(TestActionListeners.class).addTestActionListener(webSocketTestEventListener);
+                    applicationContext.getBean(MessageListeners.class).addMessageListener(webSocketTestEventListener);
+                }
+            };
+
+            try {
+                testContextManager.prepareTestInstance(null);
+            } catch (Exception e) {
+                log.error("Failed to load application context", e);
             }
-        };
-        
-        try {
-            testContextManager.prepareTestInstance(null);
-        } catch (Exception e) {
-            log.error("Failed to load application context", e);
         }
         
         return applicationContext;
@@ -100,7 +90,7 @@ public class ApplicationContextHolder {
         TestContextManager testContextManager = new TestContextManager(AbstractTestNGCitrusTest.class) {
             @Override
             public void prepareTestInstance(Object testInstance) throws Exception {
-                getTestContext().markApplicationContextDirty();
+                getTestContext().markApplicationContextDirty(DirtiesContext.HierarchyMode.CURRENT_LEVEL);
             }
         };
         
@@ -112,5 +102,19 @@ public class ApplicationContextHolder {
         
         applicationContext = null;
     }
-    
+
+    /**
+     * Gets the application context.
+     * @return
+     */
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if (applicationContext != null) {
+            destroyApplicationContext();
+        }
+    }
 }

@@ -16,11 +16,13 @@
 
 package com.consol.citrus.functions.core;
 
-import java.util.List;
-import java.util.Random;
-
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.InvalidFunctionUsageException;
 import com.consol.citrus.functions.Function;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
+import java.util.Random;
 
 /**
  * Function returning a random numeric value. Argument specifies the number of digits and
@@ -33,14 +35,14 @@ public class RandomNumberFunction implements Function {
     private static Random generator = new Random(System.currentTimeMillis());
 
     /**
-     * @see com.consol.citrus.functions.Function#execute(java.util.List)
+     * @see com.consol.citrus.functions.Function#execute(java.util.List, com.consol.citrus.context.TestContext)
      * @throws InvalidFunctionUsageException
      */
-    public String execute(List<String> parameterList) {
+    public String execute(List<String> parameterList, TestContext context) {
         int numberLength;
         boolean paddingOn = true;
 
-        if (parameterList == null || parameterList.isEmpty()) {
+        if (CollectionUtils.isEmpty(parameterList)) {
             throw new InvalidFunctionUsageException("Function parameters must not be empty");
         }
 
@@ -131,7 +133,7 @@ public class RandomNumberFunction implements Function {
                 replacement = generator.nextInt(10);
             }
             
-            return String.valueOf(replacement) + generated.substring(1);
+            return replacement + generated.substring(1);
         } else {
             return generated;
         }

@@ -16,7 +16,7 @@
 		
         <actions>
             <parallel>
-	            <send with="httpMessageSender">
+	            <send endpoint="httpClient">
 	            	<message>
 	            		<data>
                           {
@@ -30,7 +30,7 @@
 	            </send>
               
                 <sequential>
-                    <receive with="httpRequestReceiver">
+                    <receive endpoint="httpServerRequestEndpoint">
                         <message type="json">
                             <data>
                               {
@@ -42,11 +42,11 @@
                             </data>
                         </message>
                         <extract>
-                            <header name="jms_messageId" variable="correlation_id"/>
+                            <header name="citrus_jms_messageId" variable="correlation_id"/>
                         </extract>
                     </receive>
     	            
-    	            <send with="httpResponseSender">
+    	            <send endpoint="httpServerResponseEndpoint">
     	            	<message>
     	            		<data>
                               {
@@ -67,13 +67,13 @@
     	           			<element name="citrus_http_status_code" value="200"/>
     	           			<element name="citrus_http_version" value="HTTP/1.1"/>
     	           			<element name="citrus_http_reason_phrase" value="OK"/>
-                            <element name="jms_correlationId" value="${correlation_id}"/>
+                            <element name="citrus_jms_correlationId" value="${correlation_id}"/>
     	           		</header>
     	            </send>
                 </sequential>
             </parallel>
             
-            <receive with="httpResponseReceiver">
+            <receive endpoint="httpClient">
             	<message type="json">
                     <data>
                       {
@@ -97,7 +97,7 @@
            		</header>
             </receive>
             
-            <send with="httpMessageSender">
+            <send endpoint="httpClient">
                 <message>
                     <data>
                       {
@@ -110,9 +110,9 @@
                 </message>
             </send>
             
-            <sleep time="2"/>
+            <sleep seconds="2"/>
             
-            <receive with="httpResponseReceiver">
+            <receive endpoint="httpClient">
                 <message type="json">
                     <data></data>
                 </message>

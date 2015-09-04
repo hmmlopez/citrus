@@ -12,7 +12,7 @@
     <para>Let us clarify this with a little example. Once the real SSH server daemon is fired up within Citrus we accept a SSH EXEC request
     for instance. The request is translated into a XML message of the following format:</para>
 
-    <programlisting>&lt;ssh-request&gt;
+    <programlisting>&lt;ssh-request xmlns=&quot;http://www.citrusframework.org/schema/ssh/message&quot;&gt;
   &lt;command&gt;cat - | sed -e 's/Hello/Hello SSH/'&lt;/command&gt;
   &lt;stdin&gt;Hello World&lt;/stdin&gt;
 &lt;/ssh-request&gt;</programlisting>
@@ -22,7 +22,7 @@
     SSH response should be provided as appropriate answer. This is done with a message sending action on a reply handler as it is known from synchronous
     http message communication in Citrus for instance. The SSH XML representation of a response message looks like this:</para>
 
-    <programlisting>&lt;ssh-response&gt;
+    <programlisting>&lt;ssh-response xmlns=&quot;http://www.citrusframework.org/schema/ssh/message&quot;&gt;
   &lt;stdout&gt;Hello SSH World&lt;/stdout&gt;
   &lt;stderr&gt;&lt;/stderr&gt;
   &lt;exit&gt;0&lt;/exit&gt;
@@ -62,13 +62,12 @@
       <para>The SSH client components receive its configuration in the Spring application context as usual. We can use the special SSH module namespace
       for easy configuration:</para>
       
-      <programlisting>&lt;citrus-ssh:client id=&quot;sshClientSender&quot;
+      <programlisting>&lt;citrus-ssh:client id=&quot;sshClient&quot;
            port=&quot;9072&quot;
            user=&quot;roland&quot;
            private-key-path=&quot;classpath:com/consol/citrus/ssh/test_user.priv&quot;
            strict-host-checking=&quot;false&quot;
-           host=&quot;localhost&quot;
-           reply-handler=&quot;sshResponseReceiver&quot;/&gt;</programlisting>
+           host=&quot;localhost&quot;/&gt;</programlisting>
     
       <para><emphasis>The SSH client receives several attributes, these are:</emphasis></para>
   
@@ -114,41 +113,32 @@
         Timeout in milliseconds for how long to for a connectiuon to connect. Default is 1 minute
         (e.g. connection-timeout="60000")</para></listitem>
       
-        <listitem><para><emphasis>reply-handler:</emphasis>
-        Reference to reply handler which receives the SSH answer as a message. This reply handler should be specified with
-        <emphasis>&lt;citrus-ssh:reply-handler&gt;</emphasis>. The reply handler follows the typical Citrus semantics.
-        (e.g. reply-handler="sshResponseReceiver")</para></listitem>
-      
         <listitem><para><emphasis>actor</emphasis>:
         Actor used for switching groups of actions (e.g. actor="ssh-mock")</para></listitem>
       </itemizedlist>
       
       <para>Once defines as client component in the Spring application context test cases can reference the client in every send test action.</para>
       
-      <programlisting>&lt;send with=&quot;sshClientSender&quot;&gt;
+      <programlisting>&lt;send endpoint=&quot;sshClient&quot;&gt;
   &lt;message&gt;
-    &lt;data&gt;
-      &lt;![CDATA[
-          &lt;ssh-request&gt;
-            &lt;command&gt;shutdown&lt;/command&gt;
-            &lt;stdin&gt;input&lt;/stdin&gt;
-          &lt;/ssh-request&gt;
-      ]]&gt;
-    &lt;/data&gt;
+    &lt;payload&gt;
+        &lt;ssh-request xmlns=&quot;http://www.citrusframework.org/schema/ssh/message&quot;&gt;
+          &lt;command&gt;shutdown&lt;/command&gt;
+          &lt;stdin&gt;input&lt;/stdin&gt;
+        &lt;/ssh-request&gt;
+    &lt;/payload&gt;
   &lt;/message&gt;
 &lt;/send&gt;
   
-&lt;receive with=&quot;sshResponseReceiver&quot;&gt;
+&lt;receive endpoint=&quot;sshClient&quot;&gt;
   &lt;message&gt;
-    &lt;data&gt;
-      &lt;![CDATA[
-          &lt;ssh-response&gt;
-              &lt;stdout&gt;Hello Citrus&lt;/stdout&gt;
-              &lt;stderr/&gt;
-              &lt;exit&gt;0&lt;/exit&gt;
-          &lt;/ssh-response&gt;
-      ]]&gt;
-    &lt;/data&gt;
+    &lt;payload&gt;
+        &lt;ssh-response xmlns=&quot;http://www.citrusframework.org/schema/ssh/message&quot;&gt;
+            &lt;stdout&gt;Hello Citrus&lt;/stdout&gt;
+            &lt;stderr/&gt;
+            &lt;exit&gt;0&lt;/exit&gt;
+        &lt;/ssh-response&gt;
+    &lt;/payload&gt;
   &lt;/message&gt;
 &lt;/receive&gt;</programlisting>
       
@@ -170,11 +160,11 @@
              user=&quot;roland&quot;
              port=&quot;9072&quot;
              auto-start=&quot;true&quot;
-             message-handler-ref=&quot;sshMessageHandler&quot;/&gt;</programlisting>
+             endpoint-adapter=&quot;sshEndpointAdapter&quot;/&gt;</programlisting>
                
-      <para><emphasis>message-handler-ref</emphasis> is the handler which receives the SSH request as messages 
-      (in the request format described above). Message handler implementations are fully described in <xref linkend="http-server"/> 
-      All message handlers described there are supported in SSH server module, too.</para>
+      <para><emphasis>endpoint-adapter</emphasis> is the handler which receives the SSH request as messages
+      (in the request format described above). Endpoint adapter implementations are fully described in <xref linkend="http-server"/>
+      All adapters described there are supported in SSH server module, too.</para>
       
       <para>The <emphasis>&lt;citrus-ssh:server&gt;</emphasis> supports the following attributes:</para>
       
@@ -220,37 +210,33 @@
         <emphasis>false</emphasis>, a test action is responsible for starting/stopping the server
         (e.g. auto-start="true")</para></listitem>
         
-        <listitem><para><emphasis>message-handler-ref:</emphasis>
-        Bean reference to a message handler which processes the incoming SSH request. The message format for the request
-        and response are described above (e.g. message-handler-ref="sshMessageHandler")</para></listitem>
+        <listitem><para><emphasis>endpoint-adapter:</emphasis>
+        Bean reference to a endpoint adapter which processes the incoming SSH request. The message format for the request
+        and response are described above (e.g. endpoint-adapter="sshEndpointAdapter")</para></listitem>
       </itemizedlist>
       
-      <para>Once the SSH server component is added to the Spring application context with a proper message handler like the MessageChannel
-      forwarding message handler we can receive incoming requests in a test case and provide a respone message for the client.</para>
+      <para>Once the SSH server component is added to the Spring application context with a proper endpoint adapter like the MessageChannel
+      forwarding adapter we can receive incoming requests in a test case and provide a respone message for the client.</para>
       
-      <programlisting>&lt;receive with=&quot;sshRequestReceiver&quot;&gt;
+      <programlisting>&lt;receive endpoint=&quot;sshServer&quot;&gt;
   &lt;message&gt;
-    &lt;data&gt;
-      &lt;![CDATA[
-          &lt;ssh-request&gt;
-             &lt;command&gt;shutdown&lt;/command&gt;
-             &lt;stdin&gt;input&lt;/stdin&gt;
-          &lt;/ssh-request&gt;
-       ]]&gt;
-    &lt;/data&gt;
+    &lt;payload&gt;
+        &lt;ssh-request xmlns=&quot;http://www.citrusframework.org/schema/ssh/message&quot;&gt;
+           &lt;command&gt;shutdown&lt;/command&gt;
+           &lt;stdin&gt;input&lt;/stdin&gt;
+        &lt;/ssh-request&gt;
+    &lt;/payload&gt;
   &lt;/message&gt;
 &lt;/receive&gt;
 
-&lt;send with=&quot;sshResponseSender&quot;&gt;
+&lt;send endpoint=&quot;sshServer&quot;&gt;
   &lt;message&gt;
-    &lt;data&gt;
-      &lt;![CDATA[
-          &lt;ssh-response&gt;
-              &lt;stdout&gt;Hello Citrus&lt;/stdout&gt;
-              &lt;exit&gt;0&lt;/exit&gt;
-          &lt;/ssh-response&gt;
-         ]]&gt;
-    &lt;/data&gt;
+    &lt;payload&gt;
+        &lt;ssh-response xmlns=&quot;http://www.citrusframework.org/schema/ssh/message&quot;&gt;
+            &lt;stdout&gt;Hello Citrus&lt;/stdout&gt;
+            &lt;exit&gt;0&lt;/exit&gt;
+        &lt;/ssh-response&gt;
+    &lt;/payload&gt;
   &lt;/message&gt;
 &lt;/send&gt;</programlisting>
     </section>

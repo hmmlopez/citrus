@@ -20,12 +20,23 @@
     &lt;/actions&gt;
 &lt;/testcase&gt;</programlisting>
 
-    <para><emphasis>Java DSL</emphasis></para>
-    <programlisting language="java">protected void configure() {
+    <para><emphasis>Java DSL designer</emphasis></para>
+    <programlisting language="java">@CitrusTest
+public void repeatOnErrorTest() {
     repeatOnError(
         echo("index is: ${i}"),
         fail("Force loop to fail!")
     ).until("i = 5").index("i");
+}</programlisting>
+
+    <para><emphasis>Java DSL runner</emphasis></para>
+    <programlisting language="java">@CitrusTest
+public void repeatOnErrorTest() {
+    repeatOnError().until("i = 5").index("i"))
+        .actions(
+            echo("index is: ${i}"),
+            fail("Force loop to fail!")
+        );
 }</programlisting>
     
     <para>In the code example the error-loop continues four times as the &lt;fail&gt; action definitely fails the test.
@@ -40,7 +51,7 @@
     
     <para>The repeat-on-error container also offers an automatic sleep mechanism. This auto-sleep property will force the container to
     wait a given amount of time before executing the next iteration. We used this mechanism a lot when validating database entries. Let's say
-    we want to check the existence of an order entry in the database. Unfortunately the system under test is not very performant and may 
+    we want to check the existence of an order entry in the database. Unfortunately the system under test is not very well performing and may
     need some time to store the new order. This amount of time is not predictable, especially when dealing with different hardware on our test 
     environments (local testing vs. server testing). Following from that our test case may fail unpredictable only because of runtime 
     conditions.</para>
@@ -48,7 +59,7 @@
     <para>We can avoid unstable test cases that are based on these runtime conditions with the auto-sleep functionality.</para>
     
     <para><emphasis>XML DSL</emphasis></para>
-    <programlisting>&lt;repeat-onerror-until-true auto-sleep=&quot;1&quot; condition=&quot;i = 5&quot; index=&quot;i&quot;&gt;
+    <programlisting>&lt;repeat-onerror-until-true auto-sleep=&quot;1000&quot; condition=&quot;i = 5&quot; index=&quot;i&quot;&gt;
     &lt;echo&gt;
         &lt;sql datasource=&quot;testDataSource&quot;&gt;
             &lt;statement&gt;
@@ -61,20 +72,27 @@
     &lt;/echo&gt;
 &lt;/repeat-onerror-until-true&gt;</programlisting>
 
-    <para><emphasis>Java DSL</emphasis></para>
-    <programlisting language="java">protected void configure() {
-    repeatOnError(
-        query(testDataSource)
-            .statement("SELECT COUNT(1) AS CNT_ORDERS FROM ORDERS WHERE CUSTOMER_ID='${customerId}'")
-            .validate("CNT_ORDERS", "1")
-    ).until("i = 5").index("i").autoSleep(1L);
+    <para><emphasis>Java DSL designer and runner</emphasis></para>
+    <programlisting language="java">@CitrusTest
+public void repeatOnErrorTest() {
+    repeatOnError().until("i = 5").index("i").autoSleep(1000))
+        .actions(
+            query(action -> action.dataSource(testDataSource)
+                .statement("SELECT COUNT(1) AS CNT_ORDERS FROM ORDERS WHERE CUSTOMER_ID='${customerId}'")
+                .validate("CNT_ORDERS", "1"))
+        );
 }</programlisting>
     
-    <para>We surrounded the database check with a repeat-onerror container having the auto-sleep property set to 1 second. The repeat container
+    <para>We surrounded the database check with a repeat-onerror container having the auto-sleep property set to 1000 milliseconds. The repeat container
     will try to check the database up to five times with an automatic sleep of 1 second before every iteration. This gives the system under test
     up to five seconds time to store the new entry to the database. The test case is very stable and just fits to the hardware environment. On slow
     test environments the test may need several iterations to successfully read the database entry. On very fast environments the test may succeed
     right on the first try.</para>
+
+    <important>
+      <para>We changed auto sleep time from seconds to milliseconds with Citrus 2.0 release. So if you are coming from previous Citrus versions
+      be sure to now use proper millisecond values.</para>
+    </important>
     
     <para>So fast environments are not slowed down by static sleep operations and slower environments are still able to execute this test case
     with high stability.</para>

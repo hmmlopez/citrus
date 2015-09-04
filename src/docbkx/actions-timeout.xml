@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section id="actions-timeout">
-    <title>Expect timeouts on a destination</title>
+    <title>Receive timeout</title>
 
     <para>In some cases it might be necessary to validate that a message is <emphasis>not</emphasis> present on a destination. 
     This means that this action expects a timeout when receiving a message from an endpoint destination. For instance the tester 
@@ -12,27 +12,39 @@
     is very simple as the following example shows:</para>
     
     <para><emphasis>XML DSL</emphasis></para>
-    <programlisting>&lt;testcase name=&quot;receiveJMSimeoutTest&quot;&gt;
+    <programlisting>&lt;testcase name=&quot;receiveJMSTimeoutTest&quot;&gt;
     &lt;actions&gt;
-        &lt;expect-timeout message-receiver=&quot;myMessageReceiver&quot; wait=&quot;500&quot;/&gt;
+        &lt;expect-timeout endpoint=&quot;myEndpoint&quot; wait=&quot;500&quot;/&gt;
     &lt;/actions&gt;
 &lt;/testcase&gt;</programlisting>
 
-    <para><emphasis>Java DSL</emphasis></para>
+    <para><emphasis>Java DSL designer</emphasis></para>
     <programlisting language="java">@Autowired
-@Qualifier("myMessageReceiver")
-private MessageReceiver myMessageReceiver;
-    
-protected void configure() {
-    expectTimeout(myMessageReceiver)
+@Qualifier("myEndpoint")
+private Endpoint myEndpoint;
+
+@CitrusTest
+public void receiveTimeoutTest() {
+    receiveTimeout(myEndpoint)
         .timeout(500);
+}</programlisting>
+
+    <para><emphasis>Java DSL runner</emphasis></para>
+    <programlisting language="java">@Autowired
+@Qualifier("myEndpoint")
+private Endpoint myEndpoint;
+
+@CitrusTest
+public void receiveTimeoutTest() {
+    receiveTimeout(action -> action.endpoint(myEndpoint)
+                    .timeout(500));
 }</programlisting>
     
     <para>The action offers two attributes:</para>
     
     <itemizedlist mark="opencircle">
         <listitem>
-            <para><emphasis>message-receiver</emphasis>: Reference to a message receiver that will try to receive messages.</para>
+            <para><emphasis>endpoint</emphasis>: Reference to a message endpoint that will try to receive messages.</para>
         </listitem>
         <listitem>
             <para><emphasis>wait/timeout</emphasis>: Time period to wait for messages to arrive</para>
@@ -43,14 +55,23 @@ protected void configure() {
     This is possible with defining a message selector on the test action as follows.</para>
 
     <para><emphasis>XML DSL</emphasis></para>
-    <programlisting>&lt;expect-timeout message-receiver=&quot;myMessageReceiver&quot; wait=&quot;500&quot;&gt;
+    <programlisting>&lt;expect-timeout endpoint=&quot;myEndpoint&quot; wait=&quot;500&quot;&gt;
   &lt;select&gt;MessageId='123456789'&lt;select/&gt;
 &lt;expect-timeout/&gt;</programlisting>
 
-    <para><emphasis>Java DSL</emphasis></para>
-    <programlisting language="java">protected void configure() {
-    expectTimeout(myMessageReceiver)
+    <para><emphasis>Java DSL designer</emphasis></para>
+    <programlisting language="java">@CitrusTest
+public void receiveTimeoutTest() {
+    receiveTimeout(myEndpoint)
         .selector("MessageId = '123456789'")
         .timeout(500);
+}</programlisting>
+
+    <para><emphasis>Java DSL runner</emphasis></para>
+    <programlisting language="java">@CitrusTest
+public void receiveTimeoutTest() {
+    receiveTimeout(action -> action.endpoint(myEndpoint)
+                    .selector("MessageId = '123456789'")
+                    .timeout(500));
 }</programlisting>
 </section>

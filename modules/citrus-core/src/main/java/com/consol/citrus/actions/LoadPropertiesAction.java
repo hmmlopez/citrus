@@ -16,22 +16,23 @@
 
 package com.consol.citrus.actions;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.io.*;
-import org.springframework.core.io.support.PropertiesLoaderUtils;
-
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.util.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
+
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Properties;
 
 /**
  * Action reads property files and creates test variables for every property entry. File
- * resource path can define a {@link ClassPathResource} or a {@link FileSystemResource}.
+ * resource path can define a {@link org.springframework.core.io.ClassPathResource} or
+ * a {@link org.springframework.core.io.FileSystemResource}.
  * 
  * @author Christoph Deppisch
  */
@@ -42,6 +43,13 @@ public class LoadPropertiesAction extends AbstractTestAction {
 
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(LoadPropertiesAction.class);
+
+    /**
+     * Default constructor.
+     */
+    public LoadPropertiesAction() {
+        setName("load");
+    }
 
     @Override
     public void doExecute(TestContext context) {
@@ -73,8 +81,9 @@ public class LoadPropertiesAction extends AbstractTestAction {
      * File path setter.
      * @param file the file to set
      */
-    public void setFilePath(String file) {
+    public LoadPropertiesAction setFilePath(String file) {
         this.filePath = file;
+        return this;
     }
 
     /**

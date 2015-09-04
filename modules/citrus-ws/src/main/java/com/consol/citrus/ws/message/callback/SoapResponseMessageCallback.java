@@ -16,15 +16,13 @@
 
 package com.consol.citrus.ws.message.callback;
 
-import java.io.IOException;
-
-import javax.xml.transform.TransformerException;
-
-import org.springframework.integration.Message;
+import com.consol.citrus.ws.client.WebServiceEndpointConfiguration;
+import com.consol.citrus.message.Message;
 import org.springframework.ws.WebServiceMessage;
 import org.springframework.ws.client.core.WebServiceMessageCallback;
 
-import com.consol.citrus.ws.message.converter.SoapMessageConverter;
+import javax.xml.transform.TransformerException;
+import java.io.IOException;
 
 /**
  * Receiver callback invoked by framework on response message. Callback fills an internal message representation with
@@ -35,25 +33,33 @@ import com.consol.citrus.ws.message.converter.SoapMessageConverter;
 public class SoapResponseMessageCallback implements WebServiceMessageCallback {
 
     /** The response message built from WebService response message */
-    private Message<?> response;
+    private Message response;
 
-    /** Message converter */
-    private SoapMessageConverter messageConverter = new SoapMessageConverter();
-    
+    /** Endpoint configuration */
+    private WebServiceEndpointConfiguration endpointConfiguration;
+
+    /**
+     * Constructor using endpoint configuration.
+     * @param endpointConfiguration
+     */
+    public SoapResponseMessageCallback(WebServiceEndpointConfiguration endpointConfiguration) {
+        this.endpointConfiguration = endpointConfiguration;
+    }
+
     /**
      * Callback method called with actual web service response message. Method constructs a Spring Integration
      * message from this web service message for further processing.
      */
     public void doWithMessage(WebServiceMessage responseMessage) throws IOException, TransformerException {
         // convert and set response for later access via getResponse():
-        response = messageConverter.convert(responseMessage);
+        response = endpointConfiguration.getMessageConverter().convertInbound(responseMessage, endpointConfiguration);
     }
     
     /**
      * Gets the constructed Spring Integration response message object.
      * @return the response message.
      */
-    public Message<?> getResponse() {
+    public Message getResponse() {
         return response;
     }
 }

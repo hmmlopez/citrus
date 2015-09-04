@@ -14,23 +14,23 @@
     <para>The library is built in the Spring configuration and contains a set of functions that are of
     public use.</para>
     
-    <programlisting>&lt;bean id=&quot;testFrameworkFunctionLibrary&quot; 
-         class=&quot;com.consol.citrus.functions.FunctionLibrary&quot;&gt;
-    &lt;property name=&quot;name&quot; value=&quot;testFrameworkFunctionLibrary&quot;/&gt;
-    &lt;property name=&quot;prefix&quot; value=&quot;citrus:&quot;/&gt;
-    &lt;property name=&quot;members&quot;&gt;
-        &lt;map&gt;
-          &lt;entry key=&quot;randomNumber&quot;&gt;
-              &lt;bean class=&quot;com.consol.citrus.functions.RandomNumberFunction&quot;/&gt;
-          &lt;/entry&gt;
-          &lt;entry key=&quot;randomString&quot;&gt;
-              &lt;bean class=&quot;com.consol.citrus.functions.RandomStringFunction&quot;/&gt;
-          &lt;/entry&gt;
+    <programlisting>&lt;citrus:function-library id=&quot;testLibrary&quot; prefix=&quot;foo:&quot;&gt;
+          &lt;citrus:function name=&quot;randomNumber&quot;&gt; class=&quot;com.consol.citrus.functions.RandomNumberFunction&quot;/&gt;
+          &lt;citrus:function name=&quot;randomString&quot;&gt; class=&quot;com.consol.citrus.functions.RandomStringFunction&quot;/&gt;
+          &lt;citrus:function name=&quot;customFunction&quot;&gt; ref=&quot;customFunctionBean&quot;/&gt;
           ...
-        &lt;/map&gt;
-    &lt;/property&gt;
-&lt;/bean&gt;</programlisting>
+&lt;/citrus:function-library&gt;</programlisting>
     
+    <para>As you can see the library defines one to many functions either referenced as normal Spring bean or by its implementing Java class name. Citrus
+      constructs the library and you are able to use the functions in your test case with the leading library prefix just like this:</para>
+
+    <programlisting>foo:randomNumber()
+      foo:randomString()
+      foo:customFunction()</programlisting>
+
+    <tip>You can add custom function implementations and custom function libraries. Just use a custom prefix for your library. The default Citrus function library
+      uses the <emphasis>citrus:</emphasis> prefix.</tip>
+
     <para>In the next chapters the default functions offered by the framework will be described in detail.</para>
 
     <section id="functions-concat">
@@ -259,36 +259,31 @@
     <section id="functions-random-enum-value">
         <title>citrus:randomEnumValue()</title>
         <para>
-              This function returns one of its supplied arguments. Furthermore you can specify a custom function
-              with a preconfigured list of values (the enumeration). The function will randomly return an entry when called without arguments. 
-              This promotes code reuse and facilitates refactoring.
+            This function returns one of its supplied arguments. Furthermore you can specify a custom function
+            with a configured list of values (the enumeration). The function will randomly return an entry when called without arguments.
+            This promotes code reuse and facilitates refactoring.
         </para>
         <para>
-              In the next sample the function is used to set a httpStatusCode variable to one of the given HTTP status codes (200, 401, 500)
+            In the next sample the function is used to set a httpStatusCode variable to one of the given HTTP status codes (200, 401, 500)
         </para>
         <programlisting>&lt;variable name="httpStatusCode" value="citrus:randomEnumValue('200', '401', '500')" /&gt;</programlisting>
         <para>
             As mentioned before you can define a custom function for your very specific needs in order to easily manage a list of predefined values like this:
         </para>
-        <programlisting>&lt;bean id="myCustomFunctionLibrary" class="com.consol.citrus.functions.FunctionLibrary"&gt;
-&lt;property name="name" value="myCustomFunctionLibrary" /&gt;
-&lt;property name="prefix" value="custom:" /&gt;
-&lt;property name="members"&gt;
-  &lt;map&gt;
-    &lt;entry key="randomHttpStatusCode"&gt;
-      &lt;bean class="com.consol.citrus.functions.core.RandomEnumValueFunction"&gt;
-        &lt;property name="values"&gt;
-          &lt;list&gt;
-            &lt;value&gt;200&lt;/value&gt;
-            &lt;value&gt;500&lt;/value&gt;
-            &lt;value&gt;401&lt;/value&gt;
-          &lt;/list&gt;
-        &lt;/property&gt;
-      &lt;/bean&gt;
-    &lt;/entry&gt;
-  &lt;/map&gt;
-&lt;/property&gt;
+        <programlisting>&lt;citrus:function-library id=&quot;myCustomFunctionLibrary&quot; prefix=&quot;custom:&quot;&gt;
+    &lt;citrus-function name=&quot;randomHttpStatusCode&quot; ref=&quot;randomHttpStatusCodeFunction&quot;/&gt;
+&lt;/citrus:function-library&gt;
+
+&lt;bean id=&quot;randomHttpStatusCodeFunction&quot; class=&quot;com.consol.citrus.functions.core.RandomEnumValueFunction&quot;&gt;
+  &lt;property name=&quot;values&quot;&gt;
+    &lt;list&gt;
+      &lt;value&gt;200&lt;/value&gt;
+      &lt;value&gt;500&lt;/value&gt;
+      &lt;value&gt;401&lt;/value&gt;
+    &lt;/list&gt;
+  &lt;/property&gt;
 &lt;/bean&gt;</programlisting>
+
         <para>
             We have added a custom function library with a custom function definition. The custom function "randomHttpStatusCode" randomly 
             chooses an HTTP status code each time it is called. Inside the test you can use the function like this:
@@ -410,25 +405,20 @@
         <para>
               The following function library defines a custom function for mapping HTTP status codes to the corresponding messages:
         </para>
-        <programlisting>&lt;bean id="myCustomFunctionLibrary" class="com.consol.citrus.functions.FunctionLibrary"&gt;
-  &lt;property name="name" value="myCustomFunctionLibrary" /&gt;
-  &lt;property name="prefix" value="custom:" /&gt;
-  &lt;property name="members"&gt;
+        <programlisting>&lt;citrus:function-library id=&quot;myCustomFunctionLibrary&quot; prefix=&quot;custom:&quot;&gt;
+      &lt;citrus-function name=&quot;getHttpStatusMessage&quot; ref=&quot;getHttpStatusMessageFunction&quot;/&gt;
+&lt;/citrus:function-library&gt;
+
+&lt;bean id=&quot;getHttpStatusMessageFunction&quot; class=&quot;com.consol.citrus.functions.core.MapValueFunction&quot;&gt;
+  &lt;property name=&quot;values&quot;&gt;
     &lt;map&gt;
-      &lt;entry key="getHttpStatusMessage"&gt;
-        &lt;bean class="com.consol.citrus.functions.core.MapValueFunction"&gt;
-          &lt;property name="values"&gt;
-            &lt;map&gt;
-              &lt;entry key="200" value="OK" /&gt;
-              &lt;entry key="401" value="Unauthorized" /&gt;
-              &lt;entry key="500" value="Internal Server Error" /&gt;
-            &lt;/map&gt;
-          &lt;/property&gt;
-        &lt;/bean&gt;
-      &lt;/entry&gt;
+      &lt;entry key=&quot;200&quot; value=&quot;OK&quot; /&gt;
+      &lt;entry key=&quot;401&quot; value=&quot;Unauthorized&quot; /&gt;
+      &lt;entry key=&quot;500&quot; value=&quot;Internal Server Error&quot; /&gt;
     &lt;/map&gt;
   &lt;/property&gt;
 &lt;/bean&gt;</programlisting>
+
         <para>
             In this example the function sets the variable httpStatusMessage to the 'Internal Server Error' string dynamically at runtime.
             The test only knows the HTTP status code and does not care about spelling and message locales.
@@ -535,4 +525,37 @@ uri=http://127.0.0.1:8080,response=51f98c,opaque=b29a30,algorithm=md5&gt;</progr
         
         <para>address = <emphasis>&lt;192.168.2.100&gt;</emphasis></para>
     </section>
+
+    <section id="functions-changedate">
+        <title>citrus:changeDate()</title>
+
+        <para>This function works with date values and manipulates those at runtime by adding or removing a date
+        value offset. You can manipulate several date fields such as: year, month, day, hour, minute or second.</para>
+
+        <para>Let us clarify this with a simple example for this function:</para>
+
+        <programlisting>&lt;echo&gt;
+    &lt;message&gt;citrus:changeDate('01.01.2000', '+1y+1M+1d')&lt;/message&gt;
+&lt;/echo&gt;
+&lt;echo&gt;
+    &lt;message&gt;citrus:changeDate(citrus:currentDate(), '-1M')&lt;/message&gt;
+&lt;/echo&gt;</programlisting>
+
+        <para>Function output:</para>
+        <para><emphasis>02.02.2001</emphasis></para>
+        <para><emphasis>13.04.2013</emphasis></para>
+
+        <para>As you can see the change date function works on static date values or dynamic variable values or functions like <emphasis>citrus:currentDate()</emphasis>. By default
+        the change date function requires a date format such as the current date function ('dd.MM.yyyy'). You can also define a custom date format:</para>
+
+        <programlisting>&lt;echo&gt;
+    &lt;message&gt;citrus:changeDate('2000-01-10', '-1M-1d', 'yyyy-MM-dd')&lt;/message&gt;
+&lt;/echo&gt;</programlisting>
+
+        <para>Function output:</para>
+        <para><emphasis>1999-12-09</emphasis></para>
+
+        <para>With this you are able to manipulate all date values of static or dynamic nature at test runtime.</para>
+    </section>
+
 </chapter>

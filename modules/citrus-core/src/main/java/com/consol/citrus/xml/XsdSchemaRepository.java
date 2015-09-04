@@ -16,10 +16,7 @@
 
 package com.consol.citrus.xml;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.consol.citrus.xml.schema.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanNameAware;
@@ -31,8 +28,10 @@ import org.springframework.xml.xsd.XsdSchema;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.xml.schema.*;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Schema repository holding a set of XML schema resources known in the test scope.
@@ -40,18 +39,15 @@ import com.consol.citrus.xml.schema.*;
  * @author Christoph Deppisch
  */
 public class XsdSchemaRepository implements BeanNameAware, InitializingBean {
-    /** The default repository name */
-    public static final String DEFAULT_REPOSITORY_NAME = "schemaRepository";
-    
     /** This repositories name in the Spring application context */
-    private String name = DEFAULT_REPOSITORY_NAME;
+    private String name = "schemaRepository";
     
     /** List of schema resources */
     private List<XsdSchema> schemas = new ArrayList<XsdSchema>();
     
     /** List of location patterns that will be translated to schema resources */
     private List<String> locations = new ArrayList<String>();
-    
+
     /** Mapping strategy */
     private XsdSchemaMappingStrategy schemaMappingStrategy = new TargetNamespaceSchemaMappingStrategy();
     
@@ -59,23 +55,15 @@ public class XsdSchemaRepository implements BeanNameAware, InitializingBean {
     private static Logger log = LoggerFactory.getLogger(XsdSchemaRepository.class);
     
     /**
-     * Find the matching schema for a given message namespace or root element
-     * name.
+     * Find the matching schema for document using given schema mapping strategy.
      * @param doc the document instance to validate.
-     * @return the matching schema instance
+     * @return boolean flag marking matching schema instance found
      * @throws IOException
      * @throws SAXException
      */
-    public XsdSchema findSchema(Document doc) throws IOException, SAXException {
+    public boolean canValidate(Document doc) throws IOException, SAXException {
         XsdSchema schema = schemaMappingStrategy.getSchema(schemas, doc);
-        
-        if (schema == null) {
-            throw new CitrusRuntimeException("Unable to find proper XML schema definition for element " + 
-                        doc.getFirstChild().getLocalName() + "(" + doc.getFirstChild().getNamespaceURI() + ") " +
-                        "add schema to schema repository or disable schema validation for this message");
-        }
-        
-        return schema;
+        return schema != null;
     }
     
     /**
@@ -103,6 +91,25 @@ public class XsdSchemaRepository implements BeanNameAware, InitializingBean {
                 }
             }
         }
+
+        // Add default Citrus message schemas if available on classpath
+        addCitrusSchema("citrus-mail-message");
+        addCitrusSchema("citrus-ftp-message");
+        addCitrusSchema("citrus-ssh-message");
+    }
+
+    /**
+     * Adds Citrus message schema to repository if available on classpath.
+     * @param schemaName
+     */
+    protected void addCitrusSchema(String schemaName) throws IOException, SAXException, ParserConfigurationException {
+        Resource resource = new PathMatchingResourcePatternResolver().getResource("classpath:com/consol/citrus/schema/" + schemaName + ".xsd");
+        if (resource.exists()) {
+            log.info("Loading XSD schema resource " + resource.getFilename());
+            SimpleXsdSchema schema = new SimpleXsdSchema(resource);
+            schema.afterPropertiesSet();
+            schemas.add(schema);
+        }
     }
 
     /**
@@ -127,6 +134,14 @@ public class XsdSchemaRepository implements BeanNameAware, InitializingBean {
      */
     public void setSchemaMappingStrategy(XsdSchemaMappingStrategy schemaMappingStrategy) {
         this.schemaMappingStrategy = schemaMappingStrategy;
+    }
+
+    /**
+     * Gets the schema mapping strategy.
+     * @return
+     */
+    public XsdSchemaMappingStrategy getSchemaMappingStrategy() {
+        return schemaMappingStrategy;
     }
 
     /**

@@ -16,28 +16,19 @@
 
 package com.consol.citrus.http.controller;
 
-import java.util.*;
-import java.util.Map.Entry;
-
-import javax.servlet.http.HttpServletRequest;
-
+import com.consol.citrus.endpoint.EndpointAdapter;
+import com.consol.citrus.endpoint.adapter.EmptyResponseEndpointAdapter;
+import com.consol.citrus.http.client.HttpEndpointConfiguration;
+import com.consol.citrus.http.message.HttpMessage;
+import com.consol.citrus.message.Message;
 import org.springframework.http.*;
-import org.springframework.integration.Message;
-import org.springframework.integration.http.support.DefaultHttpHeaderMapper;
-import org.springframework.integration.mapping.HeaderMapper;
-import org.springframework.integration.support.MessageBuilder;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.UrlPathHelper;
 
-import com.consol.citrus.adapter.handler.EmptyResponseProducingMessageHandler;
-import com.consol.citrus.http.message.CitrusHttpMessageHeaders;
-import com.consol.citrus.message.CitrusMessageHeaders;
-import com.consol.citrus.message.MessageHandler;
-import com.consol.citrus.util.MessageUtils;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Message controller implementation handling all incoming requests by forwarding to a message 
@@ -49,18 +40,12 @@ import com.consol.citrus.util.MessageUtils;
 @RequestMapping("/*")
 public class HttpMessageController {
 
-    /** Message handler for incoming requests, providing proper responses */
-    private MessageHandler messageHandler = new EmptyResponseProducingMessageHandler();
+    /** Endpoint adapter for incoming requests, providing proper responses */
+    private EndpointAdapter endpointAdapter = new EmptyResponseEndpointAdapter();
 
-    /** Header mapper */
-    private HeaderMapper<HttpHeaders> headerMapper = DefaultHttpHeaderMapper.inboundMapper();
-    
-    /** Default charset for response generation */
-    private String charset = "UTF-8";
-    
-    /** Default content type for response generation */
-    private String contentType = "text/plain";
-    
+    /** Endpoint configuration */
+    private HttpEndpointConfiguration endpointConfiguration = new HttpEndpointConfiguration();
+
     /** Hold the latest response message for message tracing reasons */
     private ResponseEntity<String> responseCache;
     
@@ -107,129 +92,81 @@ public class HttpMessageController {
     }
     
     /**
-     * Handles requests with message handler implementation. Previously sets Http request method as header parameter.
+     * Handles requests with endpoint adapter implementation. Previously sets Http request method as header parameter.
      * @param method
      * @param requestEntity
      * @return
      */
     private ResponseEntity<String> handleRequestInternal(HttpMethod method, HttpEntity<String> requestEntity) {
-        Map<String, ?> httpRequestHeaders = headerMapper.toHeaders(requestEntity.getHeaders());
-        Map<String, String> customHeaders = new HashMap<String, String>();
-        for (Entry<String, List<String>> header : requestEntity.getHeaders().entrySet()) {
-            if (!httpRequestHeaders.containsKey(header.getKey())) {
-                customHeaders.put(header.getKey(), StringUtils.collectionToCommaDelimitedString(header.getValue()));
-            }
-        }
-        
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpMessage request = endpointConfiguration.getMessageConverter().convertInbound(requestEntity, endpointConfiguration);
+
+        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         UrlPathHelper pathHelper = new UrlPathHelper();
-        
-        customHeaders.put(CitrusHttpMessageHeaders.HTTP_REQUEST_URI, pathHelper.getRequestUri(request));
-        customHeaders.put(CitrusHttpMessageHeaders.HTTP_CONTEXT_PATH, pathHelper.getContextPath(request));
-        
-        String queryParams = pathHelper.getOriginatingQueryString(request);
-        customHeaders.put(CitrusHttpMessageHeaders.HTTP_QUERY_PARAMS, queryParams != null ? queryParams : "");
-        
-        customHeaders.put(CitrusHttpMessageHeaders.HTTP_REQUEST_METHOD, method.toString());
 
-        Message<?> response = messageHandler.handleMessage(
-                MessageBuilder.withPayload(requestEntity.getBody())
-                              .copyHeaders(convertHeaderTypes(httpRequestHeaders))
-                              .copyHeaders(customHeaders)
-                              .build());
+        String queryParams = pathHelper.getOriginatingQueryString(servletRequest);
 
-        return generateResponse(response);
+        if (queryParams == null) {
+            queryParams = "";
+        } else {
+            queryParams = queryParams.replaceAll("&", ",");
+        }
+
+        request.uri(pathHelper.getRequestUri(servletRequest))
+                .contextPath(pathHelper.getContextPath(servletRequest))
+                .queryParams(queryParams)
+                .method(method);
+
+        Message response = endpointAdapter.handleMessage(request);
+        if (response == null) {
+            responseCache = new ResponseEntity(HttpStatus.OK);
+        } else {
+            HttpMessage httpResponse;
+            if (response instanceof HttpMessage) {
+                httpResponse = (HttpMessage) response;
+            } else {
+                httpResponse = new HttpMessage(response);
+            }
+
+            if (httpResponse.getStatusCode() == null) {
+                httpResponse.statusCode(HttpStatus.OK);
+            }
+
+            responseCache = (ResponseEntity) endpointConfiguration.getMessageConverter().convertOutbound(httpResponse, endpointConfiguration);
+        }
+
+        return responseCache;
     }
     
     /**
-     * Checks for collection typed header values and convert them to comma delimited String.
-     * We need this for further header processing e.g when forwarding headers to JMS queues.
-     * 
-     * @param headers the http request headers.
+     * Sets the endpointAdapter.
+     * @param endpointAdapter the endpointAdapter to set
      */
-    private Map<String, Object> convertHeaderTypes(Map<String, ?> headers) {
-        Map<String, Object> convertedHeaders = new HashMap<String, Object>();
-        
-        for (Entry<String, ?> header : headers.entrySet()) {
-            if (header.getValue() instanceof Collection<?>) {
-                Collection<?> value = (Collection<?>)header.getValue();
-                convertedHeaders.put(header.getKey(), StringUtils.collectionToCommaDelimitedString(value));
-            } else if (header.getValue() instanceof MediaType) {
-                convertedHeaders.put(header.getKey(), header.getValue().toString());
-            } else {
-                convertedHeaders.put(header.getKey(), header.getValue());
-            }
-        }
-        
-        return convertedHeaders;
+    public void setEndpointAdapter(EndpointAdapter endpointAdapter) {
+        this.endpointAdapter = endpointAdapter;
     }
 
     /**
-     * Generates the Http response message from given Spring Integration message.
-     * @param responseMessage message received from the message handler
-     * @return an HTTP entity as response
+     * Gets the endpoint adapter.
+     * @return
      */
-    private ResponseEntity<String> generateResponse(Message<?> responseMessage) {
-        if (responseMessage == null) {
-            return new ResponseEntity<String>(HttpStatus.OK);
-        }
-        
-        HttpHeaders httpHeaders = new HttpHeaders();
-        headerMapper.fromHeaders(responseMessage.getHeaders(), httpHeaders);
-        
-        Map<String, ?> messageHeaders = responseMessage.getHeaders();
-        for (Entry<String, ?> header : messageHeaders.entrySet()) {
-            if (!header.getKey().startsWith(CitrusMessageHeaders.PREFIX) && 
-                    !MessageUtils.isSpringInternalHeader(header.getKey()) &&
-                    !httpHeaders.containsKey(header.getKey())) {
-                httpHeaders.add(header.getKey(), header.getValue().toString());
-            }
-        }
-        
-        if (httpHeaders.getContentType() == null) {
-            httpHeaders.setContentType(MediaType.parseMediaType(contentType.contains("charset") ? contentType : contentType + ";charset=" + charset));
-        }
-        
-        HttpStatus status = HttpStatus.OK;
-        if (responseMessage.getHeaders().containsKey(CitrusHttpMessageHeaders.HTTP_STATUS_CODE)) {
-            status = HttpStatus.valueOf(Integer.valueOf(responseMessage.getHeaders().get(CitrusHttpMessageHeaders.HTTP_STATUS_CODE).toString()));
-        }
-        
-        responseCache = new ResponseEntity<String>(responseMessage.getPayload().toString(), httpHeaders, status);
-        
-        return responseCache;
+    public EndpointAdapter getEndpointAdapter() {
+        return endpointAdapter;
     }
 
     /**
-     * Sets the messageHandler.
-     * @param messageHandler the messageHandler to set
+     * Gets the endpoint configuration.
+     * @return
      */
-    public void setMessageHandler(MessageHandler messageHandler) {
-        this.messageHandler = messageHandler;
+    public HttpEndpointConfiguration getEndpointConfiguration() {
+        return endpointConfiguration;
     }
 
     /**
-     * Sets the headerMapper.
-     * @param headerMapper the headerMapper to set
+     * Sets the endpoint configuration.
+     * @param endpointConfiguration
      */
-    public void setHeaderMapper(HeaderMapper<HttpHeaders> headerMapper) {
-        this.headerMapper = headerMapper;
-    }
-
-    /**
-     * Sets the charset.
-     * @param charset the charset to set
-     */
-    public void setCharset(String charset) {
-        this.charset = charset;
-    }
-
-    /**
-     * Sets the contentType.
-     * @param contentType the contentType to set
-     */
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
+    public void setEndpointConfiguration(HttpEndpointConfiguration endpointConfiguration) {
+        this.endpointConfiguration = endpointConfiguration;
     }
 
     /**

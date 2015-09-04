@@ -16,37 +16,35 @@
 
 package com.consol.citrus.validation;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.integration.Message;
-import org.springframework.integration.support.MessageBuilder;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.consol.citrus.actions.ReceiveMessageAction;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.endpoint.Endpoint;
+import com.consol.citrus.endpoint.EndpointConfiguration;
 import com.consol.citrus.exceptions.ValidationException;
-import com.consol.citrus.message.MessageReceiver;
+import com.consol.citrus.message.DefaultMessage;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.messaging.Consumer;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
 import com.consol.citrus.validation.context.ValidationContext;
 import com.consol.citrus.validation.xml.XmlMessageValidationContext;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.easymock.EasyMock.*;
 
 /**
  * @author Christoph Deppisch
  */
 public class DTDValidationTest extends AbstractTestNGUnitTest {
-    @Autowired
-    private MessageValidator<ValidationContext> validator;
-    
-    private MessageReceiver messageReceiver = EasyMock.createMock(MessageReceiver.class);
+    private Endpoint endpoint = EasyMock.createMock(Endpoint.class);
+    private Consumer consumer = EasyMock.createMock(Consumer.class);
+    private EndpointConfiguration endpointConfiguration = EasyMock.createMock(EndpointConfiguration.class);
     
     private ReceiveMessageAction receiveMessageBean;
     
@@ -56,17 +54,18 @@ public class DTDValidationTest extends AbstractTestNGUnitTest {
         super.prepareTest();
         
         receiveMessageBean = new ReceiveMessageAction();
-        receiveMessageBean.setMessageReceiver(messageReceiver);
-        
-        receiveMessageBean.setValidator(validator);
+        receiveMessageBean.setEndpoint(endpoint);
     }
     
 	@Test
 	@SuppressWarnings({ "unchecked", "rawtypes" })
     public void testInlineDTD() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<!DOCTYPE root [ "
+        Message message = new DefaultMessage("<!DOCTYPE root [ "
                 + "<!ELEMENT root (message)>"
                 + "<!ELEMENT message (text)>"
                 + "<!ELEMENT text (#PCDATA)>"
@@ -75,11 +74,11 @@ public class DTDValidationTest extends AbstractTestNGUnitTest {
                             + "<message>"
                                 + "<text>Hello TestFramework!</text>"
                             + "</message>"
-                        + "</root>").build();
+                        + "</root>");
         
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
@@ -104,18 +103,21 @@ public class DTDValidationTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testSystemId() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<!DOCTYPE root SYSTEM \"com/consol/citrus/validation/example.dtd\">"
+        Message message = new DefaultMessage("<!DOCTYPE root SYSTEM \"com/consol/citrus/validation/example.dtd\">"
                         + "<root>"
                             + "<message>"
                                 + "<text>Hello TestFramework!</text>"
                             + "</message>"
-                        + "</root>").build();
+                        + "</root>");
         
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
@@ -136,18 +138,21 @@ public class DTDValidationTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testPublicId() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<!DOCTYPE root PUBLIC \"example\" \"com/consol/citrus/validation/example.dtd\">"
+        Message message = new DefaultMessage("<!DOCTYPE root PUBLIC \"example\" \"com/consol/citrus/validation/example.dtd\">"
                         + "<root>"
                             + "<message>"
                                 + "<text>Hello TestFramework!</text>"
                             + "</message>"
-                        + "</root>").build();
+                        + "</root>");
         
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
@@ -168,18 +173,21 @@ public class DTDValidationTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testPublicIdError() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<!DOCTYPE root PUBLIC \"example\" \"com/consol/citrus/validation/example.dtd\">"
+        Message message = new DefaultMessage("<!DOCTYPE root PUBLIC \"example\" \"com/consol/citrus/validation/example.dtd\">"
                         + "<root>"
                             + "<message>"
                                 + "<text>Hello TestFramework!</text>"
                             + "</message>"
-                        + "</root>").build();
+                        + "</root>");
         
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
@@ -206,18 +214,21 @@ public class DTDValidationTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testSystemIdError() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<!DOCTYPE root PUBLIC \"example\" \"com/consol/citrus/validation/example.dtd\">"
+        Message message = new DefaultMessage("<!DOCTYPE root PUBLIC \"example\" \"com/consol/citrus/validation/example.dtd\">"
                         + "<root>"
                             + "<message>"
                                 + "<text>Hello TestFramework!</text>"
                             + "</message>"
-                        + "</root>").build();
+                        + "</root>");
         
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();

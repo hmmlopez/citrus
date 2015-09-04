@@ -16,16 +16,6 @@
 
 package com.consol.citrus;
 
-import static org.easymock.EasyMock.*;
-
-import javax.annotation.Resource;
-
-import org.easymock.EasyMock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.consol.citrus.actions.EchoAction;
 import com.consol.citrus.actions.FailAction;
 import com.consol.citrus.container.*;
@@ -34,6 +24,15 @@ import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.report.TestSuiteListener;
 import com.consol.citrus.report.TestSuiteListeners;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
+import org.easymock.EasyMock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.util.Collections;
+
+import static org.easymock.EasyMock.*;
 
 /**
  * @author Christoph Deppisch
@@ -41,13 +40,19 @@ import com.consol.citrus.testng.AbstractTestNGUnitTest;
 public class TestSuiteTest extends AbstractTestNGUnitTest {
     @Autowired
     private TestSuiteListeners testSuiteListeners;
-    
-    @Resource(name = "mockListener")
+
+    @Autowired
+    @Qualifier("mockListener")
     private TestSuiteListener testSuiteListener;
     
     @BeforeClass
     public void setupTest() {
         testSuiteListeners.addTestSuiteListener(testSuiteListener);
+    }
+
+    @AfterClass
+    public void cleanUpTest() {
+        reset(testSuiteListener);
     }
     
     @Test
@@ -107,7 +112,7 @@ public class TestSuiteTest extends AbstractTestNGUnitTest {
         SequenceAfterSuite afterActions = new SequenceAfterSuite();
         
         beforeActions.setTestSuiteListener(testSuiteListeners);
-        beforeActions.setAfterSuiteActions(afterActions);
+        beforeActions.setAfterSuiteActions(Collections.singletonList(afterActions));
         
         afterActions.setTestSuiteListener(testSuiteListeners);
 
@@ -206,7 +211,7 @@ public class TestSuiteTest extends AbstractTestNGUnitTest {
     }
     
     @Test(expectedExceptions = CitrusRuntimeException.class)
-    public void testFailTasksBetween() {
+    public void testBeforeTestFail() {
         SequenceBeforeTest beforeTestActions = new SequenceBeforeTest();
         
         beforeTestActions.addTestAction(new FailAction());

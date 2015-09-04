@@ -24,19 +24,31 @@ import com.consol.citrus.container.Conditional;
  * 
  * @author Max Argyo, Giulia DelBravo
  * @since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.ConditionalBuilder}
  */
-public class ConditionalDefinition extends AbstractActionDefinition<Conditional> {
+public class ConditionalDefinition extends AbstractActionContainerDefinition<Conditional> {
 
+	/**
+	 * Constructor using action field.
+	 * @param action
+	 */
 	public ConditionalDefinition(Conditional action) {
 	    super(action);
     }
-	
-    /**
+
+	/**
+	 * Default constructor.
+	 */
+	public ConditionalDefinition() {
+		super(new Conditional());
+	}
+
+	/**
      * Condition which allows execution if true.
      * @param expression
      */
 	public ConditionalDefinition when(String expression) {
-		action.setExpression(expression);
+		action.setCondition(expression);
 		return this;
 	}
 }

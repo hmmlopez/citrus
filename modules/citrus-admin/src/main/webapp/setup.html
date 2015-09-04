@@ -7,12 +7,14 @@
     <meta name="description" content="Citrus Administration UI">
     <meta name="author" content="ConSol Software GmbH">
 
+    <link rel="shortcut icon" href="images/favicon.ico">
+
     <script src="javascript/support/jquery.js"></script>
     <script src="javascript/support/jqueryFileTree.js"></script>
     <script src="javascript/support/underscore.js"></script>
     <script src="javascript/support/handlebars.js"></script>
     <script src="javascript/support/backbone.js"></script>
-    <script src="javascript/template/TemplateHelper.js"></script>
+    <script src="javascript/templates/TemplateHelper.js"></script>
     
     <script src="javascript/curl.js"></script>
     
@@ -20,25 +22,25 @@
       curl({
 	      baseUrl: 'javascript',
 	      paths: {
-	          "TemplateManager" : "template/TemplateManager",
-	          "ProjectView" : "views/ProjectView"
+	          "TemplateManager" : "templates/TemplateManager",
+	          "OpenProjectView" : "views/OpenProjectView"
 	      }},
-	      ["TemplateManager", "ProjectView", "domReady!"], function(TemplateManager, ProjectView) {
+	      ["TemplateManager", "OpenProjectView", "domReady!"], function(TemplateManager, OpenProjectView) {
 	        
-	      TemplateManager.load(['ProjectView'], function() {
-	          var projectView = new ProjectView({el: $('#content')});
-              projectView.render();
+	      TemplateManager.load(['OpenProjectView'], function() {
+	          new OpenProjectView({el: $('#content')}).render();
 	      });
       });
     </script>
     
     <link type="text/css" href="styles/bootstrap.css" rel="stylesheet" />
-    <link type="text/css" href="styles/citrus-admin.css" rel="stylesheet"/>
+    <link type="text/css" href="styles/bootstrap-footer.css" rel="stylesheet" />
     <link type="text/css" href="styles/jqueryFileTree.css" rel="stylesheet"/>
-    
+    <link type="text/css" href="styles/citrus-theme.css" rel="stylesheet"/>
+
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
-      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
   </head>
 

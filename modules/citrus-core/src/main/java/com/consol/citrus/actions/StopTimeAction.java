@@ -16,16 +16,13 @@
 
 package com.consol.citrus.actions;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Action used for time measurement during test. User can define a time line that is followed
@@ -37,35 +34,33 @@ import com.consol.citrus.exceptions.CitrusRuntimeException;
 public class StopTimeAction extends AbstractTestAction {
 
     /** Static member to hold all time stamps */
-    private static Map<String, Long> timeStamps = new HashMap<String, Long>();
+    private static Map<String, Long> timeStamps = new HashMap<>();
 
     /** Current time line id */
     private String id = "CITRUS_TIMELINE";
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(StopTimeAction.class);
+
+    /**
+     * Default constructor.
+     */
+    public StopTimeAction() {
+        setName("stop-time");
+    }
 
     @Override
     public void doExecute(TestContext context) {
-        DecimalFormat decFormat = new DecimalFormat("0.0");
-        DecimalFormatSymbols symbol = new DecimalFormatSymbols();
-        symbol.setDecimalSeparator('.');
-        decFormat.setDecimalFormatSymbols(symbol);
-
         try {
             if (timeStamps.containsKey(id)) {
                 if (description != null) {
-                    log.info("TimeWatcher " + id + " after " + decFormat.format((System.currentTimeMillis() - 
-                            timeStamps.get(id).longValue())/(double)1000) + " seconds (" + description + ")");
+                    log.info("TimeWatcher " + id + " after " + (System.currentTimeMillis() - timeStamps.get(id).longValue()) + " ms (" + description + ")");
                 } else {
-                    log.info("TimeWatcher " + id + " after " + decFormat.format((System.currentTimeMillis() - 
-                            timeStamps.get(id).longValue())/(double)1000) + " seconds");
+                    log.info("TimeWatcher " + id + " after " + (System.currentTimeMillis() - timeStamps.get(id).longValue()) + " ms");
                 }
             } else {
                 log.info("Starting TimeWatcher: " + id);
-                timeStamps.put(id, Long.valueOf(System.currentTimeMillis()));
+                timeStamps.put(id, System.currentTimeMillis());
             }
         } catch (Exception e) {
             throw new CitrusRuntimeException(e);
@@ -76,8 +71,9 @@ public class StopTimeAction extends AbstractTestAction {
      * Setter for timeline id.
      * @param period
      */
-    public void setId(String period) {
+    public StopTimeAction setId(String period) {
         this.id = period;
+        return this;
     }
 
     /**

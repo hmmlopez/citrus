@@ -16,9 +16,6 @@
 
 package com.consol.citrus.functions;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.InvalidFunctionUsageException;
 import com.consol.citrus.exceptions.NoSuchFunctionException;
@@ -33,18 +30,13 @@ import org.springframework.util.StringUtils;
 public final class FunctionUtils {
 
     /**
-     * Logger
-     */
-    private static Logger log = LoggerFactory.getLogger(FunctionUtils.class);
-
-    /**
      * Prevent class instantiation.
      */
     private FunctionUtils() {}
 
     /**
      * Search for functions in string and replace with respective function result.
-     * @param string to parse
+     * @param str to parse
      * @return parsed string result
      */
     public static String replaceFunctionsInString(String str, TestContext context) {
@@ -53,7 +45,7 @@ public final class FunctionUtils {
 
     /**
      * Search for functions in string and replace with respective function result.
-     * @param string to parse.
+     * @param stringValue to parse.
      * @param enableQuoting enables quoting of function results.
      * @return parsed string result.
      */
@@ -65,8 +57,6 @@ public final class FunctionUtils {
             // it is not a function, as it is defined as 'prefix:methodName(arguments)'
             return stringValue;
         }
-        
-        log.debug("Resolving functions in expression [ {} ]", stringValue);
         
         String newString = stringValue;
         StringBuffer strBuffer = new StringBuffer();
@@ -155,6 +145,6 @@ public final class FunctionUtils {
         parameterString = VariableUtils.replaceVariablesInString(parameterString, context, false);
         parameterString = replaceFunctionsInString(parameterString, context);
 
-        return library.getFunction(function).execute(FunctionParameterHelper.getParameterList(parameterString));
+        return library.getFunction(function).execute(FunctionParameterHelper.getParameterList(parameterString), context);
     }
 }

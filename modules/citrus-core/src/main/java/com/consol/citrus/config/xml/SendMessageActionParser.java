@@ -16,9 +16,10 @@
 
 package com.consol.citrus.config.xml;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.consol.citrus.actions.SendMessageAction;
+import com.consol.citrus.config.util.BeanDefinitionParserUtils;
+import com.consol.citrus.validation.builder.AbstractMessageContentBuilder;
+import com.consol.citrus.variable.VariableExtractor;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -27,9 +28,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-import com.consol.citrus.config.util.BeanDefinitionParserUtils;
-import com.consol.citrus.validation.builder.AbstractMessageContentBuilder;
-import com.consol.citrus.variable.VariableExtractor;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Bean definition parser for send action in test case.
@@ -42,19 +42,21 @@ public class SendMessageActionParser extends AbstractMessageActionParser {
      * @see org.springframework.beans.factory.xml.BeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)
      */
     public BeanDefinition parse(Element element, ParserContext parserContext) {
-        String messageSenderReference = element.getAttribute("with");
-        
-        BeanDefinitionBuilder builder;
+        String endpointUri = element.getAttribute("endpoint");
 
-        if (StringUtils.hasText(messageSenderReference)) {
-            builder = parseComponent(element, parserContext);
-            builder.addPropertyValue("name", element.getLocalName());
-
-            builder.addPropertyReference("messageSender", messageSenderReference);
-        } else {
-            throw new BeanCreationException("Missing message sender attrbiute 'with'");
+        if (!StringUtils.hasText(endpointUri)) {
+            throw new BeanCreationException("Endpoint reference must not be empty");
         }
-        
+
+        BeanDefinitionBuilder builder = parseComponent(element, parserContext);
+        builder.addPropertyValue("name", element.getLocalName());
+
+        if (endpointUri.contains(":")) {
+            builder.addPropertyValue("endpointUri", endpointUri);
+        } else {
+            builder.addPropertyReference("endpoint", endpointUri);
+        }
+
         DescriptionElementParser.doParse(element, builder);
         
         BeanDefinitionParserUtils.setPropertyReference(builder, element.getAttribute("actor"), "actor");
@@ -62,10 +64,21 @@ public class SendMessageActionParser extends AbstractMessageActionParser {
         BeanDefinitionParserUtils.setPropertyValue(builder, element.getAttribute("fork"), "forkMode");
         
         Element messageElement = DomUtils.getChildElementByTagName(element, "message");
-        
-        AbstractMessageContentBuilder<?> messageBuilder = constructMessageBuilder(messageElement);
+        if (messageElement != null) {
+            String messageType = messageElement.getAttribute("type");
+            if (StringUtils.hasText(messageType)) {
+                builder.addPropertyValue("messageType", messageType);
+            }
+
+            String dataDictionary = messageElement.getAttribute("data-dictionary");
+            if (StringUtils.hasText(dataDictionary)) {
+                builder.addPropertyReference("dataDictionary", dataDictionary);
+            }
+        }
+
+        AbstractMessageContentBuilder messageBuilder = constructMessageBuilder(messageElement);
         parseHeaderElements(element, messageBuilder);
-        
+
         if (messageBuilder != null) {
             builder.addPropertyValue("messageBuilder", messageBuilder);
         }
@@ -81,7 +94,7 @@ public class SendMessageActionParser extends AbstractMessageActionParser {
     }
 
     @Override
-    protected void parseHeaderElements(Element actionElement, AbstractMessageContentBuilder<?> messageBuilder) {
+    protected void parseHeaderElements(Element actionElement, AbstractMessageContentBuilder messageBuilder) {
         super.parseHeaderElements(actionElement, messageBuilder);
     }
 
@@ -92,6 +105,14 @@ public class SendMessageActionParser extends AbstractMessageActionParser {
      * @return
      */
     protected BeanDefinitionBuilder parseComponent(Element element, ParserContext parserContext) {
-        return BeanDefinitionBuilder.genericBeanDefinition("com.consol.citrus.actions.SendMessageAction");
+        return BeanDefinitionBuilder.genericBeanDefinition(getBeanDefinitionClass());
+    }
+
+    /**
+     * Gets the bean definition builder class.
+     * @return
+     */
+    protected Class<?> getBeanDefinitionClass() {
+        return SendMessageAction.class;
     }
 }

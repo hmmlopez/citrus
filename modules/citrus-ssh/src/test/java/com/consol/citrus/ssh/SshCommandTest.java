@@ -16,18 +16,21 @@
 
 package com.consol.citrus.ssh;
 
-import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.consol.citrus.message.MessageHandler;
+import com.consol.citrus.endpoint.EndpointAdapter;
+import com.consol.citrus.message.DefaultMessage;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.ssh.client.SshEndpointConfiguration;
+import com.consol.citrus.ssh.model.*;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
 import org.easymock.IArgumentMatcher;
-import org.springframework.integration.Message;
-import org.springframework.integration.support.MessageBuilder;
+import org.springframework.xml.transform.StringResult;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.easymock.EasyMock.*;
 import static org.testng.AssertJUnit.assertEquals;
@@ -40,16 +43,17 @@ public class SshCommandTest {
 
     private ByteArrayOutputStream stdout, stderr;
     private SshCommand cmd;
-    private MessageHandler handler;
+    private EndpointAdapter adapter;
 
     private static String COMMAND = "shutdown";
-    private XmlMapper xmlMapper;
+    private SshMarshaller marshaller;
     private ExitCallback exitCallback;
 
     @BeforeMethod
     public void setup() {
-        handler = createMock(MessageHandler.class);
-        cmd = new SshCommand(COMMAND,handler);
+        adapter = createMock(EndpointAdapter.class);
+
+        cmd = new SshCommand(COMMAND, adapter, new SshEndpointConfiguration());
 
         stdout = new ByteArrayOutputStream();
         stderr = new ByteArrayOutputStream();
@@ -59,7 +63,7 @@ public class SshCommandTest {
         exitCallback = createMock(ExitCallback.class);
         cmd.setExitCallback(exitCallback);
 
-        xmlMapper = new XmlMapper();
+        marshaller = new SshMarshaller();
     }
     
     @Test
@@ -94,7 +98,7 @@ public class SshCommandTest {
     @Test
     public void ioException() throws IOException {
         InputStream i = createMock(InputStream.class);
-        expect(i.read((byte[]) anyObject(),anyInt(),anyInt())).andThrow(new IOException("No"));
+        expect(i.read((byte[]) anyObject())).andThrow(new IOException("No"));
         i.close();
 
         exitCallback.onExit(1,"No");
@@ -113,11 +117,16 @@ public class SshCommandTest {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private void prepare(String pInput, String pOutput, String pError, int pExitCode) {
-        String request = xmlMapper.toXML(new SshRequest(COMMAND, pInput));
+        StringResult request = new StringResult();
+        marshaller.marshal(new SshRequest(COMMAND, pInput), request);
+
         SshResponse resp = new SshResponse(pOutput, pError, pExitCode);
-        Message respMsg = MessageBuilder.withPayload(xmlMapper.toXML(resp)).build();
-        expect(handler.handleMessage(eqMessage(request))).andReturn(respMsg);
-        replay(handler);
+        StringResult response = new StringResult();
+        marshaller.marshal(resp, response);
+
+        Message respMsg = new DefaultMessage(response.toString());
+        expect(adapter.handleMessage(eqMessage(request.toString()))).andReturn(respMsg);
+        replay(adapter);
 
         exitCallback.onExit(pExitCode);
         replay(exitCallback);
@@ -130,10 +139,10 @@ public class SshCommandTest {
      * @param expected
      * @return
      */
-    public Message<?> eqMessage(final String expected) {
+    public Message eqMessage(final String expected) {
         reportMatcher(new IArgumentMatcher() {
             public boolean matches(Object argument) {
-                Message<?> msg = (Message<?>) argument;
+                Message msg = (Message) argument;
                 String payload = (String) msg.getPayload();
                 return expected.equals(payload);
             }

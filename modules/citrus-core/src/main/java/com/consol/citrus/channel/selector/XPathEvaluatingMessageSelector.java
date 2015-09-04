@@ -15,20 +15,19 @@
  */
 package com.consol.citrus.channel.selector;
 
-import java.util.Map;
-
+import com.consol.citrus.util.XMLUtils;
+import com.consol.citrus.xml.namespace.NamespaceContextBuilder;
+import com.consol.citrus.xml.xpath.XPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.integration.Message;
+import org.springframework.messaging.Message;
 import org.springframework.integration.core.MessageSelector;
 import org.springframework.xml.xpath.XPathExpressionFactory;
 import org.springframework.xml.xpath.XPathParseException;
 import org.w3c.dom.Document;
 import org.w3c.dom.ls.LSException;
 
-import com.consol.citrus.util.XMLUtils;
-import com.consol.citrus.xml.namespace.NamespaceContextBuilder;
-import com.consol.citrus.xml.xpath.XPathUtils;
+import java.util.Map;
 
 /**
  * Message selector accepts XML messages in case XPath expression evaluation result matches
@@ -66,14 +65,19 @@ public class XPathEvaluatingMessageSelector implements MessageSelector {
         this.nsContextBuilder = nsContextBuider;
     }
     
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public boolean accept(Message<?> message) {
         Document doc;
-        
+
         try {
-            doc = XMLUtils.parseMessagePayload(message.getPayload().toString());
+            String payload;
+            if (message.getPayload() instanceof com.consol.citrus.message.Message) {
+                payload = ((com.consol.citrus.message.Message) message.getPayload()).getPayload(String.class);
+            } else {
+                payload = message.getPayload().toString();
+            }
+
+            doc = XMLUtils.parseMessagePayload(payload);
         } catch (LSException e) {
             log.warn("Ignoring non XML message for XPath message selector (" + e.getClass().getName() + ")");
             return false; // non XML message - not accepted

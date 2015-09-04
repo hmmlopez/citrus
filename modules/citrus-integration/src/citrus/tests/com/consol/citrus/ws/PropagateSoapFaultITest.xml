@@ -21,11 +21,11 @@
         </variables>
 		
         <actions>
-            <send with="webServiceFaultPropagatingHelloRequestSender">
+            <send endpoint="webServiceFaultClient">
                 <message>
                     <data>
                         <![CDATA[
-                            <ns0:SoapFaultForcingRequest xmlns:ns0="http://www.consol.de/schemas/samples/sample.xsd">
+                            <ns0:SoapFaultForcingRequest xmlns:ns0="http://www.consol.de/schemas/samples/sayHello.xsd">
                                 <ns0:Message>This is invalid</ns0:Message>
                             </ns0:SoapFaultForcingRequest>
                         ]]>
@@ -33,7 +33,7 @@
                 </message>
             </send>
             
-            <receive with="webServiceHelloReplyHandler" timeout="5000">
+            <receive endpoint="webServiceFaultClient" timeout="5000">
                 <message schema-validation="false">
                     <data>
                         <![CDATA[

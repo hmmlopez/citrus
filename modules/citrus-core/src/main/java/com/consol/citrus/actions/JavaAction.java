@@ -16,17 +16,17 @@
 
 package com.consol.citrus.actions;
 
-import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * Action to enable class invocation through java reflection
@@ -50,10 +50,15 @@ public class JavaAction extends AbstractTestAction {
     /** Constructor args */
     private List<Object> constructorArgs = new ArrayList<Object>();
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(JavaAction.class);
+
+    /**
+     * Default constructor.
+     */
+    public JavaAction() {
+        setName("java");
+    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -77,7 +82,8 @@ public class JavaAction extends AbstractTestAction {
                     
                     methodObjects[i] = converted;
                 } else if (methodArgs.get(i).getClass().equals(String[].class)) {
-                    String[] converted = (String[])methodArgs.get(i);
+                    String[] params = (String[])methodArgs.get(i);
+                    String[] converted = Arrays.copyOf(params, params.length);
                     
                     for (int j = 0; j < converted.length; j++) {
                         converted[j] = context.replaceDynamicContentInString(converted[j]);
@@ -158,40 +164,45 @@ public class JavaAction extends AbstractTestAction {
      * Setter for class name
      * @param className
      */
-    public void setClassName(String className) {
+    public JavaAction setClassName(String className) {
         this.className = className;
+        return this;
     }
 
     /**
      * Setter for constructor args
      * @param constructorArgs
      */
-    public void setConstructorArgs(List<Object> constructorArgs) {
+    public JavaAction setConstructorArgs(List<Object> constructorArgs) {
         this.constructorArgs = constructorArgs;
+        return this;
     }
 
     /**
      * Setter for method args
      * @param methodArgs
      */
-    public void setMethodArgs(List<Object> methodArgs) {
+    public JavaAction setMethodArgs(List<Object> methodArgs) {
         this.methodArgs = methodArgs;
+        return this;
     }
 
     /**
      * Setter for method name
      * @param methodName
      */
-    public void setMethodName(String methodName) {
+    public JavaAction setMethodName(String methodName) {
         this.methodName = methodName;
+        return this;
     }
 
     /**
      * Setter for object instance
      * @param instance
      */
-    public void setInstance(Object instance) {
+    public JavaAction setInstance(Object instance) {
         this.instance = instance;
+        return this;
     }
 
     /**

@@ -16,9 +16,11 @@
 
 package com.consol.citrus.validation.builder;
 
-import org.springframework.integration.Message;
-
 import com.consol.citrus.context.TestContext;
+import com.consol.citrus.message.Message;
+import org.springframework.util.CollectionUtils;
+
+import java.util.Map;
 
 /**
  * Message builder returning a static message every time the build mechanism is called. This
@@ -27,37 +29,57 @@ import com.consol.citrus.context.TestContext;
  *  
  * @author Christoph Deppisch
  */
-public class StaticMessageContentBuilder<T> implements MessageContentBuilder<T> {
+public class StaticMessageContentBuilder extends AbstractMessageContentBuilder {
 
     /** The static message to build here */
-    private Message<T> message;
+    private Message message;
 
     /**
      * Default constructor with static message to be built by this message builder.
      */
-    public StaticMessageContentBuilder(Message<T> message) {
+    public StaticMessageContentBuilder(Message message) {
         this.message = message;
     }
-    
-    /**
-     * Default constructor with static message to be built by this message builder. 
-     */
-    public static <T> StaticMessageContentBuilder<T> withMessage(Message<T> message) {
-        return new StaticMessageContentBuilder<T>(message);
+
+    @Override
+    public Message buildMessageContent(TestContext context, String messageType) {
+        if (getMessageHeaders().isEmpty()
+                && CollectionUtils.isEmpty(getHeaderData())
+                && CollectionUtils.isEmpty(getHeaderResources())
+                && getMessageInterceptors().isEmpty()
+                && getDataDictionary() == null) {
+            return message;
+        } else {
+            return super.buildMessageContent(context, messageType);
+        }
     }
-    
+
+    @Override
+    protected Object buildMessagePayload(TestContext context) {
+        return message.getPayload();
+    }
+
+    @Override
+    protected Map<String, Object> buildMessageHeaders(TestContext context) {
+        Map<String, Object> headers = super.buildMessageHeaders(context);
+        headers.putAll(message.copyHeaders());
+
+        return headers;
+    }
+
     /**
-     * Returns the static message every time.
+     * Default constructor with static message to be built by this message builder.
      */
-    public Message<T> buildMessageContent(TestContext context) {
-        return message;
+    public static StaticMessageContentBuilder withMessage(Message message) {
+        return new StaticMessageContentBuilder(message);
     }
 
     /**
      * Gets the message.
      * @return the message the message to get.
      */
-    public Message<T> getMessage() {
+    public Message getMessage() {
         return message;
     }
+
 }

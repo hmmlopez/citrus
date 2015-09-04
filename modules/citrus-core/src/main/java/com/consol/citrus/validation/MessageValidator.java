@@ -16,13 +16,12 @@
 
 package com.consol.citrus.validation;
 
-import java.util.List;
-
-import org.springframework.integration.Message;
-
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.ValidationException;
+import com.consol.citrus.message.Message;
 import com.consol.citrus.validation.context.ValidationContext;
+
+import java.util.List;
 
 /**
  * Message validator interface. Message validation need specific information like
@@ -38,7 +37,7 @@ public interface MessageValidator<T extends ValidationContext> {
      * @param context the current test context.
      * @param validationContexts list of available validation contexts.
      */
-    void validateMessage(Message<?> receivedMessage, 
+    void validateMessage(Message receivedMessage,
                                 TestContext context, 
                                 List<ValidationContext> validationContexts) 
                                 throws ValidationException;
@@ -49,7 +48,7 @@ public interface MessageValidator<T extends ValidationContext> {
      * @param context the current test context
      * @param validationContext the proper validation context.
      */
-    void validateMessage(Message<?> receivedMessage, 
+    void validateMessage(Message receivedMessage,
                                 TestContext context, 
                                 T validationContext) 
                                 throws ValidationException;
@@ -66,7 +65,8 @@ public interface MessageValidator<T extends ValidationContext> {
      * in order to find a proper message validator for a message.
      * 
      * @param messageType the message type representation as String (e.g. xml, json, csv, plaintext).
+     * @param message the message object
      * @return true if this message validator is capable of validating the message type.
      */
-    boolean supportsMessageType(String messageType);
+    boolean supportsMessageType(String messageType, Message message);
 }

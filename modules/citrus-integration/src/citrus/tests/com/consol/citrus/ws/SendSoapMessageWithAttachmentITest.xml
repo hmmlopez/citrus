@@ -19,11 +19,11 @@
         
         <actions>
             <parallel>
-            	<ws:send with="webServiceRequestSender">
+            	<ws:send endpoint="webServiceClient">
                     <message>
                         <data>
                             <![CDATA[
-                                <ns0:SoapMessageWithAttachmentRequest xmlns:ns0="http://www.consol.de/schemas/samples/sample.xsd">
+                                <ns0:SoapMessageWithAttachmentRequest xmlns:ns0="http://www.consol.de/schemas/samples/sayHello.xsd">
                                     <ns0:Operation>Read the attachment</ns0:Operation>
                                 </ns0:SoapMessageWithAttachmentRequest>
                             ]]>
@@ -35,29 +35,29 @@
                 </ws:send>
                 
                 <sequential>
-                    <ws:receive with="webServiceRequestReceiver">
+                    <ws:receive endpoint="webServiceRequestReceiver">
                         <message schema-validation="false">
                             <data>
                                 <![CDATA[
-                                    <ns0:SoapMessageWithAttachmentRequest xmlns:ns0="http://www.consol.de/schemas/samples/sample.xsd">
+                                    <ns0:SoapMessageWithAttachmentRequest xmlns:ns0="http://www.consol.de/schemas/samples/sayHello.xsd">
                                         <ns0:Operation>Read the attachment</ns0:Operation>
                                     </ns0:SoapMessageWithAttachmentRequest>
                                 ]]>
                             </data>
                         </message>
                         <extract>
-                            <header name="jms_messageId" variable="internal_correlation_id"/>
+                            <header name="citrus_jms_messageId" variable="internal_correlation_id"/>
                         </extract>
                         <ws:attachment content-id="MySoapAttachment" content-type="text/plain">
                             <ws:resource file="classpath:com/consol/citrus/ws/soapAttachment.txt"/>
                         </ws:attachment>
                     </ws:receive>
                     
-                    <send with="webServiceResponseSender">
+                    <ws:send endpoint="webServiceResponseSender">
                         <message>
                             <data>
                                 <![CDATA[
-                                    <ns0:SoapMessageWithAttachmentResponse xmlns:ns0="http://www.consol.de/schemas/samples/sample.xsd">
+                                    <ns0:SoapMessageWithAttachmentResponse xmlns:ns0="http://www.consol.de/schemas/samples/sayHello.xsd">
                                         <ns0:Operation>Read the attachment</ns0:Operation>
                                         <ns0:Success>true</ns0:Success>
                                     </ns0:SoapMessageWithAttachmentResponse>
@@ -65,31 +65,31 @@
                             </data>
                         </message>
                         <header>
-                            <element name="jms_correlationId" value="${internal_correlation_id}"/>
+                            <element name="citrus_jms_correlationId" value="${internal_correlation_id}"/>
                         </header>
-                      </send>
+                      </ws:send>
                 </sequential>
             </parallel>
             
-            <receive with="webServiceReplyHandler">
+            <ws:receive endpoint="webServiceClient">
                 <message schema-validation="false">
                     <data>
                         <![CDATA[
-                            <ns0:SoapMessageWithAttachmentResponse xmlns:ns0="http://www.consol.de/schemas/samples/sample.xsd">
+                            <ns0:SoapMessageWithAttachmentResponse xmlns:ns0="http://www.consol.de/schemas/samples/sayHello.xsd">
                                 <ns0:Operation>Read the attachment</ns0:Operation>
                                 <ns0:Success>true</ns0:Success>
                             </ns0:SoapMessageWithAttachmentResponse>
                         ]]>
                     </data>
                 </message>
-            </receive>
+            </ws:receive>
             
             <parallel>
-                <ws:send with="webServiceRequestSender">
+                <ws:send endpoint="webServiceClient">
                     <message>
                         <data>
                             <![CDATA[
-                                <ns0:SoapMessageWithAttachmentRequest xmlns:ns0="http://www.consol.de/schemas/samples/sample.xsd">
+                                <ns0:SoapMessageWithAttachmentRequest xmlns:ns0="http://www.consol.de/schemas/samples/sayHello.xsd">
                                     <ns0:Operation>Read the attachment</ns0:Operation>
                                 </ns0:SoapMessageWithAttachmentRequest>
                             ]]>
@@ -105,18 +105,18 @@
                 </ws:send>
                 
                 <sequential>
-                    <ws:receive with="webServiceRequestReceiver">
+                    <ws:receive endpoint="webServiceRequestReceiver">
                         <message schema-validation="false">
                             <data>
                                 <![CDATA[
-                                    <ns0:SoapMessageWithAttachmentRequest xmlns:ns0="http://www.consol.de/schemas/samples/sample.xsd">
+                                    <ns0:SoapMessageWithAttachmentRequest xmlns:ns0="http://www.consol.de/schemas/samples/sayHello.xsd">
                                         <ns0:Operation>Read the attachment</ns0:Operation>
                                     </ns0:SoapMessageWithAttachmentRequest>
                                 ]]>
                             </data>
                         </message>
                         <extract>
-                            <header name="jms_messageId" variable="internal_correlation_id"/>
+                            <header name="citrus_jms_messageId" variable="internal_correlation_id"/>
                         </extract>
                         <ws:attachment content-id="MySoapAttachment" content-type="text/plain">
                             <ws:data>
@@ -127,11 +127,11 @@
                         </ws:attachment>
                     </ws:receive>
                     
-                    <send with="webServiceResponseSender">
+                    <ws:send endpoint="webServiceResponseSender">
                         <message>
                             <data>
                                 <![CDATA[
-                                    <ns0:SoapMessageWithAttachmentResponse xmlns:ns0="http://www.consol.de/schemas/samples/sample.xsd">
+                                    <ns0:SoapMessageWithAttachmentResponse xmlns:ns0="http://www.consol.de/schemas/samples/sayHello.xsd">
                                         <ns0:Operation>Read the attachment</ns0:Operation>
                                         <ns0:Success>true</ns0:Success>
                                     </ns0:SoapMessageWithAttachmentResponse>
@@ -139,24 +139,24 @@
                             </data>
                         </message>
                         <header>
-                            <element name="jms_correlationId" value="${internal_correlation_id}"/>
+                            <element name="citrus_jms_correlationId" value="${internal_correlation_id}"/>
                         </header>
-                      </send>
+                      </ws:send>
                 </sequential>
             </parallel>
             
-            <receive with="webServiceReplyHandler">
+            <ws:receive endpoint="webServiceClient">
                 <message schema-validation="false">
                     <data>
                         <![CDATA[
-                            <ns0:SoapMessageWithAttachmentResponse xmlns:ns0="http://www.consol.de/schemas/samples/sample.xsd">
+                            <ns0:SoapMessageWithAttachmentResponse xmlns:ns0="http://www.consol.de/schemas/samples/sayHello.xsd">
                                 <ns0:Operation>Read the attachment</ns0:Operation>
                                 <ns0:Success>true</ns0:Success>
                             </ns0:SoapMessageWithAttachmentResponse>
                         ]]>
                     </data>
                 </message>
-            </receive>
+            </ws:receive>
         </actions>
     </testcase>
 </spring:beans>

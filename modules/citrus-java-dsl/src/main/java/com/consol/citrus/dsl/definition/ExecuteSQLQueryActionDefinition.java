@@ -16,18 +16,19 @@
 
 package com.consol.citrus.dsl.definition;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-
-import org.springframework.core.io.Resource;
-
 import com.consol.citrus.actions.ExecuteSQLQueryAction;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.script.ScriptTypes;
 import com.consol.citrus.util.FileUtils;
 import com.consol.citrus.validation.script.ScriptValidationContext;
 import com.consol.citrus.validation.script.sql.SqlResultSetScriptValidator;
+import org.springframework.core.io.Resource;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Action executes SQL queries and offers result set validation.
@@ -37,22 +38,54 @@ import com.consol.citrus.validation.script.sql.SqlResultSetScriptValidator;
  * 
  * @author Max Argyo, Giulia DelBravo
  * @since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.ExecuteSQLQueryBuilder}
  */
 public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<ExecuteSQLQueryAction> {
 
+    /**
+     * Constructor using action field.
+     * @param action
+     */
 	public ExecuteSQLQueryActionDefinition(ExecuteSQLQueryAction action) {
 	    super(action);
     }
 
+    /**
+     * Default constructor.
+     */
+    public ExecuteSQLQueryActionDefinition() {
+        super(new ExecuteSQLQueryAction());
+    }
+
+    /**
+     * Sets the Spring JDBC template to use.
+     * @param jdbcTemplate
+     * @return
+     */
+    public ExecuteSQLQueryActionDefinition jdbcTemplate(JdbcTemplate jdbcTemplate) {
+        action.setJdbcTemplate(jdbcTemplate);
+        return this;
+    }
+
+    /**
+     * Sets the SQL data source.
+     * @param dataSource
+     * @return
+     */
+    public ExecuteSQLQueryActionDefinition dataSource(DataSource dataSource) {
+        action.setDataSource(dataSource);
+        return this;
+    }
+
 	/**
-     * List of statements to execute. Declared inline in the test case. 
+     * List of statements to execute. Declared inline in the test case.
      * @param statements
      */
 	public ExecuteSQLQueryActionDefinition statements(List<String> statements) {
 		action.getStatements().addAll(statements);
 		return this;
 	}
-	
+
 	/**
 	 * Adds a new statement to the list of SQL executions.
 	 * @param statements
@@ -62,7 +95,7 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
 	    action.getStatements().add(statements);
 		return this;
 	}
-	
+
 	/**
      * Setter for external file resource containing the SQL statements to execute.
      * @param sqlResource
@@ -75,7 +108,7 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
         }
 		return this;
 	}
-	
+
 	/**
      * Setter for external file resource containing the SQL statements to execute.
      * @param filePath
@@ -84,7 +117,7 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
         action.setSqlResourcePath(filePath);
         return this;
     }
-	
+
 	/**
      * Set expected control result set. Keys represent the column names, values
      * the expected values.
@@ -95,7 +128,7 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
 		action.getControlResultSet().put(column, Arrays.asList(values));
 		return this;
 	}
-	
+
 	/**
      * Validate SQL result set via validation script, for instance Groovy.
      * @param script
@@ -107,7 +140,7 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
         action.setScriptValidationContext(scriptValidationContext);
         return this;
     }
-    
+
     /**
      * Validate SQL result set via validation script, for instance Groovy.
      * @param scriptResource
@@ -123,7 +156,7 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
         action.setScriptValidationContext(scriptValidationContext);
         return this;
     }
-    
+
     /**
      * Validate SQL result set via validation script, for instance Groovy.
      * @param script
@@ -131,7 +164,7 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
     public ExecuteSQLQueryActionDefinition groovy(String script) {
         return validateScript(script, ScriptTypes.GROOVY);
     }
-    
+
     /**
      * Validate SQL result set via validation script, for instance Groovy.
      * @param scriptResource
@@ -139,7 +172,7 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
     public ExecuteSQLQueryActionDefinition groovy(Resource scriptResource) {
         return validateScript(scriptResource, ScriptTypes.GROOVY);
     }
-	
+
 	 /**
      * User can extract column values to test variables. Map holds column names (keys) and
      * respective target variable names (values).
@@ -151,7 +184,7 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
 		action.getExtractVariables().put(columnName, variableName);
 		return this;
 	}
-	
+
 	/**
      * Sets an explicit validator implementation for this action.
      * @param validator the validator to set
@@ -159,5 +192,5 @@ public class ExecuteSQLQueryActionDefinition extends AbstractActionDefinition<Ex
 	public ExecuteSQLQueryActionDefinition validator(SqlResultSetScriptValidator validator) {
 		action.setValidator(validator);
 		return this;
-	}
+    }
 }

@@ -16,23 +16,23 @@
 
 package com.consol.citrus.container;
 
+import com.consol.citrus.TestAction;
+import com.consol.citrus.context.TestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
-import com.consol.citrus.TestAction;
-import com.consol.citrus.context.TestContext;
-
 /**
+ * Sequence of test actions executed before a test case. Container execution can be restricted according to test name ,
+ * package and test groups.
+ *
  * @author Christoph Deppisch
  */
-public class SequenceBeforeTest extends AbstractActionContainer {
+public class SequenceBeforeTest extends AbstractTestBoundaryActionContainer {
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(SequenceBeforeTest.class);
-    
+
     @Override
     public void doExecute(TestContext context) {
         if (CollectionUtils.isEmpty(actions)) {

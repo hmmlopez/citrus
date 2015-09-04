@@ -16,11 +16,16 @@
 
 package com.consol.citrus.ws.config.xml;
 
+import com.consol.citrus.config.xml.SendMessageActionParser;
+import com.consol.citrus.ws.actions.SendSoapMessageAction;
+import com.consol.citrus.ws.message.SoapAttachment;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.ParserContext;
+import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-import com.consol.citrus.config.xml.SendMessageActionParser;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Parser for SOAP message sender component in Citrus ws namespace.
@@ -31,10 +36,25 @@ public class SendSoapMessageActionParser extends SendMessageActionParser {
 
     @Override
     public BeanDefinitionBuilder parseComponent(Element element, ParserContext parserContext) {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition("com.consol.citrus.ws.actions.SendSoapMessageAction");
+        BeanDefinitionBuilder builder = super.parseComponent(element, parserContext);
+
+        List<Element> attachmentElements = DomUtils.getChildElementsByTagName(element, "attachment");
+        List<SoapAttachment> attachments = new ArrayList<SoapAttachment>();
+        for (Element attachment : attachmentElements) {
+            attachments.add(SoapAttachmentParser.parseAttachment(attachment));
+        }
+
+        builder.addPropertyValue("attachments", attachments);
         
-        SoapAttachmentParser.parseAttachment(builder, element, parserContext);
-        
+        if (element.hasAttribute("mtom-enabled")) {
+            builder.addPropertyValue("mtomEnabled", element.getAttribute("mtom-enabled"));
+        }
+
         return builder;
+    }
+
+    @Override
+    protected Class<?> getBeanDefinitionClass() {
+        return SendSoapMessageAction.class;
     }
 }

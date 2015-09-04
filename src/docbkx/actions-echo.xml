@@ -22,8 +22,9 @@
     &lt;/actions&gt;
 &lt;/testcase&gt;</programlisting>
 
-    <para><emphasis>Java DSL</emphasis></para>
-    <programlisting language="java">protected void configure() {
+    <para><emphasis>Java DSL designer and runner</emphasis></para>
+    <programlisting language="java">@CitrusTest
+public void echoTest() {
     variable("date", "citrus:currentDate()");
     
     echo("Hello Test Framework");

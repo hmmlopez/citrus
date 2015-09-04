@@ -16,22 +16,62 @@
 
 package com.consol.citrus.dsl.definition;
 
-import java.util.Map;
-
 import com.consol.citrus.container.Template;
+import org.springframework.context.ApplicationContext;
+
+import java.util.Map;
 
 /**
  * Definition defines call template action with global context and parameters.
  * 
  * @author Max Argyo, Giulia DelBravo
- * @since 1.3 
+ * @since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.TemplateBuilder}
  */
 public class TemplateDefinition extends AbstractActionDefinition<Template> {
 
+	/**
+	 * Constructor using action field.
+	 * @param action
+	 */
 	public TemplateDefinition(Template action) {
 	    super(action);
     }
-	
+
+	/**
+	 * Default constructor.
+	 */
+	public TemplateDefinition() {
+		super(new Template());
+	}
+
+	/**
+	 * Sets the template name.
+	 * @param name
+	 * @return
+	 */
+	public TemplateDefinition name(String name) {
+		setName(name);
+		action.setName(name);
+		return this;
+	}
+
+    /**
+     * Loads template definition from Spring bean application context and sets attributes.
+     * @param applicationContext
+     * @return
+     */
+    public TemplateDefinition load(ApplicationContext applicationContext) {
+        Template rootTemplate = applicationContext.getBean(getName(), Template.class);
+
+        action.setGlobalContext(rootTemplate.isGlobalContext());
+		action.setActor(rootTemplate.getActor());
+		action.setActions(rootTemplate.getActions());
+		action.setParameter(rootTemplate.getParameter());
+
+        return this;
+    }
+
 	/**
      * Boolean flag marking the template variables should also affect
      * variables in test case.
@@ -44,13 +84,13 @@ public class TemplateDefinition extends AbstractActionDefinition<Template> {
 
 	/**
      * Set parameter before execution.
-     * @param parameter the parameter to set
+     * @param parameters the parameter to set
      */
 	public TemplateDefinition parameters(Map<String, String> parameters) {
 		action.getParameter().putAll(parameters);
 		return this;
 	}
-	
+
 	/**
      * Set parameter before execution.
      * @param name

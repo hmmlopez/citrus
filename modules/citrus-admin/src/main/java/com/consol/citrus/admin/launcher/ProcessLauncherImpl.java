@@ -16,25 +16,28 @@
 
 package com.consol.citrus.admin.launcher;
 
-import java.io.*;
-import java.util.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.util.*;
 
 /**
  * @author Martin.Maher@consol.de
  * @since 2012.11.30
  */
 public class ProcessLauncherImpl implements ProcessLauncher {
-    
+
     /** Logger */
     private static final Logger LOG = LoggerFactory.getLogger(ProcessLauncherImpl.class);
+    private static final int LOG_CACHE_SIZE = 10;
 
     private boolean processCompleted;
     private String processId;
     private Process process;
     private ProcessMonitor processMonitor;
+
+    /** Listeners get informed on process or test events */
     private List<ProcessListener> processListeners = new ArrayList<ProcessListener>();
 
     /**
@@ -148,10 +151,26 @@ public class ProcessLauncherImpl implements ProcessLauncher {
 
                 // Read output
                 br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                StringBuilder lineCache = new StringBuilder();
+                int lineCacheSize = LOG_CACHE_SIZE;
                 String line = null;
                 while ((line = br.readLine()) != null) {
-                    notifyOutput(processId, line);
-                    Thread.sleep(100);
+                    notifyActivity(processId, line);
+
+                    lineCache.append(line);
+                    lineCache.append(System.getProperty("line.separator"));
+
+                    if (lineCacheSize > 0) {
+                        lineCacheSize--;
+                    } else {
+                        notifyOutput(processId, lineCache.toString());
+                        lineCacheSize = LOG_CACHE_SIZE;
+                        lineCache = new StringBuilder();
+                    }
+                }
+
+                if (lineCacheSize > 0) {
+                    notifyOutput(processId, lineCache.toString());
                 }
 
                 // store result
@@ -180,31 +199,37 @@ public class ProcessLauncherImpl implements ProcessLauncher {
 
     private void notifyStart(String processId) {
         for (ProcessListener processListener : processListeners) {
-            processListener.start(processId);
+            processListener.onProcessStart(processId);
         }
     }
 
     private void notifySuccess(String processId) {
         for (ProcessListener processListener : processListeners) {
-            processListener.success(processId);
+            processListener.onProcessSuccess(processId);
         }
     }
 
     private void notifyFail(String processId, int exitCode) {
         for (ProcessListener processListener : processListeners) {
-            processListener.fail(processId, exitCode);
+            processListener.onProcessFail(processId, exitCode);
         }
     }
 
     private void notifyFail(String processId, Exception e) {
         for (ProcessListener processListener : processListeners) {
-            processListener.fail(processId, e);
+            processListener.onProcessFail(processId, e);
         }
     }
 
     private void notifyOutput(String processId, String output) {
         for (ProcessListener processListener : processListeners) {
-            processListener.output(processId, output);
+            processListener.onProcessOutput(processId, output);
+        }
+    }
+
+    private void notifyActivity(String processId, String output) {
+        for (ProcessListener processListener : processListeners) {
+            processListener.onProcessActivity(processId, output);
         }
     }
 

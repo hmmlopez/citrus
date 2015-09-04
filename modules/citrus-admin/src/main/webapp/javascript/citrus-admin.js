@@ -20,13 +20,13 @@ var CitrusAdmin;
 curl({
   baseUrl: 'javascript',
   paths: {
-      "TemplateManager" : "template/TemplateManager",
+      "TemplateManager" : "templates/TemplateManager",
       "WebSocketHolder" : "socket/WebSocketHolder",
       "AppRouter" : "router/AppRouter"
   }},
   ["TemplateManager", "AppRouter", "WebSocketHolder", "domReady!"], function(TemplateManager, AppRouter, WebSocketHolder) {
     
-  TemplateManager.load(['HeaderView', 'WelcomeView'], function() {
+  TemplateManager.load(['HeaderView', 'ProjectView'], function() {
       CitrusWebSocket = new WebSocketHolder();
       CitrusAdmin = new AppRouter();
       

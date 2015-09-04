@@ -16,213 +16,226 @@
 
 package com.consol.citrus.report;
 
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-
+import com.consol.citrus.*;
+import com.consol.citrus.container.TestActionContainer;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.consol.citrus.TestCase;
-import com.consol.citrus.container.SequenceAfterSuite;
-import com.consol.citrus.container.SequenceBeforeSuite;
-import com.consol.citrus.report.TestResult.RESULT;
+import org.springframework.util.StringUtils;
 
 /**
  * Simple logging reporter printing test start and ending to the console/logger.
  * 
  * @author Christoph Deppisch
  */
-public class LoggingReporter implements TestSuiteListener, TestListener, TestReporter {
+public class LoggingReporter implements MessageListener, TestSuiteListener, TestListener, TestActionListener, TestReporter {
     
     /** Collect test results for overall result overview at the very end of test execution */
     private TestResults testResults = new TestResults();
-    
-    /** Common decimal format for percentage calculation in report **/
-    private static DecimalFormat decFormat = new DecimalFormat("0.0");
-    
-    @Autowired(required = false)
-    private SequenceBeforeSuite beforeSuite;
-    
-    @Autowired(required = false)
-    private SequenceAfterSuite afterSuite;
-    
-    /**
-     * Logger
-     */
-    private static Logger log = LoggerFactory.getLogger(LoggingReporter.class);
 
-    static {
-        DecimalFormatSymbols symbol = new DecimalFormatSymbols();
-        symbol.setDecimalSeparator('.');
-        decFormat.setDecimalFormatSymbols(symbol);
-    }
-    /**
-     * @see com.consol.citrus.report.TestReporter#clearTestResults()
-     */
+    /** Inbound message logger */
+    private static Logger inboundMsgLogger = LoggerFactory.getLogger("Logger.Message_IN");
+
+    /** Outbound message logger */
+    private static Logger outboundMsgLogger = LoggerFactory.getLogger("Logger.Message_OUT");
+    
+    /** Logger */
+    private static Logger log = LoggerFactory.getLogger(Citrus.class);
+
+    @Override
     public void clearTestResults() {
         testResults = new TestResults();
     }
 
-    /**
-     * @see com.consol.citrus.report.TestReporter#generateTestResults()
-     */
+    @Override
     public void generateTestResults() {
-        if (log.isInfoEnabled()) {
-            log.info(seperator());
-            log.info("");
-            log.info("CITRUS TEST RESULTS");
-            log.info("");
-        }
-        
-        for (TestResult testResult : testResults) {
-            if (testResult.getResult().equals(RESULT.SKIP)) {
-                log.debug(testResult.toString());
-            } else {
+        separator();
+        newLine();
+        log.info("CITRUS TEST RESULTS");
+        newLine();
+
+        testResults.doWithResults(new TestResults.ResultCallback() {
+            @Override
+            public void doWithResult(TestResult testResult) {
                 log.info(testResult.toString());
+
+                if (testResult.isFailed()) {
+                    log.info(testResult.getFailureCause());
+                }
             }
-        }
-        
-        log.info("");
-        log.info("Total number of tests: " + (testResults.getFailed() + testResults.getSuccess()));
-        log.info("Skipped:\t" + testResults.getSkipped() + " (" + decFormat.format((double)testResults.getSkipped() / (testResults.size())*100) + "%)");
-        log.info("Failed:\t" + testResults.getFailed() + " (" + decFormat.format((double)testResults.getFailed() / (testResults.getFailed() + testResults.getSuccess()) * 100) + "%)");
-        log.info("Success:\t" + testResults.getSuccess() + " (" + decFormat.format((double)testResults.getSuccess() / (testResults.getFailed() + testResults.getSuccess()) * 100) + "%)");
+        });
 
-        log.info(seperator());
+        newLine();
+        log.info("Number of skipped tests: " + testResults.getSkipped() + " (" + testResults.getSkippedPercentage() + "%)");
+        newLine();
+
+        log.info("TOTAL:\t" + (testResults.getFailed() + testResults.getSuccess()));
+        log.info("FAILED:\t" + testResults.getFailed() + " (" + testResults.getFailedPercentage() + "%)");
+        log.info("SUCCESS:\t" + testResults.getSuccess() + " (" + testResults.getSuccessPercentage() + "%)");
+        newLine();
+
+        separator();
     }
 
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestFailure(com.consol.citrus.TestCase, java.lang.Throwable)
-     */
+    @Override
     public void onTestFailure(TestCase test, Throwable cause) {
-        if (cause != null) {
-            testResults.addResult(new TestResult(test.getName(), RESULT.FAILURE, cause, test.getParameters()));
-        } else {
-            testResults.addResult(new TestResult(test.getName(), RESULT.FAILURE, test.getParameters()));
-        }
+        testResults.addResult(TestResult.failed(test.getName(), cause, test.getParameters()));
 
-        log.error("Execution of test: " + test.getName() + " failed! Nested exception is: ", cause);
+        newLine();
+        log.error("TEST FAILED " + test.getName() + " <" + test.getPackageName() + "> Nested exception is: ", cause);
+        separator();
+        newLine();
     }
 
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestSkipped(com.consol.citrus.TestCase)
-     */
+    @Override
     public void onTestSkipped(TestCase test) {
-        if (log.isDebugEnabled()) {
-            log.debug(seperator());
-            log.debug("SKIP TEST: " + test.getName());
-            log.debug("Test explicitly excluded from test suite");
-            log.debug(seperator());
-        }
+        newLine();
+        separator();
+        log.info("SKIPPING TEST: " + test.getName());
+        separator();
+        newLine();
 
-        testResults.addResult(new TestResult(test.getName(), RESULT.SKIP, test.getParameters()));
+        testResults.addResult(TestResult.skipped(test.getName(), test.getParameters()));
     }
 
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestStart(com.consol.citrus.TestCase)
-     */
+    @Override
     public void onTestStart(TestCase test) {
-        log.info(seperator());
-        log.info("STARTING TEST: " + test.getName());
+        newLine();
+        separator();
+        log.info("STARTING TEST " + test.getName() + " <" + test.getPackageName() + ">");
+        newLine();
     }
 
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestFinish(com.consol.citrus.TestCase)
-     */
+    @Override
     public void onTestFinish(TestCase test) {
-        log.info("");
-        log.info("TEST FINISHED: " + test.getName());
-        log.info(seperator());
     }
 
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestSuccess(com.consol.citrus.TestCase)
-     */
+    @Override
     public void onTestSuccess(TestCase test) {
-        testResults.addResult(new TestResult(test.getName(), RESULT.SUCCESS, test.getParameters()));
+        testResults.addResult(TestResult.success(test.getName(), test.getParameters()));
+
+        newLine();
+        log.info("TEST SUCCESS " + test.getName() + " (" + test.getPackageName() + ")");
+        separator();
+        newLine();
     }
 
-    /**
-     * @see com.consol.citrus.report.TestSuiteListener#onFinish()
-     */
+    @Override
     public void onFinish() {
-        log.info(seperator());
-        log.info("FINISHED CITRUS TESTS");
-        log.info("");
-        
-        if (afterSuite != null) {
-            log.info(seperator());
-            log.info("STARTING AFTER SUITE");
-            log.info("");
-        }
+        newLine();
+        separator();
+        log.info("AFTER TEST SUITE");
+        newLine();
     }
 
-    /**
-     * @see com.consol.citrus.report.TestSuiteListener#onStart()
-     */
+    @Override
     public void onStart() {
-        log.info(seperator());
-        log.info("RUNNING CITRUS TESTS");
-        log.info("");
+        newLine();
+        separator();
+        newLine();
+        log.info("C I T R U S  T E S T S  " + Citrus.getVersion());
+        newLine();
 
-        if (beforeSuite != null) {
-            log.info(seperator());
-            log.info("STARTING BEFORE SUITE");
-            log.info("");
-        }
+        separator();
+        log.info("BEFORE TEST SUITE");
+        newLine();
     }
 
-    /**
-     * @see com.consol.citrus.report.TestSuiteListener#onFinishFailure(java.lang.Throwable)
-     */
+    @Override
     public void onFinishFailure(Throwable cause) {
-        if (afterSuite != null) {
-            log.info(seperator());
-            log.info("AFTER SUITE: failed");
-            log.info("");
-        }
+        newLine();
+        log.info("AFTER TEST SUITE: FAILED");
+        separator();
+        newLine();
     }
 
-    /**
-     * @see com.consol.citrus.report.TestSuiteListener#onFinishSuccess()
-     */
+    @Override
     public void onFinishSuccess() {
-        if (afterSuite != null) {
-            log.info(seperator());
-            log.info("AFTER SUITE: successfully");
-            log.info("");
-        }
+        newLine();
+        log.info("AFTER TEST SUITE: SUCCESS");
+        separator();
+        newLine();
     }
 
-    /**
-     * @see com.consol.citrus.report.TestSuiteListener#onStartFailure(java.lang.Throwable)
-     */
+    @Override
     public void onStartFailure(Throwable cause) {
-        if (beforeSuite != null) {
-            log.info(seperator());
-            log.info("BEFORE SUITE: failed");
-            log.info("");
+        newLine();
+        log.info("BEFORE TEST SUITE: FAILED");
+        separator();
+        newLine();
+    }
+
+    @Override
+    public void onStartSuccess() {
+        newLine();
+        log.info("BEFORE TEST SUITE: SUCCESS");
+        separator();
+        newLine();
+    }
+
+    @Override
+    public void onTestActionStart(TestCase testCase, TestAction testAction) {
+        newLine();
+        if (testCase.isTestRunner()) {
+            log.info("TEST STEP " + (testCase.getActionIndex(testAction) + 1) + ": " + (testAction.getName() != null ? testAction.getName() : testAction.getClass().getName()));
+        } else {
+            log.info("TEST STEP " + (testCase.getActionIndex(testAction) + 1) + "/" + testCase.getActionCount() + ": " + (testAction.getName() != null ? testAction.getName() : testAction.getClass().getName()));
+        }
+
+        if (testAction instanceof TestActionContainer) {
+            log.info("TEST ACTION CONTAINER with " + ((TestActionContainer)testAction).getActionCount() + " embedded actions");
+        }
+
+        if (log.isDebugEnabled() && StringUtils.hasText(testAction.getDescription())) {
+            log.debug("");
+            log.debug(testAction.getDescription());
+            log.debug("");
         }
     }
 
-    /**
-     * @see com.consol.citrus.report.TestSuiteListener#onStartSuccess()
-     */
-    public void onStartSuccess() {
-        if (beforeSuite != null) {
-            log.info(seperator());
-            log.info("BEFORE SUITE: successfully");
-            log.info("");
+    @Override
+    public void onTestActionFinish(TestCase testCase, TestAction testAction) {
+        newLine();
+        if (testCase.isTestRunner()) {
+            log.info("TEST STEP " + (testCase.getActionIndex(testAction) + 1) + " SUCCESS");
+        } else {
+            log.info("TEST STEP " + (testCase.getActionIndex(testAction) + 1) + "/" + testCase.getActionCount() + " SUCCESS");
         }
+    }
+
+    @Override
+    public void onTestActionSkipped(TestCase testCase, TestAction testAction) {
+        newLine();
+        if (testCase.isTestRunner()) {
+            log.info("SKIPPING TEST STEP " + (testCase.getActionIndex(testAction) + 1));
+        } else {
+            log.info("SKIPPING TEST STEP " + (testCase.getActionIndex(testAction) + 1) + "/" + testCase.getActionCount());
+        }
+        log.info("TEST ACTION " + (testAction.getName() != null ? testAction.getName() : testAction.getClass().getName()) + " SKIPPED");
+    }
+
+    @Override
+    public void onInboundMessage(Message message, TestContext context) {
+        inboundMsgLogger.info(message.toString());
+    }
+
+    @Override
+    public void onOutboundMessage(Message message, TestContext context) {
+        outboundMsgLogger.info(message.toString());
     }
 
     /**
      * Helper method to build consistent separators
-     * @return
      */
-    private String seperator() {
-        return "------------------------------------------------------------------------";
+    private void separator() {
+        log.info("------------------------------------------------------------------------");
     }
 
+    /**
+     * Adds new line to console logging output.
+     */
+    private void newLine() {
+        log.info("");
+    }
 }

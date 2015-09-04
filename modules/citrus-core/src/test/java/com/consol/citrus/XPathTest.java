@@ -16,39 +16,37 @@
 
 package com.consol.citrus;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-
-import java.util.*;
-
+import com.consol.citrus.actions.ReceiveMessageAction;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.endpoint.Endpoint;
+import com.consol.citrus.endpoint.EndpointConfiguration;
+import com.consol.citrus.message.DefaultMessage;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.messaging.Consumer;
+import com.consol.citrus.testng.AbstractTestNGUnitTest;
+import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
+import com.consol.citrus.validation.context.ValidationContext;
+import com.consol.citrus.validation.xml.XmlMessageValidationContext;
+import com.consol.citrus.validation.xml.XpathMessageValidationContext;
+import com.consol.citrus.validation.xml.XpathPayloadVariableExtractor;
 import org.easymock.EasyMock;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.integration.Message;
-import org.springframework.integration.support.MessageBuilder;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.consol.citrus.actions.ReceiveMessageAction;
-import com.consol.citrus.message.MessageReceiver;
-import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import com.consol.citrus.validation.MessageValidator;
-import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
-import com.consol.citrus.validation.context.ValidationContext;
-import com.consol.citrus.validation.xml.XmlMessageValidationContext;
-import com.consol.citrus.variable.XpathPayloadVariableExtractor;
+import java.util.*;
+
+import static org.easymock.EasyMock.*;
 
 /**
  * @author Christoph Deppisch
  */
 public class XPathTest extends AbstractTestNGUnitTest {
-    @Autowired
-    MessageValidator<ValidationContext> validator;
-    
-    MessageReceiver messageReceiver = EasyMock.createMock(MessageReceiver.class);
-    
-    ReceiveMessageAction receiveMessageBean;
+    private Endpoint endpoint = EasyMock.createMock(Endpoint.class);
+    private Consumer consumer = EasyMock.createMock(Consumer.class);
+    private EndpointConfiguration endpointConfiguration = EasyMock.createMock(EndpointConfiguration.class);
+
+    private ReceiveMessageAction receiveMessageBean;
     
     @Override
     @BeforeMethod
@@ -56,17 +54,18 @@ public class XPathTest extends AbstractTestNGUnitTest {
         super.prepareTest();
         
         receiveMessageBean = new ReceiveMessageAction();
-        receiveMessageBean.setMessageReceiver(messageReceiver);
-
-        receiveMessageBean.setValidator(validator);
+        receiveMessageBean.setEndpoint(endpoint);
     }
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testUsingXPath() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<ns1:root xmlns='http://test' xmlns:ns1='http://citrus'>"
+        Message message = new DefaultMessage("<ns1:root xmlns='http://test' xmlns:ns1='http://citrus'>"
                             + "<element attributeA='attribute-value' attributeB='attribute-value'>"
                                 + "<sub-elementA attribute='A'>text-value</sub-elementA>"
                                 + "<sub-elementB attribute='B'>text-value</sub-elementB>"
@@ -74,12 +73,11 @@ public class XPathTest extends AbstractTestNGUnitTest {
                             + "</element>"
                             + "<ns1:ns-element>namespace</ns1:ns-element>"
                             + "<search-element>search-for</search-element>"
-                        + "</ns1:root>")
-                        .build();
-        
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+                        + "</ns1:root>");
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         HashMap<String, String> validateMessageElements = new HashMap<String, String>();
         validateMessageElements.put("//:element/:sub-elementA", "text-value");
@@ -90,9 +88,9 @@ public class XPathTest extends AbstractTestNGUnitTest {
         validateMessageElements.put("//*[.='search-for']", "search-for");
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
-        validationContext.setPathValidationExpressions(validateMessageElements);
+        validationContext.setXpathExpressions(validateMessageElements);
         
         validationContext.setSchemaValidation(false);
         
@@ -105,9 +103,12 @@ public class XPathTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testUsingXPathWithDefaultNamespace() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<root xmlns='http://test'>"
+        Message message = new DefaultMessage("<root xmlns='http://test'>"
                             + "<element attributeA='attribute-value' attributeB='attribute-value'>"
                                 + "<sub-elementA attribute='A'>text-value</sub-elementA>"
                                 + "<sub-elementB attribute='B'>text-value</sub-elementB>"
@@ -115,12 +116,11 @@ public class XPathTest extends AbstractTestNGUnitTest {
                             + "</element>"
                             + "<ns-element>namespace</ns-element>"
                             + "<search-element>search-for</search-element>"
-                        + "</root>")
-                        .build();
-        
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+                        + "</root>");
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         HashMap<String, String> validateMessageElements = new HashMap<String, String>();
         validateMessageElements.put("//:element/:sub-elementA", "text-value");
@@ -131,9 +131,9 @@ public class XPathTest extends AbstractTestNGUnitTest {
         validateMessageElements.put("//*[.='search-for']", "search-for");
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
-        validationContext.setPathValidationExpressions(validateMessageElements);
+        validationContext.setXpathExpressions(validateMessageElements);
         
         validationContext.setSchemaValidation(false);
         
@@ -146,9 +146,12 @@ public class XPathTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testUsingXPathWithExplicitNamespace() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<root xmlns='http://test' xmlns:ns1='http://citrus'>"
+        Message message = new DefaultMessage("<root xmlns='http://test' xmlns:ns1='http://citrus'>"
                             + "<element attributeA='attribute-value' attributeB='attribute-value'>"
                                 + "<sub-elementA attribute='A'>text-value</sub-elementA>"
                                 + "<sub-elementB attribute='B'>text-value</sub-elementB>"
@@ -156,21 +159,20 @@ public class XPathTest extends AbstractTestNGUnitTest {
                             + "</element>"
                             + "<ns1:ns-element>namespace</ns1:ns-element>"
                             + "<search-element>search-for</search-element>"
-                        + "</root>")
-                        .build();
-        
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+                        + "</root>");
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         HashMap<String, String> validateMessageElements = new HashMap<String, String>();
         validateMessageElements.put("//:element/:sub-elementA", "text-value");
         validateMessageElements.put("//ns1:ns-element", "namespace");
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
-        validationContext.setPathValidationExpressions(validateMessageElements);
+        validationContext.setXpathExpressions(validateMessageElements);
         
         validationContext.setSchemaValidation(false);
         
@@ -183,9 +185,12 @@ public class XPathTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testUsingXPathWithExplicitNamespaceInElementDefinition() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<root xmlns='http://test'>"
+        Message message = new DefaultMessage("<root xmlns='http://test'>"
                             + "<element attributeA='attribute-value' attributeB='attribute-value'>"
                                 + "<sub-elementA attribute='A'>text-value</sub-elementA>"
                                 + "<sub-elementB attribute='B'>text-value</sub-elementB>"
@@ -193,21 +198,20 @@ public class XPathTest extends AbstractTestNGUnitTest {
                             + "</element>"
                             + "<ns1:ns-element xmlns:ns1='http://citrus'>namespace</ns1:ns-element>"
                             + "<search-element>search-for</search-element>"
-                        + "</root>")
-                        .build();
-        
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+                        + "</root>");
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         HashMap<String, String> validateMessageElements = new HashMap<String, String>();
         validateMessageElements.put("//:element/:sub-elementA", "text-value");
         validateMessageElements.put("//ns1:ns-element", "namespace");
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
-        validationContext.setPathValidationExpressions(validateMessageElements);
+        validationContext.setXpathExpressions(validateMessageElements);
         
         Map<String, String> namespaces = new HashMap<String, String>();
         namespaces.put("ns1", "http://citrus");
@@ -225,9 +229,12 @@ public class XPathTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testValidateMessageElementsUsingXPathWithResultTypes() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<ns1:root xmlns='http://test' xmlns:ns1='http://citrus'>"
+        Message message = new DefaultMessage("<ns1:root xmlns='http://test' xmlns:ns1='http://citrus'>"
                             + "<element attributeA='attribute-value' attributeB='attribute-value'>"
                                 + "<sub-elementA attribute='A'>text-value</sub-elementA>"
                                 + "<sub-elementB attribute='B'>text-value</sub-elementB>"
@@ -235,12 +242,11 @@ public class XPathTest extends AbstractTestNGUnitTest {
                             + "</element>"
                             + "<ns1:ns-element>namespace</ns1:ns-element>"
                             + "<search-element>search-for</search-element>"
-                        + "</ns1:root>")
-                        .build();
-        
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
+                        + "</ns1:root>");
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
         
         HashMap<String, String> validateMessageElements = new HashMap<String, String>();
         validateMessageElements.put("node://:element/:sub-elementA", "text-value");
@@ -258,9 +264,9 @@ public class XPathTest extends AbstractTestNGUnitTest {
         validateMessageElements.put("boolean:/ns1:root/:element-does-not-exist", "false");
         
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
-        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        XpathMessageValidationContext validationContext = new XpathMessageValidationContext();
         validationContext.setMessageBuilder(controlMessageBuilder);
-        validationContext.setPathValidationExpressions(validateMessageElements);
+        validationContext.setXpathExpressions(validateMessageElements);
         
         validationContext.setSchemaValidation(false);
         
@@ -273,9 +279,12 @@ public class XPathTest extends AbstractTestNGUnitTest {
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testExtractMessageValuesUsingXPathWithResultTypes() {
-        reset(messageReceiver);
+        reset(endpoint, consumer, endpointConfiguration);
+        expect(endpoint.createConsumer()).andReturn(consumer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        Message message = MessageBuilder.withPayload("<ns1:root xmlns='http://test' xmlns:ns1='http://citrus'>"
+        Message message = new DefaultMessage("<ns1:root xmlns='http://test' xmlns:ns1='http://citrus'>"
                             + "<element attributeA='attribute-value' attributeB='attribute-value'>"
                                 + "<sub-elementA attribute='A'>text-value</sub-elementA>"
                                 + "<sub-elementB attribute='B'>text-value</sub-elementB>"
@@ -283,13 +292,12 @@ public class XPathTest extends AbstractTestNGUnitTest {
                             + "</element>"
                             + "<ns1:ns-element>namespace</ns1:ns-element>"
                             + "<search-element>search-for</search-element>"
-                        + "</ns1:root>")
-                        .build();
-        
-        expect(messageReceiver.receive()).andReturn(message);
-        expect(messageReceiver.getActor()).andReturn(null).anyTimes();
-        replay(messageReceiver);
-        
+                        + "</ns1:root>");
+
+        expect(consumer.receive(anyObject(TestContext.class), anyLong())).andReturn(message).once();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, consumer, endpointConfiguration);
+
         HashMap<String, String> extractMessageElements = new HashMap<String, String>();
         extractMessageElements.put("node://:element/:sub-elementA", "elementA");
         extractMessageElements.put("node://:element/:sub-elementA/@attribute", "elementAttribute");
@@ -303,7 +311,7 @@ public class XPathTest extends AbstractTestNGUnitTest {
         extractMessageElements.put("boolean:/ns1:root/:element-does-not-exist", "existsNot");
         
         XpathPayloadVariableExtractor variableExtractor = new XpathPayloadVariableExtractor();
-        variableExtractor.setxPathExpressions(extractMessageElements);
+        variableExtractor.setXpathExpressions(extractMessageElements);
         
         receiveMessageBean.addVariableExtractors(variableExtractor);
         

@@ -16,20 +16,15 @@
 
 package com.consol.citrus.validation.builder;
 
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.integration.Message;
-import org.springframework.integration.MessageHeaders;
-import org.springframework.integration.support.MessageBuilder;
-import org.springframework.util.StringUtils;
-
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.message.CitrusMessageHeaders;
-import com.consol.citrus.message.MessageHeaderType;
+import com.consol.citrus.message.*;
 import com.consol.citrus.util.FileUtils;
+import com.consol.citrus.validation.interceptor.MessageConstructionInterceptor;
+import com.consol.citrus.variable.dictionary.DataDictionary;
+
+import java.lang.reflect.Constructor;
+import java.util.*;
 
 /**
  * Abstract control message builder is aware of message headers and delegates message payload
@@ -37,28 +32,64 @@ import com.consol.citrus.util.FileUtils;
  * 
  * @author Christoph Deppisch
  */
-public abstract class AbstractMessageContentBuilder<T> implements MessageContentBuilder<T> {
+public abstract class AbstractMessageContentBuilder implements MessageContentBuilder {
 
     /** The control headers expected for this message */
     private Map<String, Object> messageHeaders = new HashMap<String, Object>();
 
     /** The message header as a file resource path */
-    private String messageHeaderResourcePath;
+    private List<String> headerResources = new ArrayList<String>();
 
     /** The message header as inline data */
-    private String messageHeaderData;
-    
+    private List<String> headerData = new ArrayList<String>();
+
+    /** Optional data dictionary that explicitly modifies control message content before construction */
+    private DataDictionary dataDictionary;
+
+    /** List of manipulators for static message payload */
+    private List<MessageConstructionInterceptor> messageInterceptors = new ArrayList<MessageConstructionInterceptor>();
+
     /**
      * Constructs the control message with headers and payload coming from 
      * subclass implementation.
      */
-    public Message<T> buildMessageContent(TestContext context) {
-        return MessageBuilder.withPayload(buildMessagePayload(context))
-                             .copyHeaders(buildMessageHeaders(context))
-                             .build();
+    @Override
+    public Message buildMessageContent(TestContext context, String messageType) {
+        Object payload = buildMessagePayload(context);
+
+        try {
+            Message message = new DefaultMessage(payload, buildMessageHeaders(context));
+
+            if (payload != null) {
+                if (dataDictionary != null) {
+                    message = dataDictionary.interceptMessageConstruction(message, messageType, context);
+                }
+
+                message = context.getMessageConstructionInterceptors().interceptMessageConstruction(message, messageType, context);
+
+                for (MessageConstructionInterceptor modifyer : messageInterceptors) {
+                    message = modifyer.interceptMessageConstruction(message, messageType, context);
+                }
+            }
+
+            for (String headerResourcePath : headerResources) {
+                message.addHeaderData(context.replaceDynamicContentInString(FileUtils.readToString(FileUtils.getFileResource(headerResourcePath, context))));
+            }
+
+            for (String data : headerData){
+                message.addHeaderData(context.replaceDynamicContentInString(data.trim()));
+            }
+
+            return message;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CitrusRuntimeException("Failed to build message content", e);
+        }
+
     }
     
-    protected abstract T buildMessagePayload(TestContext context);
+    protected abstract Object buildMessagePayload(TestContext context);
 
     protected Map<String, Object> buildMessageHeaders(TestContext context) {
         try {
@@ -74,19 +105,8 @@ public abstract class AbstractMessageContentBuilder<T> implements MessageContent
                 }
             }
             
-            String headerContent = null;
-            if (messageHeaderResourcePath != null) {
-                headerContent = context.replaceDynamicContentInString(FileUtils.readToString(FileUtils.getFileResource(messageHeaderResourcePath, context)));
-            } else if (messageHeaderData != null){
-                headerContent = context.replaceDynamicContentInString(messageHeaderData.trim());
-            }
-            
-            if (StringUtils.hasText(headerContent)) {
-                headers.put(CitrusMessageHeaders.HEADER_CONTENT, headerContent);
-            }
-            
-            checkHeaderTypes(headers);
-            
+            MessageHeaderUtils.checkHeaderTypes(headers);
+
             return headers;
         } catch (RuntimeException e) {
             throw e;
@@ -94,23 +114,18 @@ public abstract class AbstractMessageContentBuilder<T> implements MessageContent
             throw new CitrusRuntimeException("Failed to build message content", e);
         }
     }
-    
+
+    @Override
+    public void setDataDictionary(DataDictionary dataDictionary) {
+        this.dataDictionary = dataDictionary;
+    }
+
     /**
-     * Method checks all header types to meet Spring Integration type requirements. For instance
-     * sequence number must be of type {@link Integer}.
-     * 
-     * @param headers the headers to check.
+     * Gets the data dictionary.
+     * @return
      */
-    private void checkHeaderTypes(Map<String, Object> headers) {
-        if (headers.containsKey(MessageHeaders.SEQUENCE_NUMBER)) {
-            String number = headers.get(MessageHeaders.SEQUENCE_NUMBER).toString();
-            headers.put(MessageHeaders.SEQUENCE_NUMBER, Integer.valueOf(number));
-        }
-        
-        if (headers.containsKey(MessageHeaders.SEQUENCE_SIZE)) {
-            String size = headers.get(MessageHeaders.SEQUENCE_SIZE).toString();
-            headers.put(MessageHeaders.SEQUENCE_SIZE, Integer.valueOf(size));
-        }
+    public DataDictionary getDataDictionary() {
+        return dataDictionary;
     }
 
     /**
@@ -122,19 +137,19 @@ public abstract class AbstractMessageContentBuilder<T> implements MessageContent
     }
 
     /**
-     * Sets the message header resource.
-     * @param messageHeaderResource the messageHeaderResource to set
+     * Sets the message header resource paths.
+     * @param headerResources the messageHeaderResource to set
      */
-    public void setMessageHeaderResourcePath(String messageHeaderResource) {
-        this.messageHeaderResourcePath = messageHeaderResource;
+    public void setHeaderResources(List<String> headerResources) {
+        this.headerResources = headerResources;
     }
 
     /**
      * Sets the message header data.
-     * @param messageHeaderData the messageHeaderData to set
+     * @param headerData
      */
-    public void setMessageHeaderData(String messageHeaderData) {
-        this.messageHeaderData = messageHeaderData;
+    public void setHeaderData(List<String> headerData) {
+        this.headerData = headerData;
     }
 
     /**
@@ -146,18 +161,43 @@ public abstract class AbstractMessageContentBuilder<T> implements MessageContent
     }
 
     /**
-     * Gets the messageHeaderResource.
-     * @return the messageHeaderResource the messageHeaderResource to get.
+     * Gets the message header resource paths.
+     * @return the header resources.
      */
-    public String getMessageHeaderResourcePath() {
-        return messageHeaderResourcePath;
+    public List<String> getHeaderResources() {
+        return headerResources;
     }
 
     /**
-     * Gets the messageHeaderData.
-     * @return the messageHeaderData the messageHeaderData to get.
+     * Gets the message header data.
+     * @return the headerData.
      */
-    public String getMessageHeaderData() {
-        return messageHeaderData;
+    public List<String> getHeaderData() {
+        return headerData;
+    }
+
+    /**
+     * Adds a new interceptor to the message construction process.
+     * @param interceptor
+     */
+    public void add(MessageConstructionInterceptor interceptor) {
+        messageInterceptors.add(interceptor);
+    }
+
+    /**
+     * Gets the messageInterceptors.
+     * @return the messageInterceptors
+     */
+    public List<MessageConstructionInterceptor> getMessageInterceptors() {
+        return messageInterceptors;
+    }
+
+    /**
+     * Sets the messageInterceptors.
+     * @param messageInterceptors the messageInterceptors to set
+     */
+    public void setMessageInterceptors(
+            List<MessageConstructionInterceptor> messageInterceptors) {
+        this.messageInterceptors = messageInterceptors;
     }
 }

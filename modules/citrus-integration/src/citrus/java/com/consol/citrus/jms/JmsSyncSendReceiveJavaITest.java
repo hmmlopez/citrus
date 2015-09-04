@@ -16,24 +16,25 @@
 
 package com.consol.citrus.jms;
 
+import com.consol.citrus.annotations.CitrusTest;
 import org.springframework.core.io.ClassPathResource;
-import org.testng.ITestContext;
 import org.testng.annotations.Test;
 
 /**
  * @author Christoph Deppisch
  */
-public class JmsSyncSendReceiveJavaITest extends AbstractJmsTestBuilder {
+@Test
+public class JmsSyncSendReceiveJavaITest extends AbstractJmsTestDesigner {
     
-    @Override
-    public void configure() {
+    @CitrusTest
+    public void JmsSyncSendReceiveJavaITest() {
         variable("correlationId", "citrus:randomNumber(10)");
         variable("messageId", "citrus:randomNumber(10)");
         variable("user", "Christoph");
         
         echo("Test 1: Send JMS request and receive sync JMS response (inline CDATA payload)");
         
-        send("helloRequestJmsSyncMessageSender")
+        send("helloSyncJmsEndpoint")
             .payload("<HelloRequest xmlns=\"http://www.consol.de/schemas/samples/sayHello.xsd\">" +
                            "<MessageId>${messageId}</MessageId>" +
                            "<CorrelationId>${correlationId}</CorrelationId>" +
@@ -43,7 +44,7 @@ public class JmsSyncSendReceiveJavaITest extends AbstractJmsTestBuilder {
             .header("Operation", "sayHello")
             .header("CorrelationId", "${correlationId}");
         
-        receive("helloResponseReplyMessageHandler")
+        receive("helloSyncJmsEndpoint")
             .payload("<HelloResponse xmlns=\"http://www.consol.de/schemas/samples/sayHello.xsd\">" +
                             "<MessageId>${messageId}</MessageId>" +
                             "<CorrelationId>${correlationId}</CorrelationId>" +
@@ -55,19 +56,14 @@ public class JmsSyncSendReceiveJavaITest extends AbstractJmsTestBuilder {
         
         echo("Test 2: Send JMS request and receive sync JMS response (file resource payload)");
         
-        send("helloRequestJmsSyncMessageSender")
+        send("helloSyncJmsEndpoint")
             .payload(new ClassPathResource("com/consol/citrus/jms/helloRequest.xml"))
             .header("Operation", "sayHello")
             .header("CorrelationId", "${correlationId}");
         
-        receive("helloResponseReplyMessageHandler")
+        receive("helloSyncJmsEndpoint")
             .payload(new ClassPathResource("com/consol/citrus/jms/helloResponse.xml"))
             .header("Operation", "sayHello")
             .header("CorrelationId", "${correlationId}");
-    }
-    
-    @Test
-    public void echoActionITest(ITestContext testContext) {
-        executeTest(testContext);
     }
 }

@@ -16,10 +16,9 @@
 
 package com.consol.citrus.http;
 
-import org.testng.ITestContext;
-import org.testng.annotations.Test;
-
+import com.consol.citrus.annotations.CitrusXmlTest;
 import com.consol.citrus.testng.AbstractTestNGCitrusTest;
+import org.testng.annotations.Test;
 
 /**
  * @author Christoph Deppisch
@@ -27,7 +26,22 @@ import com.consol.citrus.testng.AbstractTestNGCitrusTest;
  */
 public class HttpServerITest extends AbstractTestNGCitrusTest {
     @Test
-    public void httpServerITest(ITestContext testContext) {
-        executeTest(testContext);
-    }
+    @CitrusXmlTest
+    public void HttpServerITest() {}
+
+    @Test
+    @CitrusXmlTest
+    public void HttpServerStandaloneITest() {}
+
+    @Test
+    @CitrusXmlTest
+    public void HttpParallelRequest_1_ITest() {}
+
+    @Test
+    @CitrusXmlTest
+    public void HttpParallelRequest_2_ITest() {}
+
+    @Test
+    @CitrusXmlTest
+    public void HttpParallelRequest_3_ITest() {}
 }

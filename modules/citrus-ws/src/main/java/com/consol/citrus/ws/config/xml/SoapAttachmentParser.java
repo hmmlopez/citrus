@@ -16,12 +16,9 @@
 
 package com.consol.citrus.ws.config.xml;
 
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.xml.ParserContext;
+import com.consol.citrus.ws.message.SoapAttachment;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
-
-import com.consol.citrus.config.util.BeanDefinitionParserUtils;
 
 /**
  * Parser for SOAP attachment element in Citrus ws namespace.
@@ -38,26 +35,41 @@ public final class SoapAttachmentParser {
     
     /**
      * Parse the attachment element with all children and attributes.
-     * @param builder
-     * @param element
-     * @param parserContext
+     * @param attachmentElement
      */
-    public static void parseAttachment(BeanDefinitionBuilder builder, Element element, ParserContext parserContext) {
-        Element attachmentElement = DomUtils.getChildElementByTagName(element, "attachment");
-        if (attachmentElement == null) { return; }
-        
-        BeanDefinitionParserUtils.setPropertyValue(builder, attachmentElement.getAttribute("content-id"), "contentId");
-        BeanDefinitionParserUtils.setPropertyValue(builder, attachmentElement.getAttribute("content-type"), "contentType");
-        BeanDefinitionParserUtils.setPropertyValue(builder, attachmentElement.getAttribute("charset-name"), "charsetName");
+    public static SoapAttachment parseAttachment(Element attachmentElement) {
+        SoapAttachment soapAttachment = new SoapAttachment();
+
+        if (attachmentElement.hasAttribute("content-id")) {
+            soapAttachment.setContentId(attachmentElement.getAttribute("content-id"));
+        }
+
+        if (attachmentElement.hasAttribute("content-type")) {
+            soapAttachment.setContentType(attachmentElement.getAttribute("content-type"));
+        }
+
+        if (attachmentElement.hasAttribute("charset-name")) {
+            soapAttachment.setCharsetName(attachmentElement.getAttribute("charset-name"));
+        }
+
+        if (attachmentElement.hasAttribute("mtom-inline")) {
+            soapAttachment.setMtomInline(Boolean.parseBoolean(attachmentElement.getAttribute("mtom-inline")));
+        }
+
+        if (attachmentElement.hasAttribute("encoding-type")) {
+            soapAttachment.setEncodingType(attachmentElement.getAttribute("encoding-type"));
+        }
         
         Element attachmentDataElement = DomUtils.getChildElementByTagName(attachmentElement, "data");
         if (attachmentDataElement != null) {
-            builder.addPropertyValue("attachmentData", DomUtils.getTextValue(attachmentDataElement));
+            soapAttachment.setContent(DomUtils.getTextValue(attachmentDataElement));
         }
         
         Element attachmentResourceElement = DomUtils.getChildElementByTagName(attachmentElement, "resource");
         if (attachmentResourceElement != null) {
-            builder.addPropertyValue("attachmentResourcePath", attachmentResourceElement.getAttribute("file"));
+            soapAttachment.setContentResourcePath(attachmentResourceElement.getAttribute("file"));
         }
+
+        return soapAttachment;
     }
 }

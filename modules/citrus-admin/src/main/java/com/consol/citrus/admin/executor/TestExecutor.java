@@ -16,34 +16,20 @@
 
 package com.consol.citrus.admin.executor;
 
-import java.util.List;
-
-import com.consol.citrus.admin.model.TestCaseType;
+import com.consol.citrus.admin.configuration.RunConfiguration;
 
 /**
  * @author Christoph Deppisch
  */
-public interface TestExecutor {
+public interface TestExecutor<C extends RunConfiguration> {
 
     /**
-     * Get all available test cases in default Citrus test directory
-     * @return
-     */
-    List<TestCaseType> getTests();
-    
-    /**
      * Run test and throw exception when failed.
+     * @param packageName
      * @param testName
+     * @param runConfiguration
      * @throws Exception
      */
-    void execute(String testName) throws Exception;
-    
-    /**
-     * Gets the source code for a given test case. Either getting the XML or Java part of the test.
-     * @param testPackage
-     * @param testName
-     * @param type
-     * @return
-     */
-    String getSourceCode(String testPackage, String testName, String type);
+    void execute(String packageName, String testName, C runConfiguration) throws Exception;
+
 }

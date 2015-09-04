@@ -21,13 +21,25 @@ import com.consol.citrus.container.Assert;
 /**
  * @author Christoph Deppisch
  * @since 1.3
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.AssertExceptionBuilder}
  */
-public class AssertDefinition extends AbstractActionDefinition<Assert> {
+public class AssertDefinition extends AbstractActionContainerDefinition<Assert> {
 
+	/**
+	 * Constructor using action field.
+	 * @param action
+	 */
 	public AssertDefinition(Assert action) {
 	    super(action);
     }
-	
+
+	/**
+	 * Default constructor.
+	 */
+	public AssertDefinition() {
+		super(new Assert());
+	}
+
 	/**
 	 * Expected exception during execution.
 	 * @param exception
@@ -37,7 +49,7 @@ public class AssertDefinition extends AbstractActionDefinition<Assert> {
 	    action.setException(exception);
 	    return this;
 	}
-	
+
     /**
      * Expect error message in exception.
      * @param message

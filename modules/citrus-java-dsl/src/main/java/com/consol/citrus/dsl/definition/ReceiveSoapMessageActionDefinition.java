@@ -16,39 +16,31 @@
 
 package com.consol.citrus.dsl.definition;
 
-import java.io.IOException;
-import java.util.Map;
-
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.Resource;
-import org.springframework.integration.Message;
-
 import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.message.MessageType;
 import com.consol.citrus.util.FileUtils;
-import com.consol.citrus.validation.MessageValidator;
-import com.consol.citrus.validation.callback.ValidationCallback;
-import com.consol.citrus.validation.context.ValidationContext;
-import com.consol.citrus.ws.SoapAttachment;
 import com.consol.citrus.ws.actions.ReceiveSoapMessageAction;
+import com.consol.citrus.ws.message.SoapAttachment;
 import com.consol.citrus.ws.validation.SoapAttachmentValidator;
+import org.springframework.core.io.Resource;
+
+import java.io.IOException;
 
 /**
  * Special SOAP receive message action definition adds SOAP specific properties.
  * 
  * @author Christoph Deppisch
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.ReceiveSoapMessageBuilder}
  */
-public class ReceiveSoapMessageActionDefinition extends ReceiveMessageActionDefinition {
+public class ReceiveSoapMessageActionDefinition extends ReceiveMessageActionDefinition<ReceiveSoapMessageAction, ReceiveSoapMessageActionDefinition> {
 
     /**
      * Default constructor using action and application context.
      * @param action
-     * @param ctx
      */
-    public ReceiveSoapMessageActionDefinition(ReceiveSoapMessageAction action, ApplicationContext ctx) {
-        super(action, ctx, null);
+    public ReceiveSoapMessageActionDefinition(ReceiveSoapMessageAction action) {
+        super(action);
     }
-    
+
     /**
      * Sets the control attachment with string content.
      * @param contentId
@@ -56,14 +48,17 @@ public class ReceiveSoapMessageActionDefinition extends ReceiveMessageActionDefi
      * @param content
      * @return
      */
-    public ReceiveSoapMessageActionDefinition attatchment(String contentId, String contentType, String content) {
-        getAction().setContentId(contentId);
-        getAction().setContentType(contentType);
-        getAction().setAttachmentData(content);
-        
+    public ReceiveSoapMessageActionDefinition attachment(String contentId, String contentType, String content) {
+        SoapAttachment attachment = new SoapAttachment();
+        attachment.setContentId(contentId);
+        attachment.setContentType(contentType);
+        attachment.setContent(content);
+
+        getAction().getAttachments().add(attachment);
+
         return this;
     }
-    
+
     /**
      * Sets the control attachment with content resource.
      * @param contentId
@@ -71,41 +66,41 @@ public class ReceiveSoapMessageActionDefinition extends ReceiveMessageActionDefi
      * @param contentResource
      * @return
      */
-    public ReceiveSoapMessageActionDefinition attatchment(String contentId, String contentType, Resource contentResource) {
-        getAction().setContentId(contentId);
-        getAction().setContentType(contentType);
-        
+    public ReceiveSoapMessageActionDefinition attachment(String contentId, String contentType, Resource contentResource) {
+        SoapAttachment attachment = new SoapAttachment();
+        attachment.setContentId(contentId);
+        attachment.setContentType(contentType);
+
         try {
-            getAction().setAttachmentData(FileUtils.readToString(contentResource));
+            attachment.setContent(FileUtils.readToString(contentResource));
         } catch (IOException e) {
             throw new CitrusRuntimeException("Failed to read attachment content resource", e);
         }
-        
+
+        getAction().getAttachments().add(attachment);
+
         return this;
     }
-    
+
     /**
      * Sets the charset name for this send action definition's control attachment.
-     * @param charset
+     * @param charsetName
      * @return
      */
     public ReceiveSoapMessageActionDefinition charset(String charsetName) {
-        getAction().setCharsetName(charsetName);
+        if (!getAction().getAttachments().isEmpty()) {
+            getAction().getAttachments().get(getAction().getAttachments().size() - 1).setCharsetName(charsetName);
+        }
         return this;
     }
-    
+
     /**
      * Sets the control attachment from Java object instance.
      * @param attachment
      * @return
      */
-    public ReceiveSoapMessageActionDefinition attatchment(SoapAttachment attachment) {
-        getAction().setContentId(attachment.getContentId());
-        getAction().setContentType(attachment.getContentType());
-        getAction().setAttachmentData(attachment.getContent());
-        
-        getAction().setCharsetName(attachment.getCharsetName());
-        
+    public ReceiveSoapMessageActionDefinition attachment(SoapAttachment attachment) {
+        getAction().getAttachments().add(attachment);
         return this;
     }
 
@@ -116,82 +111,18 @@ public class ReceiveSoapMessageActionDefinition extends ReceiveMessageActionDefi
      */
     public ReceiveSoapMessageActionDefinition attachmentValidator(SoapAttachmentValidator validator) {
         getAction().setAttachmentValidator(validator);
-        
+
         return this;
     }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition description(String description) {
-        return (ReceiveSoapMessageActionDefinition) super.description(description);
-    }
 
-    @Override
-    public ReceiveSoapMessageActionDefinition message(Message<?> controlMessage) {
-        return (ReceiveSoapMessageActionDefinition) super.message(controlMessage);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition payload(String payload) {
-        return (ReceiveSoapMessageActionDefinition) super.payload(payload);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition header(String name, Object value) {
-        return (ReceiveSoapMessageActionDefinition) super.header(name, value);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition timeout(long receiveTimeout) {
-        return (ReceiveSoapMessageActionDefinition) super.timeout(receiveTimeout);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition messageType(MessageType messageType) {
-        return (ReceiveSoapMessageActionDefinition) super.messageType(messageType);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition extractFromHeader(String headerName, String variable) {
-        return (ReceiveSoapMessageActionDefinition) super.extractFromHeader(headerName, variable);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition extractFromPayload(String xpath, String variable) {
-        return (ReceiveSoapMessageActionDefinition) super.extractFromPayload(xpath, variable);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition selector(Map<String, String> messageSelector) {
-        return (ReceiveSoapMessageActionDefinition) super.selector(messageSelector);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition selector(String messageSelector) {
-        return (ReceiveSoapMessageActionDefinition) super.selector(messageSelector);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition validationCallback(ValidationCallback callback) {
-        return (ReceiveSoapMessageActionDefinition) super.validationCallback(callback);
-    }
-
-    @Override
-    public ReceiveSoapMessageActionDefinition validator(MessageValidator<? extends ValidationContext> validator) {
-        return (ReceiveSoapMessageActionDefinition) super.validator(validator);
-    }
-    
-    @Override
-    public ReceiveSoapMessageActionDefinition validator(String validatorName) {
-        return (ReceiveSoapMessageActionDefinition) super.validator(validatorName);
-    }
-    
     @Override
     public ReceiveSoapMessageActionDefinition soap() {
         return this;
     }
-    
+
     @Override
-    public ReceiveSoapMessageAction getAction() {
-        return (ReceiveSoapMessageAction) super.getAction();
+    public ReceiveHttpMessageActionDefinition http() {
+        throw new CitrusRuntimeException("Invalid use of http and soap action definition");
     }
+
 }

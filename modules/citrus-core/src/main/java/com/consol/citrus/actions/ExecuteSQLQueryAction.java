@@ -16,28 +16,21 @@
 
 package com.consol.citrus.actions;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.*;
+import com.consol.citrus.validation.matcher.ValidationMatcherUtils;
+import com.consol.citrus.validation.script.ScriptValidationContext;
+import com.consol.citrus.validation.script.sql.GroovySqlResultSetValidator;
+import com.consol.citrus.validation.script.sql.SqlResultSetScriptValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.util.CollectionUtils;
 
-import com.consol.citrus.CitrusConstants;
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.exceptions.UnknownElementException;
-import com.consol.citrus.exceptions.ValidationException;
-import com.consol.citrus.validation.matcher.ValidationMatcherUtils;
-import com.consol.citrus.validation.script.ScriptValidationContext;
-import com.consol.citrus.validation.script.sql.GroovySqlResultSetValidator;
-import com.consol.citrus.validation.script.sql.SqlResultSetScriptValidator;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Action executes SQL queries and offers result set validation.
@@ -65,16 +58,22 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
     /** NULL value representation in SQL */
     private static final String NULL_VALUE = "NULL";
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(ExecuteSQLQueryAction.class);
+
+    /**
+     * Default constructor.
+     */
+    public ExecuteSQLQueryAction() {
+        setName("sql-query");
+    }
 
     @Override
     public void doExecute(TestContext context) {
         if (statements.isEmpty()) {
             statements = createStatementsFromFileResource(context);
         }
+
         try {
             //for control result set validation
             Map<String, List<String>> columnValuesMap = new HashMap<String, List<String>>();
@@ -84,6 +83,8 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
             for (String stmt : statements) {
                 validateSqlStatement(stmt);
                 stmt = context.replaceDynamicContentInString(stmt);
+
+                log.info("Executing SQL query: " + stmt);
                 List<Map<String, Object>> results = getJdbcTemplate().queryForList(stmt);
 
                 allResultRows.addAll(results);
@@ -284,6 +285,7 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
                         + "found value: NULL expected value: " + controlValue);
             }
         }
+
         if (resultValue.equals(controlValue)) {
             if (log.isDebugEnabled()) {
                 log.debug("Validation successful for column: '" + columnName +
@@ -313,8 +315,9 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
      *
      * @param controlResultSet
      */
-    public void setControlResultSet(Map<String, List<String>> controlResultSet) {
+    public ExecuteSQLQueryAction setControlResultSet(Map<String, List<String>> controlResultSet) {
         this.controlResultSet = controlResultSet;
+        return this;
     }
 
     /**
@@ -323,17 +326,19 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
      *
      * @param variablesMap the variables to be created out of database values
      */
-    public void setExtractVariables(Map<String, String> variablesMap) {
+    public ExecuteSQLQueryAction setExtractVariables(Map<String, String> variablesMap) {
         this.extractVariables = variablesMap;
+        return this;
     }
 
     /**
      * Sets the script validation context.
      * @param scriptValidationContext the scriptValidationContext to set
      */
-    public void setScriptValidationContext(
+    public ExecuteSQLQueryAction setScriptValidationContext(
             ScriptValidationContext scriptValidationContext) {
         this.scriptValidationContext = scriptValidationContext;
+        return this;
     }
 
     /**
@@ -348,8 +353,9 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
      * Sets the validator.
      * @param validator the validator to set
      */
-    public void setValidator(SqlResultSetScriptValidator validator) {
+    public ExecuteSQLQueryAction setValidator(SqlResultSetScriptValidator validator) {
         this.validator = validator;
+        return this;
     }
 
     /**

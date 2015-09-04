@@ -16,17 +16,14 @@
 
 package com.consol.citrus.actions;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.StringTokenizer;
-
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
+import java.io.*;
+import java.util.StringTokenizer;
 
 /**
  * Test action prompts user data from standard input stream. The input data is then stored as new
@@ -39,9 +36,7 @@ import com.consol.citrus.exceptions.CitrusRuntimeException;
  */
 public class InputAction extends AbstractTestAction {
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(InputAction.class);
 
     /** Prompted message displayed to the user before input */
@@ -55,6 +50,13 @@ public class InputAction extends AbstractTestAction {
     
     /** Separates valid answer possibilities */
     public static final String ANSWER_SEPARATOR = "/";
+
+    /**
+     * Default constructor.
+     */
+    public InputAction() {
+        setName("input");
+    }
 
     @Override
     public void doExecute(TestContext context) {
@@ -80,7 +82,7 @@ public class InputAction extends AbstractTestAction {
             do {
                 log.info(display);
 
-                BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+                BufferedReader stdin = getInputReader();
                 input = stdin.readLine();
             } while (validAnswers != null && !checkAnswer(input));
         } catch (IOException e) {
@@ -88,6 +90,14 @@ public class InputAction extends AbstractTestAction {
         }
 
         context.setVariable(variable, input.trim());
+    }
+
+    /**
+     * Provides input stream reader from system in standard input stream.
+     * @return
+     */
+    protected BufferedReader getInputReader() {
+        return new BufferedReader(new InputStreamReader(System.in));
     }
 
     /**
@@ -113,24 +123,27 @@ public class InputAction extends AbstractTestAction {
      * Sets the message.
      * @param message the message to set
      */
-    public void setMessage(String message) {
+    public InputAction setMessage(String message) {
         this.message = message;
+        return this;
     }
 
     /**
      * Sets the variable.
      * @param variable the variable to set
      */
-    public void setVariable(String variable) {
+    public InputAction setVariable(String variable) {
         this.variable = variable;
+        return this;
     }
 
     /**
      * Sets the valid answers.
      * @param validAnswers the validAnswers to set
      */
-    public void setValidAnswers(String validAnswers) {
+    public InputAction setValidAnswers(String validAnswers) {
         this.validAnswers = validAnswers;
+        return this;
     }
 
     /**

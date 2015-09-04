@@ -22,11 +22,11 @@
       </echo>
 
       <parallel>
-        <send with="sshClientWithWrongPrivateKey">
+        <send endpoint="sshClientWithWrongPrivateKey">
           <message>
             <data>
               <![CDATA[
-                  <ssh-request>
+                  <ssh-request xmlns="http://www.citrusframework.org/schema/ssh/message">
                     <command>shutdown</command>
                     <stdin>input</stdin>
                   </ssh-request>
@@ -36,11 +36,11 @@
         </send>
 
         <sequential>
-          <receive with="sshRequestReceiver">
+          <receive endpoint="sshRequestReceiver">
             <message>
               <data>
                 <![CDATA[
-                    <ssh-request>
+                    <ssh-request xmlns="http://www.citrusframework.org/schema/ssh/message">
                        <command>shutdown</command>
                        <stdin>input</stdin>
                     </ssh-request>
@@ -48,15 +48,15 @@
               </data>
             </message>
             <extract>
-              <header name="jms_messageId" variable="correlation_id"/>
+              <header name="citrus_jms_messageId" variable="correlation_id"/>
             </extract>
           </receive>
 
-          <send with="sshResponseSender">
+          <send endpoint="sshResponseSender">
             <message>
               <data>
                 <![CDATA[
-                    <ssh-response>
+                    <ssh-response xmlns="http://www.citrusframework.org/schema/ssh/message">
                         <stdout>Hello Citrus</stdout>
                         <exit>0</exit>
                     </ssh-response>
@@ -64,17 +64,17 @@
               </data>
             </message>
             <header>
-              <element name="jms_correlationId" value="${correlation_id}"/>
+              <element name="citrus_jms_correlationId" value="${correlation_id}"/>
             </header>
           </send>
         </sequential>
       </parallel>
 
-      <receive with="sshResponseReceiver">
+      <receive endpoint="sshClient">
         <message>
           <data>
             <![CDATA[
-                <ssh-response>
+                <ssh-response xmlns="http://www.citrusframework.org/schema/ssh/message">
                     <stdout>Hello Citrus</stdout>
                     <stderr/>
                     <exit>0</exit>

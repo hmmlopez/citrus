@@ -16,10 +16,12 @@
 
 package com.consol.citrus.functions.core;
 
-import java.util.List;
-
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.InvalidFunctionUsageException;
 import com.consol.citrus.functions.Function;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
 
 /**
  * Function returning the absolute value of a decimal number.
@@ -29,20 +31,20 @@ import com.consol.citrus.functions.Function;
 public class AbsoluteFunction implements Function {
 
     /**
-     * @see com.consol.citrus.functions.Function#execute(java.util.List)
+     * @see com.consol.citrus.functions.Function#execute(java.util.List, com.consol.citrus.context.TestContext)
      * @throws InvalidFunctionUsageException
      */
-    public String execute(List<String> parameterList) {
-        if (parameterList == null || parameterList.isEmpty()) {
+    public String execute(List<String> parameterList, TestContext context) {
+        if (CollectionUtils.isEmpty(parameterList)) {
             throw new InvalidFunctionUsageException("Function parameters must not be empty");
         }
 
         String param = parameterList.get(0);
         
         if (param.contains(".")) {
-            return Double.valueOf(Math.abs(Double.valueOf(param))).toString();
+            return String.valueOf(Math.abs(Double.valueOf(param)));
         } else {
-            return Integer.valueOf(Math.abs(Integer.valueOf(param))).toString();
+            return String.valueOf(Math.abs(Integer.valueOf(param)));
         }
     }
 

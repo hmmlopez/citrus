@@ -16,15 +16,18 @@
 
 package com.consol.citrus;
 
-import java.util.*;
-import java.util.Map.Entry;
-
+import com.consol.citrus.container.*;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.exceptions.TestCaseFailedException;
+import com.consol.citrus.report.TestActionListeners;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import com.consol.citrus.container.AbstractActionContainer;
-import com.consol.citrus.context.TestContext;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Test case executing a list of {@link TestAction} in sequence.
@@ -34,69 +37,186 @@ import com.consol.citrus.context.TestContext;
  */
 public class TestCase extends AbstractActionContainer implements BeanNameAware {
 
-    /** Further chain of test actions to be executed in any case (Success, error)
+    /** Further chain of test actions to be executed in any case (success, error)
      * Usually used to clean up database in any case of test result */
-    private List<TestAction> finallyChain = new ArrayList<TestAction>();
+    private List<TestAction> finalActions = new ArrayList<>();
 
     /** Tests variables */
-    private Map<String, ?> variableDefinitions = new LinkedHashMap<String, Object>();
-
-    /** Test context */
-    private TestContext context;
+    private Map<String, Object> variableDefinitions = new LinkedHashMap<>();
 
     /** Meta-Info */
     private TestCaseMetaInfo metaInfo = new TestCaseMetaInfo();
     
     /** Test package name */
-    private String packageName;
+    private String packageName = this.getClass().getPackage().getName();
     
     /** In case test was called with parameters from outside */
-    private String[] parameters = new String[] {};
+    private Map<String, Object> parameters = new LinkedHashMap<String, Object>();
+
+    @Autowired
+    private TestActionListeners testActionListeners = new TestActionListeners();
+
+    @Autowired(required = false)
+    private List<SequenceBeforeTest> beforeTest;
+
+    @Autowired(required = false)
+    private List<SequenceAfterTest> afterTest;
+
+    /** The result of this test case */
+    private TestResult testResult;
+
+    /** Marks this test case as test runner instance that grows in size step by step as test actions are executed */
+    private boolean testRunner = false;
     
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(TestCase.class);
+
+    /**
+     * Starts the test case.
+     * @param context
+     */
+    public void start(TestContext context) {
+        context.getTestListeners().onTestStart(this);
+
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Initializing test case");
+            }
+
+           /* build up the global test variables in TestContext by
+            * getting the names and the current values of all variables */
+            for (Entry<String, Object> entry : variableDefinitions.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+
+                if (value instanceof String) {
+                    //check if value is a variable or function (and resolve it accordingly)
+                    context.setVariable(key, context.replaceDynamicContentInString(value.toString()));
+                } else {
+                    context.setVariable(key, value);
+                }
+            }
+
+            /* Debug print all variables */
+            if (context.hasVariables() && log.isDebugEnabled()) {
+                log.debug("Global variables:");
+                for (Entry<String, Object> entry : context.getVariables().entrySet()) {
+                    log.debug(entry.getKey() + " = " + entry.getValue());
+                }
+            }
+
+            // add default variables for test
+            context.setVariable(CitrusConstants.TEST_NAME_VARIABLE, getName());
+            context.setVariable(CitrusConstants.TEST_PACKAGE_VARIABLE, getPackageName());
+
+            for (Entry<String, Object> paramEntry : parameters.entrySet()) {
+                log.info(String.format("Initializing test parameter '%s' as variable", paramEntry.getKey()));
+                context.setVariable(paramEntry.getKey(), paramEntry.getValue());
+            }
+
+            beforeTest(context);
+        } catch (Exception e) {
+            testResult = TestResult.failed(getName(), e);
+            throw new TestCaseFailedException(e);
+        } catch (Error e) {
+            testResult = TestResult.failed(getName(), e);
+            throw new TestCaseFailedException(e);
+        }
+    }
 
     /**
      * Method executes the test case and all its actions.
      */
     public void doExecute(TestContext context) {
-        if (log.isDebugEnabled()) {
-            log.debug("Initializing TestCase");
+        if (!getMetaInfo().getStatus().equals(TestCaseMetaInfo.Status.DISABLED)) {
+
+            try {
+                start(context);
+
+                for (TestAction action: actions) {
+                    executeAction(action, context);
+                }
+
+                testResult = TestResult.success(getName());
+            } catch (TestCaseFailedException e) {
+                throw e;
+            } catch (Exception e) {
+                testResult = TestResult.failed(getName(), e);
+                throw new TestCaseFailedException(e);
+            } catch (Error e) {
+                testResult = TestResult.failed(getName(), e);
+                throw new TestCaseFailedException(e);
+            } finally {
+                finish(context);
+            }
+        } else {
+            testResult = TestResult.skipped(getName());
+            context.getTestListeners().onTestSkipped(this);
         }
+    }
 
-        this.context = context;
-
-        /* build up the global test variables in TestContext by
-         * getting the names and the current values of all variables */
-        for (Entry<String, ?> entry : variableDefinitions.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-
-            //check if value is a variable or function (and resolve it accordingly)
-            value = context.replaceDynamicContentInString(value.toString());
-
-            context.setVariable(key, value);
-        }
-
-        /* Debug print all variables */
-        if (context.hasVariables() && log.isDebugEnabled()) {
-            log.debug("TestCase using the following global variables:");
-            for (Entry<String, Object> entry : context.getVariables().entrySet()) {
-                log.debug(entry.getKey() + " = " + entry.getValue());
+    /**
+     * Sequence of test actions before the test case.
+     * @param context
+     */
+    public void beforeTest(TestContext context) {
+        if (beforeTest != null) {
+            for (SequenceBeforeTest sequenceBeforeTest : beforeTest) {
+                try {
+                    if (sequenceBeforeTest.shouldExecute(getName(), getPackageName(), null)) //TODO provide test group information
+                        sequenceBeforeTest.execute(context);
+                } catch (Exception e) {
+                    throw new CitrusRuntimeException("Before test failed with errors", e);
+                }
             }
         }
+    }
 
-        /* execute the test actions */
-        for (TestAction action: actions) {
-            log.info("");
-            log.info("TESTACTION " + (getActionIndex(action)+1) + "/" + getActionCount());
+    /**
+     * Sequence of test actions after test case. This operation does not raise andy errors - exceptions
+     * will only be logged as warning. This is because we do not want to overwrite errors that may have occurred
+     * before in test execution.
+     *
+     * @param context
+     */
+    public void afterTest(TestContext context) {
+        if (afterTest != null) {
+            for (SequenceAfterTest sequenceAfterTest : afterTest) {
+                try {
+                    if (sequenceAfterTest.shouldExecute(getName(), getPackageName(), null)) {
+                        sequenceAfterTest.execute(context);
+                    }
+                } catch (Exception e) {
+                    log.warn("After test failed with errors", e);
+                } catch (Error e) {
+                    log.warn("After test failed with errors", e);
+                }
+            }
+        }
+    }
 
-            setLastExecutedAction(action);
-            
-            /* execute the test action and validate its success */
-            action.execute(context);
+    /**
+     * Executes a single test action with given test context.
+     * @param action
+     * @param context
+     */
+    public void executeAction(TestAction action, TestContext context) {
+        try {
+            if (!action.isDisabled(context)) {
+                testActionListeners.onTestActionStart(this, action);
+                setLastExecutedAction(action);
+
+                action.execute(context);
+                testActionListeners.onTestActionFinish(this, action);
+            } else {
+                testActionListeners.onTestActionSkipped(this, action);
+            }
+        } catch (Exception e) {
+            testResult = TestResult.failed(getName(), e);
+            throw new TestCaseFailedException(e);
+        } catch (Error e) {
+            testResult = TestResult.failed(getName(), e);
+            throw new TestCaseFailedException(e);
         }
     }
 
@@ -104,15 +224,36 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
      * Method that will be executed in any case of test case result (success, error)
      * Usually used for clean up tasks.
      */
-    public void finish() {
-        if (!finallyChain.isEmpty()) {
-            log.info("Now reaching finally block to finish test case");
-        }
+    public void finish(TestContext context) {
+        context.getTestListeners().onTestFinish(this);
 
-        /* walk through the finally chain and execute the actions in there */
-        for (TestAction action : finallyChain) {
-            /* execute the test action and validate its success */
-            action.execute(context);
+        try {
+            if (!finalActions.isEmpty()) {
+                log.info("Finish test case with actions in finally block");
+
+                /* walk through the finally chain and execute the actions in there */
+                for (TestAction action : finalActions) {
+                    action.execute(context);
+                }
+            }
+
+            if (testResult == null) {
+                testResult = TestResult.success(getName());
+            }
+        } catch (Exception e) {
+            testResult = TestResult.failed(getName(), e);
+            throw new TestCaseFailedException(e);
+        } catch (Error e) {
+            testResult = TestResult.failed(getName(), e);
+            throw new TestCaseFailedException(e);
+        } finally {
+            if (testResult.isSuccess()) {
+                context.getTestListeners().onTestSuccess(this);
+            } else {
+                context.getTestListeners().onTestFailure(this, testResult.getCause());
+            }
+
+            afterTest(context);
         }
     }
 
@@ -120,16 +261,24 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
      * Setter for variables.
      * @param variableDefinitions
      */
-    public void setVariableDefinitions(Map<String, ?> variableDefinitions) {
+    public void setVariableDefinitions(Map<String, Object> variableDefinitions) {
         this.variableDefinitions = variableDefinitions;
     }
 
     /**
-     * Setter for finally chain.
-     * @param finallyChain
+     * Gets the variable definitions.
+     * @return
      */
-    public void setFinallyChain(List<TestAction> finallyChain) {
-        this.finallyChain = finallyChain;
+    public Map<String, Object> getVariableDefinitions() {
+        return variableDefinitions;
+    }
+
+    /**
+     * Setter for finally chain.
+     * @param finalActions
+     */
+    public void setFinalActions(List<TestAction> finalActions) {
+        this.finalActions = finalActions;
     }
 
     @Override
@@ -138,13 +287,13 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
 
         buf.append("[testVariables:");
 
-        for (Entry<String, ?> entry : variableDefinitions.entrySet()) {
+        for (Entry<String, Object> entry : variableDefinitions.entrySet()) {
             buf.append(entry.getKey()).append("=").append(entry.getValue().toString()).append(";");
         }
 
         buf.append("] ");
 
-        buf.append("[testChain:");
+        buf.append("[testActions:");
 
         for (TestAction action: actions) {
             buf.append(action.getClass().getName()).append(";");
@@ -159,8 +308,8 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
      * Adds action to finally action chain.
      * @param testAction
      */
-    public void addFinallyChainAction(TestAction testAction) {
-        this.finallyChain.add(testAction);
+    public void addFinalAction(TestAction testAction) {
+        this.finalActions.add(testAction);
     }
     
     /**
@@ -181,10 +330,10 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
 
     /**
      * Get all actions in the finally chain.
-     * @return the finallyChain
+     * @return the finalActions
      */
-    public List<TestAction> getFinallyChain() {
-        return finallyChain;
+    public List<TestAction> getFinalActions() {
+        return finalActions;
     }
 
     /**
@@ -194,22 +343,6 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
         if (getName() == null) {
             setName(name);
         }
-    }
-
-    /**
-     * Get the test context.
-     * @return the variables
-     */
-    public TestContext getTestContext() {
-        return context;
-    }
-
-    /**
-     * Set the test context.
-     * @param context the context to set
-     */
-    public void setTestContext(TestContext context) {
-        this.context = context;
     }
 
     /**
@@ -230,17 +363,65 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
 
     /**
      * Sets the parameters.
-     * @param parameters the parameters to set
+     * @param parameterNames the parameter names to set
+     * @param parameterValues the parameters to set
      */
-    public void setParameters(String[] parameters) {
-        this.parameters = Arrays.copyOf(parameters, parameters.length);
+    public void setParameters(String[] parameterNames, Object[] parameterValues) {
+        if (parameterNames.length != parameterValues.length) {
+            throw new CitrusRuntimeException(String.format("Invalid test parameter usage - received '%s' parameters with '%s' values",
+                    parameterNames.length, parameterValues.length));
+        }
+
+        for (int i = 0; i < parameterNames.length; i++) {
+            this.parameters.put(parameterNames[i], parameterValues[i]);
+        }
     }
 
     /**
-     * Gets the parameters.
+     * Gets the test parameters.
      * @return the parameters
      */
-    public String[] getParameters() {
-        return Arrays.copyOf(parameters, parameters.length);
+    public Map<String, Object> getParameters() {
+        return parameters;
+    }
+
+    /**
+     * Sets the list of test action listeners.
+     * @param testActionListeners
+     */
+    public void setTestActionListeners(TestActionListeners testActionListeners) {
+        this.testActionListeners = testActionListeners;
+    }
+
+    /**
+     * Sets the before test action sequence.
+     * @param beforeTest
+     */
+    public void setBeforeTest(List<SequenceBeforeTest> beforeTest) {
+        this.beforeTest = beforeTest;
+    }
+
+    /**
+     * Sets the after test action sequence.
+     * @param afterTest
+     */
+    public void setAfterTest(List<SequenceAfterTest> afterTest) {
+        this.afterTest = afterTest;
+    }
+
+    /**
+     * Sets the test runner flag.
+     * @param testRunner
+     */
+    public void setTestRunner(boolean testRunner) {
+        this.testRunner = testRunner;
+    }
+
+    /**
+     * Gets the test runner flag.
+     * @return
+     */
+    public boolean isTestRunner() {
+        return testRunner;
     }
 }

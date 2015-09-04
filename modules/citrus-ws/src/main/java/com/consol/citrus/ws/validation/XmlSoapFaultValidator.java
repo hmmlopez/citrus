@@ -16,16 +16,21 @@
 
 package com.consol.citrus.ws.validation;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.integration.Message;
-import org.springframework.integration.support.MessageBuilder;
-
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.ValidationException;
+import com.consol.citrus.message.*;
 import com.consol.citrus.validation.MessageValidator;
+import com.consol.citrus.validation.MessageValidatorRegistry;
 import com.consol.citrus.validation.context.ValidationContext;
+import com.consol.citrus.validation.xml.DomXmlMessageValidator;
 import com.consol.citrus.validation.xml.XmlMessageValidationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 /**
  * Soap fault validator implementation that delegates soap fault detail validation to default XML message validator
@@ -33,12 +38,20 @@ import com.consol.citrus.validation.xml.XmlMessageValidationContext;
  * 
  * @author Christoph Deppisch
  */
-public class XmlSoapFaultValidator extends AbstractFaultDetailValidator {
+public class XmlSoapFaultValidator extends AbstractFaultDetailValidator implements InitializingBean, ApplicationContextAware {
 
-    @Autowired(required = false)
-    @Qualifier("xmlMessageValidator")
-    private MessageValidator<XmlMessageValidationContext> messageValidator;
-    
+    /** Logger */
+    private static Logger log = LoggerFactory.getLogger(XmlSoapFaultValidator.class);
+
+    @Autowired
+    private MessageValidatorRegistry messageValidatorRegistry;
+
+    /** Xml message validator */
+    private DomXmlMessageValidator messageValidator;
+
+    /** Spring bean application context */
+    private ApplicationContext applicationContext;
+
     /**
      * Delegates to XML message validator for validation of fault detail.
      */
@@ -53,18 +66,32 @@ public class XmlSoapFaultValidator extends AbstractFaultDetailValidator {
             xmlMessageValidationContext = new XmlMessageValidationContext();
         }
         
-        Message<String> controlMessage = MessageBuilder.withPayload(controlDetailString).build();
+        Message controlMessage = new DefaultMessage(controlDetailString);
         xmlMessageValidationContext.setControlMessage(controlMessage);
 
-        Message<String> receivedMessage = MessageBuilder.withPayload(receivedDetailString).build();
+        Message receivedMessage = new DefaultMessage(receivedDetailString);
         messageValidator.validateMessage(receivedMessage, context, xmlMessageValidationContext);
     }
 
-    /**
-     * Sets the message validator capable of validating the Soap fault detail.
-     * @param validator the validator to set
-     */
-    public void setMessageValidator(MessageValidator<XmlMessageValidationContext> validator) {
-        this.messageValidator = validator;
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        // try to find xml message validator in registry
+        for (MessageValidator<? extends ValidationContext> validator : messageValidatorRegistry.getMessageValidators()) {
+            if (validator instanceof DomXmlMessageValidator &&
+                    validator.supportsMessageType(MessageType.XML.name(), new DefaultMessage(""))) {
+                messageValidator = (DomXmlMessageValidator) validator;
+            }
+        }
+
+        if (messageValidator == null) {
+            log.warn("No XML message validator found in Spring bean context - setting default validator");
+            messageValidator = new DomXmlMessageValidator();
+            messageValidator.setApplicationContext(applicationContext);
+        }
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }

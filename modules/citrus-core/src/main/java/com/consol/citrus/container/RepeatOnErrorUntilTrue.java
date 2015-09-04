@@ -33,65 +33,72 @@ import com.consol.citrus.exceptions.CitrusRuntimeException;
  * 
  * @author Christoph Deppisch
  */
-public class RepeatOnErrorUntilTrue extends AbstractIteratingTestAction {
-    /** Auto sleep in seconds */
-    private long autoSleep = 1;
+public class RepeatOnErrorUntilTrue extends AbstractIteratingActionContainer {
+    /** Auto sleep in milliseconds */
+    private Long autoSleep = 1000L;
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(RepeatOnErrorUntilTrue.class);
 
     /**
-     * @see com.consol.citrus.container.AbstractIteratingTestAction#executeIteration(com.consol.citrus.context.TestContext)
+     * Default constructor.
+     */
+    public RepeatOnErrorUntilTrue() {
+        setName("repeat-on-error");
+    }
+
+    /**
+     * @see AbstractIteratingActionContainer#executeIteration(com.consol.citrus.context.TestContext)
      * @throws CitrusRuntimeException
      */
     @Override
     public void executeIteration(TestContext context) {
-        do {
+        CitrusRuntimeException exception = null;
+
+        while(!checkCondition(context)) {
             try {
+                exception = null;
                 executeActions(context);
                 break;
             } catch (CitrusRuntimeException e) {
-                index++;
-                if (checkCondition()) {
-                    throw new CitrusRuntimeException(e);
-                } else {
-                    index--;
-                    log.info("Caught exception of type " + e.getClass().getName() + " '" + 
-                            e.getMessage() + "' - repeating because of error");
-                }
-            } finally {
+                exception = e;
+
+                log.info("Caught exception of type " + e.getClass().getName() + " '" +
+                        e.getMessage() + "' - performing retry #" + index);
+
+                doAutoSleep();
                 index++;
             }
-        } while (!checkCondition());
+        }
+
+        if (exception != null) {
+            log.info("All retries have failed - raising exception " + exception.getClass().getName());
+            throw exception;
+        }
     }
 
     /**
-     * Executes the nested test actions.
-     * @param context
+     * Sleep amount of time in between iterations.
      */
-    protected void executeActions(TestContext context) {
+    private void doAutoSleep() {
         if (autoSleep > 0) {
-            log.info("Sleeping " + autoSleep + " seconds");
+            log.info("Sleeping " + autoSleep + " milliseconds");
 
             try {
-                Thread.sleep(autoSleep * 1000L);
+                Thread.sleep(autoSleep);
             } catch (InterruptedException e) {
                 log.error("Error during doc generation", e);
             }
 
-            log.info("Returning after " + autoSleep + " seconds");
+            log.info("Returning after " + autoSleep + " milliseconds");
         }
-
-        super.executeActions(context);
     }
 
     /**
      * Setter for auto sleep time (in seconds).
      * @param autoSleep
      */
-    public void setAutoSleep(long autoSleep) {
+    public void setAutoSleep(Long autoSleep) {
         this.autoSleep = autoSleep;
     }
 
@@ -99,7 +106,7 @@ public class RepeatOnErrorUntilTrue extends AbstractIteratingTestAction {
      * Gets the autoSleep.
      * @return the autoSleep
      */
-    public long getAutoSleep() {
+    public Long getAutoSleep() {
         return autoSleep;
     }
 }

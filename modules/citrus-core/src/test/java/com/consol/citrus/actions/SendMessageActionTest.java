@@ -16,43 +16,45 @@
 
 package com.consol.citrus.actions;
 
-import static org.easymock.EasyMock.*;
+import com.consol.citrus.TestActor;
+import com.consol.citrus.TestCase;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.endpoint.Endpoint;
+import com.consol.citrus.endpoint.EndpointConfiguration;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.message.*;
+import com.consol.citrus.messaging.Producer;
+import com.consol.citrus.testng.AbstractTestNGUnitTest;
+import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
+import com.consol.citrus.validation.json.*;
+import com.consol.citrus.validation.script.GroovyScriptMessageBuilder;
+import com.consol.citrus.validation.xml.*;
+import com.consol.citrus.variable.MessageHeaderVariableExtractor;
+import com.consol.citrus.variable.VariableExtractor;
+import org.easymock.EasyMock;
+import org.easymock.IAnswer;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
-import org.springframework.integration.Message;
-import org.springframework.integration.MessageHeaders;
-import org.springframework.integration.support.MessageBuilder;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
-import com.consol.citrus.TestActor;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.message.MessageSender;
-import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
-import com.consol.citrus.validation.interceptor.XpathMessageConstructionInterceptor;
-import com.consol.citrus.validation.script.GroovyScriptMessageBuilder;
-import com.consol.citrus.validation.xml.DomXmlMessageValidator;
-import com.consol.citrus.validation.xml.XmlMessageValidationContext;
-import com.consol.citrus.variable.MessageHeaderVariableExtractor;
-import com.consol.citrus.variable.VariableExtractor;
+import static org.easymock.EasyMock.*;
 
 /**
  * @author Christoph Deppisch
  */
 public class SendMessageActionTest extends AbstractTestNGUnitTest {
 
-    private MessageSender messageSender = EasyMock.createMock(MessageSender.class);
+    private Endpoint endpoint = EasyMock.createMock(Endpoint.class);
+    private Producer producer = EasyMock.createMock(Producer.class);
+    private EndpointConfiguration endpointConfiguration = EasyMock.createMock(EndpointConfiguration.class);
     
     @Test
     @SuppressWarnings("rawtypes")
 	public void testSendMessageWithMessagePayloadData() {
 		SendMessageAction sendAction = new SendMessageAction();
-		sendAction.setMessageSender(messageSender);
+		sendAction.setEndpoint(endpoint);
 		
 		TestActor testActor = new TestActor();
         testActor.setName("TESTACTOR");
@@ -64,14 +66,13 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
 		
 		sendAction.setMessageBuilder(messageBuilder);
 		
-		Map<String, Object> headers = new HashMap<String, Object>();
-		final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-		                        .copyHeaders(headers)
-		                        .build();
-		
-		reset(messageSender);
-		
-		messageSender.send((Message)anyObject());
+		final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+		producer.send(anyObject(Message.class), anyObject(TestContext.class));
 		expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -82,35 +83,34 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-		
-		expect(messageSender.getActor()).andReturn(null).anyTimes();
-		
-		replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
 		
 		sendAction.execute(context);
-		
-		verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
 	}
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithMessagePayloadResource() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
         
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadResourcePath("classpath:com/consol/citrus/actions/test-request-payload.xml");
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -121,21 +121,21 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
 	public void testSendMessageWithMessageBuilderScriptData() {
 		SendMessageAction sendAction = new SendMessageAction();
-		sendAction.setMessageSender(messageSender);
+		sendAction.setEndpoint(endpoint);
 		StringBuilder sb = new StringBuilder();
 		sb.append("markupBuilder.TestRequest(){\n");
 		sb.append("Message('Hello World!')\n");
@@ -146,14 +146,13 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
 		
 		sendAction.setMessageBuilder(scriptMessageBuidler);
 		
-		Map<String, Object> headers = new HashMap<String, Object>();
-		final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-		                        .copyHeaders(headers)
-		                        .build();
-		
-		reset(messageSender);
-		
-		messageSender.send((Message)anyObject());
+		final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
 		expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -164,14 +163,14 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-		
-		expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
 		
 		sendAction.execute(context);
-		
-		verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
 	}
     
     @Test
@@ -180,7 +179,7 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         context.setVariable("text", "Hello World!");
         
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
         StringBuilder sb = new StringBuilder();
         sb.append("markupBuilder.TestRequest(){\n");
         sb.append("Message('${text}')\n");
@@ -191,14 +190,13 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         
         sendAction.setMessageBuilder(scriptMessageBuidler);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -209,35 +207,34 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithMessageBuilderScriptResource() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
         
         GroovyScriptMessageBuilder scriptMessageBuidler = new GroovyScriptMessageBuilder();
         scriptMessageBuidler.setScriptResourcePath("classpath:com/consol/citrus/actions/test-request-payload.groovy");
         
         sendAction.setMessageBuilder(scriptMessageBuidler);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -248,21 +245,21 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithMessagePayloadDataVariablesSupport() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
         
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<TestRequest><Message>${myText}</Message></TestRequest>");
@@ -271,14 +268,13 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         
         context.setVariable("myText", "Hello World!");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -289,21 +285,21 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithMessagePayloadResourceVariablesSupport() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadResourcePath("classpath:com/consol/citrus/actions/test-request-payload-with-variables.xml");
@@ -312,14 +308,13 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         
         context.setVariable("myText", "Hello World!");
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -330,35 +325,34 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithMessagePayloadResourceFunctionsSupport() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadResourcePath("classpath:com/consol/citrus/actions/test-request-payload-with-functions.xml");
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -369,21 +363,21 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageOverwriteMessageElementsXPath() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<TestRequest><Message>?</Message></TestRequest>");
@@ -392,18 +386,17 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         overwriteElements.put("/TestRequest/Message", "Hello World!");
         
         XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteElements);
-        messageBuilder.addMessageConstructingInterceptor(interceptor);
+        messageBuilder.add(interceptor);
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -414,21 +407,66 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
+    }
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    public void testSendMessageOverwriteMessageElementsJsonPath() {
+        SendMessageAction sendAction = new SendMessageAction();
+        sendAction.setMessageType(MessageType.JSON.toString());
+        sendAction.setEndpoint(endpoint);
+
+        PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
+        messageBuilder.setPayloadData("{ \"TestRequest\": { \"Message\": \"?\" }}");
+
+        Map<String, String> overwriteElements = new HashMap<String, String>();
+        overwriteElements.put("$.TestRequest.Message", "Hello World!");
+
+        JsonPathMessageConstructionInterceptor interceptor = new JsonPathMessageConstructionInterceptor(overwriteElements);
+        messageBuilder.add(interceptor);
+
+        sendAction.setMessageBuilder(messageBuilder);
+
+        final Message controlMessage = new DefaultMessage("{ \"TestRequest\": { \"Message\": \"Hello World!\" }}");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
+        expectLastCall().andAnswer(new IAnswer<Object>() {
+            public Object answer() throws Throwable {
+                JsonTextMessageValidator validator = new JsonTextMessageValidator();
+                JsonMessageValidationContext validationContext = new JsonMessageValidationContext();
+                validationContext.setControlMessage(controlMessage);
+
+                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                return null;
+            }
+        }).once();
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
+
+        sendAction.execute(context);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageOverwriteMessageElementsDotNotation() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<TestRequest><Message>?</Message></TestRequest>");
@@ -437,18 +475,17 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         overwriteElements.put("TestRequest.Message", "Hello World!");
         
         XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteElements);
-        messageBuilder.addMessageConstructingInterceptor(interceptor);
+        messageBuilder.add(interceptor);
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -459,21 +496,21 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageOverwriteMessageElementsXPathWithNamespace() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\">" +
@@ -483,18 +520,17 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         overwriteElements.put("/ns0:TestRequest/ns0:Message", "Hello World!");
 
         XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteElements);
-        messageBuilder.addMessageConstructingInterceptor(interceptor);
+        messageBuilder.add(interceptor);
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\"><ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\"><ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -506,21 +542,21 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageOverwriteMessageElementsXPathWithDefaultNamespace() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<TestRequest xmlns=\"http://citrusframework.org/unittest\">" +
@@ -530,18 +566,17 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         overwriteElements.put("/:TestRequest/:Message", "Hello World!");
 
         XpathMessageConstructionInterceptor interceptor = new XpathMessageConstructionInterceptor(overwriteElements);
-        messageBuilder.addMessageConstructingInterceptor(interceptor);
+        messageBuilder.add(interceptor);
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest xmlns=\"http://citrusframework.org/unittest\"><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<TestRequest xmlns=\"http://citrusframework.org/unittest\"><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -553,40 +588,40 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithMessageHeaders() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
         
         final Map<String, Object> controlHeaders = new HashMap<String, Object>();
         controlHeaders.put("Operation", "sayHello");
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(controlHeaders)
-                                .build();
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", controlHeaders);
 
         final Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
         messageBuilder.setMessageHeaders(headers);
         
         sendAction.setMessageBuilder(messageBuilder);
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -597,21 +632,21 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithHeaderValuesVariableSupport() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
@@ -620,19 +655,19 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         
         final Map<String, Object> controlHeaders = new HashMap<String, Object>();
         controlHeaders.put("Operation", "sayHello");
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(controlHeaders)
-                                .build();
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", controlHeaders);
 
         final Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "${myOperation}");
         messageBuilder.setMessageHeaders(headers);
         
         sendAction.setMessageBuilder(messageBuilder);
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -643,30 +678,32 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     public void testSendMessageWithUnknwonVariableInMessagePayload() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<TestRequest><Message>${myText}</Message></TestRequest>");
         
         sendAction.setMessageBuilder(messageBuilder);
-        
-        reset(messageSender);
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         try {
             sendAction.execute(context);
@@ -681,7 +718,7 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
     @Test
     public void testSendMessageWithUnknwonVariableInHeaders() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
@@ -691,11 +728,13 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         messageBuilder.setMessageHeaders(headers);
         
         sendAction.setMessageBuilder(messageBuilder);
-        
-        reset(messageSender);
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         try {
             sendAction.execute(context);
@@ -711,16 +750,14 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithExtractHeaderValues() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
         
         final Map<String, Object> controlHeaders = new HashMap<String, Object>();
         controlHeaders.put("Operation", "sayHello");
-        final Message controlMessage = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(controlHeaders)
-                                .build();
+        final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>", controlHeaders);
 
         final Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
@@ -738,10 +775,12 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         
         variableExtractors.add(variableExtractor);
         sendAction.setVariableExtractors(variableExtractors);
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -752,67 +791,68 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
         
         Assert.assertNotNull(context.getVariable("myOperation"));
         Assert.assertNotNull(context.getVariable("correlationId"));
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testMissingMessagePayload() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        sendAction.setEndpoint(endpoint);
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(MessageBuilder.withPayload("").build());
+                validationContext.setControlMessage(new DefaultMessage(""));
                 
                 validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithXmlDeclaration() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -823,35 +863,34 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithUTF16Encoding() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<?xml version=\"1.0\" encoding=\"UTF-16\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<?xml version=\"1.0\" encoding=\"UTF-16\"?><TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-16\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -862,35 +901,34 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithISOEncoding() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -901,64 +939,65 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithUnsupportedEncoding() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadData("<?xml version=\"1.0\" encoding=\"MyUnsupportedEncoding\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
         
         sendAction.setMessageBuilder(messageBuilder);
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         try {
             sendAction.execute(context);
         } catch (CitrusRuntimeException e) {
             Assert.assertTrue(e.getCause() instanceof UnsupportedEncodingException);
         }
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithMessagePayloadResourceISOEncoding() {
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
 
         PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
         messageBuilder.setPayloadResourcePath("classpath:com/consol/citrus/actions/test-request-iso-encoding.xml");
         
         sendAction.setMessageBuilder(messageBuilder);
         
-        Map<String, Object> headers = new HashMap<String, Object>();
-        final Message controlMessage = MessageBuilder.withPayload("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><TestRequest><Message>Hello World!</Message></TestRequest>")
-                                .copyHeaders(headers)
-                                .build();
-        
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        final Message controlMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
@@ -969,20 +1008,21 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
                 return null;
             }
         }).once();
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+
+        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     public void testDisabledSendMessage() {
+        TestCase testCase = new TestCase();
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
         
         TestActor disabledActor = new TestActor();
         disabledActor.setDisabled(true);
@@ -992,22 +1032,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         messageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
         
         sendAction.setMessageBuilder(messageBuilder);
-        
-        reset(messageSender);
-        
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
-        
-        sendAction.execute(context);
-        
-        verify(messageSender);
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, producer, endpointConfiguration);
+
+        testCase.addTestAction(sendAction);
+        testCase.execute(context);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
-    public void testDisabledSendMessageByMessageSender() {
+    public void testDisabledSendMessageByEndpointActor() {
+        TestCase testCase = new TestCase();
         SendMessageAction sendAction = new SendMessageAction();
-        sendAction.setMessageSender(messageSender);
+        sendAction.setEndpoint(endpoint);
         
         TestActor disabledActor = new TestActor();
         disabledActor.setDisabled(true);
@@ -1016,16 +1058,17 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         messageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
         
         sendAction.setMessageBuilder(messageBuilder);
-        
-        reset(messageSender);
-        
-        expect(messageSender.getActor()).andReturn(disabledActor).times(2);
-        
-        replay(messageSender);
-        
-        sendAction.execute(context);
-        
-        verify(messageSender);
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpoint.getActor()).andReturn(disabledActor).times(2);
+        replay(endpoint, producer, endpointConfiguration);
+
+        testCase.addTestAction(sendAction);
+        testCase.execute(context);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
 }

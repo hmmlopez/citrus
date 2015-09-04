@@ -16,19 +16,18 @@
 
 package com.consol.citrus.validation.xhtml;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.io.Resource;
-import org.springframework.integration.Message;
-import org.springframework.integration.support.MessageBuilder;
-import org.w3c.tidy.Tidy;
-
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.ValidationException;
+import com.consol.citrus.message.DefaultMessage;
+import com.consol.citrus.message.Message;
 import com.consol.citrus.validation.xml.DomXmlMessageValidator;
 import com.consol.citrus.validation.xml.XmlMessageValidationContext;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.io.Resource;
+import org.w3c.tidy.Tidy;
+
+import java.io.StringReader;
+import java.io.StringWriter;
 
 /**
  * XHTML message validator using W3C jtidy to automatically convert HTML content to XHTML fixing most common
@@ -54,11 +53,11 @@ public class XhtmlMessageValidator extends DomXmlMessageValidator implements Ini
     private static final String XHTML_DOCTYPE_DEFINITION = "DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0";
     
     @Override
-    public void validateMessage(Message<?> receivedMessage,
+    public void validateMessage(Message receivedMessage,
             TestContext context, XmlMessageValidationContext validationContext)
             throws ValidationException {
         
-        String messagePayload = receivedMessage.getPayload().toString();
+        String messagePayload = receivedMessage.getPayload(String.class);
         String xhtmlPayload;
         
         // check if we already have XHTML message content
@@ -72,12 +71,12 @@ public class XhtmlMessageValidator extends DomXmlMessageValidator implements Ini
             xhtmlPayload = xhtmlPayload.replaceFirst(W3_XHTML1_URL, "org/w3/xhtml/");
         }
         
-        super.validateMessage(MessageBuilder.withPayload(xhtmlPayload).copyHeaders(receivedMessage.getHeaders()).build(), 
+        super.validateMessage(new DefaultMessage(xhtmlPayload, receivedMessage.copyHeaders()),
                 context, validationContext);
     }
     
     @Override
-    public boolean supportsMessageType(String messageType) {
+    public boolean supportsMessageType(String messageType, Message message) {
         return messageType.equalsIgnoreCase(XHTML_MESSAGE_TYPE);
     }
 

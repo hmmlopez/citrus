@@ -16,22 +16,19 @@
 
 package com.consol.citrus.validation;
 
-import java.util.List;
-import java.util.Map.Entry;
-
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.ValidationException;
+import com.consol.citrus.message.*;
+import com.consol.citrus.validation.context.ValidationContext;
+import com.consol.citrus.validation.matcher.ValidationMatcherUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.integration.Message;
-import org.springframework.integration.MessageHeaders;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.exceptions.ValidationException;
-import com.consol.citrus.message.CitrusMessageHeaders;
-import com.consol.citrus.util.MessageUtils;
-import com.consol.citrus.validation.context.ValidationContext;
-import com.consol.citrus.validation.matcher.ValidationMatcherUtils;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Basic control message validator provides message header validation. Subclasses only have to add
@@ -39,7 +36,7 @@ import com.consol.citrus.validation.matcher.ValidationMatcherUtils;
  * 
  * @author Christoph Deppisch
  */
-public class ControlMessageValidator extends AbstractMessageValidator<ControlMessageValidationContext> {
+public class ControlMessageValidator<T extends ControlMessageValidationContext> extends AbstractMessageValidator<T> {
 
     /**
      * Logger
@@ -50,18 +47,25 @@ public class ControlMessageValidator extends AbstractMessageValidator<ControlMes
      * Implementation performs message header validation as well as message
      * payload validation.
      */
-    public void validateMessage(Message<?> receivedMessage, TestContext context,
-            ControlMessageValidationContext validationContext) {
-        
-        Message<?> controlMessage = validationContext.getControlMessage(context);
-        
+    public void validateMessage(Message receivedMessage, TestContext context,
+            T validationContext) {
+        log.info("Start message validation ...");
+
+        Message controlMessage = validationContext.getControlMessage(context);
+
         // validate message payload first
-        validateMessagePayload(receivedMessage, controlMessage, context);
-        
-        // validate message headers
-        validateMessageHeader(controlMessage.getHeaders(), 
-                receivedMessage.getHeaders(), 
+        validateMessagePayload(receivedMessage,
+                controlMessage,
+                validationContext,
                 context);
+
+        // validate message headers
+        validateMessageHeader(controlMessage.copyHeaders(),
+                receivedMessage.copyHeaders(),
+                validationContext,
+                context);
+
+        log.info("Message validation successful: All values OK");
     }
     
     /**
@@ -69,11 +73,12 @@ public class ControlMessageValidator extends AbstractMessageValidator<ControlMes
      * located in validation context.
      * 
      * @param receivedMessage the received message to check.
-     * @param validationContext the current validation context holding the expected control message.
+     * @param controlMessage the expected control message.
+     * @param validationContext the current validation context
      * @param context the current test context with all variables.
      */
-    public void validateMessagePayload(Message<?> receivedMessage, 
-            Message<?> controlMessage, TestContext context) throws ValidationException {
+    public void validateMessagePayload(Message receivedMessage,
+            Message controlMessage, T validationContext, TestContext context) throws ValidationException {
     }
     
     
@@ -82,9 +87,11 @@ public class ControlMessageValidator extends AbstractMessageValidator<ControlMes
      *
      * @param controlHeaders the expected control headers.
      * @param receivedHeaders the actual headers from message received.
+     * @param validationContext the current validation context
      * @param context the current test context.
      */
-    public void validateMessageHeader(MessageHeaders controlHeaders, MessageHeaders receivedHeaders, TestContext context) {
+    public void validateMessageHeader(Map<String, Object> controlHeaders, Map<String, Object> receivedHeaders,
+                                      T validationContext, TestContext context) {
         if (CollectionUtils.isEmpty(controlHeaders)) { return; }
 
         log.info("Start message header validation");
@@ -94,7 +101,8 @@ public class ControlMessageValidator extends AbstractMessageValidator<ControlMes
             String expectedValue = entry.getValue().toString();
             String actualValue = null;
 
-            if (MessageUtils.isSpringInternalHeader(headerName) || headerName.equals(CitrusMessageHeaders.HEADER_CONTENT)) {
+            if (MessageHeaderUtils.isSpringInternalHeader(headerName) ||
+                    headerName.startsWith(MessageHeaders.MESSAGE_PREFIX)) {
                 continue;
             }
             //check if header expression is variable or function
@@ -149,25 +157,19 @@ public class ControlMessageValidator extends AbstractMessageValidator<ControlMes
         log.info("Validation of message headers finished successfully: All properties OK");
     }
 
-    /**
-     * Construct a proper validation context for this validator. Method uses the
-     * available context builder implementations searching for an accountable builder supporting
-     * {@link ControlMessageValidationContext}.
-     */
-    public ControlMessageValidationContext findValidationContext(List<ValidationContext> validationContexts) {
+    @Override
+    public T findValidationContext(List<ValidationContext> validationContexts) {
         for (ValidationContext validationContext : validationContexts) {
             if (validationContext instanceof ControlMessageValidationContext) {
-                return (ControlMessageValidationContext) validationContext;
+                return (T) validationContext;
             }
         }
         
         return null;
     }
     
-    /**
-     * Checks if the message type is supported.
-     */
-    public boolean supportsMessageType(String messageType) {
+    @Override
+    public boolean supportsMessageType(String messageType, Message message) {
         return true;
     }
 }

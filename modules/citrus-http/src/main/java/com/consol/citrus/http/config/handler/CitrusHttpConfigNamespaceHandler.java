@@ -16,11 +16,9 @@
 
 package com.consol.citrus.http.config.handler;
 
-import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
-
-import com.consol.citrus.config.xml.ReplyMessageReceiverParser;
-import com.consol.citrus.http.config.xml.HttpMessageSenderParser;
+import com.consol.citrus.http.config.xml.HttpClientParser;
 import com.consol.citrus.http.config.xml.HttpServerParser;
+import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
 /**
  * Namespace handler implementation for components in Citrus http namespace.
@@ -31,8 +29,7 @@ public class CitrusHttpConfigNamespaceHandler extends NamespaceHandlerSupport {
 
     public void init() {
         registerBeanDefinitionParser("server", new HttpServerParser());
-        registerBeanDefinitionParser("message-sender", new HttpMessageSenderParser());
-        registerBeanDefinitionParser("reply-message-handler", new ReplyMessageReceiverParser());
+        registerBeanDefinitionParser("client", new HttpClientParser());
     }
 
 }

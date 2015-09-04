@@ -16,17 +16,16 @@
 
 package com.consol.citrus;
 
-import java.util.*;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.consol.citrus.actions.AbstractTestAction;
 import com.consol.citrus.actions.EchoAction;
 import com.consol.citrus.context.TestContext;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.exceptions.TestCaseFailedException;
 import com.consol.citrus.functions.core.CurrentDateFunction;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.util.*;
 
 /**
  * @author Christoph Deppisch
@@ -59,24 +58,26 @@ public class TestCaseTest extends AbstractTestNGUnitTest {
         testcase.addTestAction(new AbstractTestAction() {
             @Override
             public void doExecute(TestContext context) {
+                Assert.assertEquals(context.getVariables().get(CitrusConstants.TEST_NAME_VARIABLE), "MyTestCase");
+                Assert.assertEquals(context.getVariables().get(CitrusConstants.TEST_PACKAGE_VARIABLE), TestCase.class.getPackage().getName());
                 Assert.assertEquals(context.getVariable("${name}"), "Citrus");
                 Assert.assertEquals(context.getVariable("${framework}"), "Citrus");
                 Assert.assertEquals(context.getVariable("${hello}"), "Hello Citrus!");
                 Assert.assertEquals(context.getVariable("${goodbye}"), "Goodbye Citrus!");
-                Assert.assertEquals(context.getVariable("${welcome}"), "Welcome Citrus, today is " + new CurrentDateFunction().execute(new ArrayList<String>()) + "!");
+                Assert.assertEquals(context.getVariable("${welcome}"), "Welcome Citrus, today is " + new CurrentDateFunction().execute(new ArrayList<String>(), context) + "!");
             }
         });
         
         testcase.execute(context);
     }
     
-    @Test(expectedExceptions = {CitrusRuntimeException.class})
+    @Test(expectedExceptions = {TestCaseFailedException.class})
     public void testUnknownVariable() {
         TestCase testcase = new TestCase();
         testcase.setName("MyTestCase");
         
         final String message = "Hello TestFramework!";
-        testcase.setVariableDefinitions(Collections.singletonMap("text", message));
+        testcase.setVariableDefinitions(Collections.<String, Object>singletonMap("text", message));
         
         testcase.addTestAction(new AbstractTestAction() {
             @Override
@@ -89,14 +90,13 @@ public class TestCaseTest extends AbstractTestNGUnitTest {
     }
     
     @Test
-    public void testFinallyChain() {
+    public void testFinalActions() {
         TestCase testcase = new TestCase();
         testcase.setName("MyTestCase");
         
         testcase.addTestAction(new EchoAction());
-        testcase.addFinallyChainAction(new EchoAction());
+        testcase.addFinalAction(new EchoAction());
         
         testcase.execute(context);
-        testcase.finish();
     }
 }

@@ -6,7 +6,7 @@
                                   http://www.citrusframework.org/schema/testcase http://www.citrusframework.org/schema/testcase/citrus-testcase.xsd">
     <testcase name="ReceiveMessageActionParserTest">
         <actions>
-            <receive with="myMessageReceiver">
+            <receive endpoint="myMessageEndpoint">
                 <message>
                     <data>
                         <![CDATA[
@@ -19,7 +19,7 @@
                 </header>
             </receive>
             
-            <receive with="myMessageReceiver" timeout="1000">
+            <receive endpoint="myMessageEndpoint" timeout="1000">
                 <selector>
                     <element name="operation" value="Test"/>
                 </selector>
@@ -28,7 +28,7 @@
                 </message>
             </receive>
             
-            <receive with="myMessageReceiver">
+            <receive endpoint="myMessageEndpoint">
                 <selector>
                     <value>operation = 'Test'</value>
                 </selector>
@@ -41,7 +41,7 @@
                 </message>
             </receive>
             
-            <receive with="myMessageReceiver">
+            <receive endpoint="myMessageEndpoint">
                 <message>
                     <builder type="groovy">
                         <![CDATA[
@@ -55,14 +55,14 @@
                 </header>
             </receive>
             
-            <receive with="myMessageReceiver">
+            <receive endpoint="myMessageEndpoint">
                 <message>
                     <builder type="groovy" file="classpath:com/consol/citrus/script/example.groovy"/>
                 </message>
             </receive>
             
-            <receive with="myMessageReceiver">
-                <message>
+            <receive endpoint="myMessageEndpoint">
+                <message data-dictionary="myDataDictionary">
                     <data>
                         <![CDATA[
                             <TestMessage>Hello Citrus</TestMessage>
@@ -75,7 +75,7 @@
                 </extract>
             </receive>
             
-            <receive with="myMessageReceiver">
+            <receive endpoint="myMessageEndpoint">
                 <message schema-validation="false">
                     <data>
                         <![CDATA[
@@ -88,17 +88,91 @@
                 </message>
             </receive>
             
-            <receive with="myMessageReceiver">
+            <receive endpoint="channel:myMessageEndpoint">
                 <message>
                     <validate path="/TestMessage/text" value="Hello Citrus"/>
                     <validate path="/TestMessage/foo" value="true" result-type="boolean"/>
                 </message>
             </receive>
+
+            <receive endpoint="channel:myMessageEndpoint">
+                <message>
+                    <validate>
+                        <xpath expression="/TestMessage/text" value="Hello Citrus"/>
+                        <xpath expression="/TestMessage/foo" value="true" result-type="boolean"/>
+                    </validate>
+                </message>
+            </receive>
+
+            <receive endpoint="channel:myMessageEndpoint">
+                <message>
+                    <validate>
+                        <script type="groovy">
+                            assert true
+                        </script>
+                    </validate>
+                    <validate path="/TestMessage/foo" value="true" result-type="boolean"/>
+                </message>
+            </receive>
+
+            <receive endpoint="channel:myMessageEndpoint">
+                <message>
+                    <validate>
+                        <script type="groovy" file="classpath:com/consol/citrus/actions/test-validation-script.groovy"/>
+                    </validate>
+                </message>
+            </receive>
+
+            <receive endpoint="channel:myMessageEndpoint">
+                <message type="json">
+                    <validate path="$.json.text" value="Hello Citrus"/>
+                    <validate path="$..foo.bar" value="true"/>
+                </message>
+            </receive>
+
+            <receive endpoint="channel:myMessageEndpoint">
+                <message type="json">
+                    <validate>
+                        <json-path expression="$.json.text" value="Hello Citrus"/>
+                        <json-path expression="$..foo.bar" value="true"/>
+                    </validate>
+                </message>
+            </receive>
+
+            <receive endpoint="myMessageEndpoint">
+                <message type="json">
+                    <data>
+                        <![CDATA[
+                            { "FooMessage": { "foo": "Hello World!" }, { "bar": "@ignore@" }}
+                        ]]>
+                    </data>
+                    <element path="$.FooMessage.foo" value="newValue"/>
+                    <ignore path="$.FooMessage.bar"/>
+                </message>
+            </receive>
+
+            <receive endpoint="myMessageEndpoint">
+                <message type="json">
+                    <data>
+                        <![CDATA[
+                            { "message": { "text": "Hello World!" }, { "bar": "@ignore@" }}
+                        ]]>
+                    </data>
+                </message>
+                <extract>
+                    <header name="operation" variable="operation"/>
+                    <message path="$.message.text" variable="text"/>
+                </extract>
+            </receive>
+
         </actions>
     </testcase>
     
-    <spring:bean id="myMessageReceiver" class="org.easymock.EasyMock" factory-method="createMock">
-        <spring:constructor-arg value="com.consol.citrus.message.MessageReceiver"/>
+    <spring:bean id="myMessageEndpoint" class="org.easymock.EasyMock" factory-method="createMock">
+        <spring:constructor-arg value="com.consol.citrus.endpoint.Endpoint"/>
     </spring:bean>
-    
+
+    <spring:bean id="myDataDictionary" class="org.easymock.EasyMock" factory-method="createMock">
+        <spring:constructor-arg value="com.consol.citrus.variable.dictionary.DataDictionary"/>
+    </spring:bean>
 </spring:beans>

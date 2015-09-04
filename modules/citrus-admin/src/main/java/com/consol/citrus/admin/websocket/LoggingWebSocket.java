@@ -16,32 +16,23 @@
 
 package com.consol.citrus.admin.websocket;
 
-import java.io.IOException;
-import java.util.*;
-
-import org.eclipse.jetty.websocket.WebSocket;
-import org.json.simple.JSONObject;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.*;
+import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.consol.citrus.admin.launcher.ProcessListener;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Used for publishing log messages to connected clients via the web socket api.
  *
  * @author Martin.Maher@consol.de
- * @since 2013.01.28
+ * @since 1.3
  */
-public class LoggingWebSocket implements WebSocket.OnTextMessage, ProcessListener {
-
-    /** Log event types */
-    private enum LogEvent {
-        PING,
-        START,
-        MESSAGE,
-        SUCCESS,
-        FAILED;
-    }
+@WebSocket
+public class LoggingWebSocket {
 
     /**
      * Logger
@@ -49,10 +40,9 @@ public class LoggingWebSocket implements WebSocket.OnTextMessage, ProcessListene
     private static final Logger LOG = LoggerFactory.getLogger(LoggingWebSocket.class);
 
     /**
-     * Web Socket connections
-     * TODO MM thread safe
+     * Web Socket sessions
      */
-    private List<Connection> connections = new ArrayList<Connection>();
+    private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<Session>());
 
     /**
      * Default constructor.
@@ -62,136 +52,73 @@ public class LoggingWebSocket implements WebSocket.OnTextMessage, ProcessListene
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                LOG.debug("Pinging client to keep connection alive");
                 ping();
             }
         };
         timer.schedule(task, 60000, 60000);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void onOpen(Connection connection) {
-        LOG.info("Accepted a new connection");
-        this.connections.add(connection);
+    @SuppressWarnings("unused")
+    @OnWebSocketConnect
+    public void handleConnect(Session session) {
+        LOG.info("Accepted a new session");
+        sessions.add(session);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @SuppressWarnings({"PMD.CloseResource"})
-    public void onClose(int closeCode, String message) {
-        LOG.debug("Web socket connection closed");
-        Iterator<Connection> itor = connections.iterator();
-        while (itor.hasNext()) {
-            Connection connection = itor.next();
-            if (connection == null || !connection.isOpen()) {
-                itor.remove();
+    @SuppressWarnings({"PMD.CloseResource", "unused"})
+    @OnWebSocketClose
+    public void handleClose(int statusCode, String reason) {
+        LOG.info(String.format("Closing session (%s:%s)", statusCode, reason));
+        for (Session session : sessions) {
+            if (session == null || !session.isOpen()) {
+                sessions.remove(session);
             }
         }
-
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void onMessage(String data) {
-        LOG.info("Received web socket client message: " + data);
+    @SuppressWarnings("unused")
+    @OnWebSocketMessage
+    public void handleMessage(String message) {
+        LOG.info(String.format("Received message from client: %s", message));
     }
 
-    /**
-     * Invoked on start process event
-     *
-     * @param processId the id of the process
-     */
-    public void start(String processId) {
-        logMessage(createMessage(processId, LogEvent.START, "process started"));
-    }
-
-    /**
-     * Invoked on successful completion event
-     *
-     * @param processId the id of the completed process
-     */
-    public void success(String processId) {
-        logMessage(createMessage(processId, LogEvent.SUCCESS, "process completed successfully"));
-    }
-
-    /**
-     * Invoked on failed completion event, with the process exit code
-     *
-     * @param processId the id of the process
-     * @param exitCode the exitcode returned from the process
-     */
-    public void fail(String processId, int exitCode) {
-        logMessage(createMessage(processId, LogEvent.FAILED, "process failed with exit code " + exitCode));
-    }
-
-    /**
-     * Invoked on failed completion event, with the exception that was caught
-     *
-     * @param processId the id of the process
-     * @param e the exception caught within the ProcessLauncher
-     */
-    public void fail(String processId, Exception e) {
-        logMessage(createMessage(processId, LogEvent.FAILED, "process failed with exception " + e.getLocalizedMessage()));
-    }
-
-    /**
-     * Invoked on output message event with output data from process
-     *
-     * @param processId the id of the process
-     * @param output
-     */
-    public void output(String processId, String output) {
-        logMessage(createMessage(processId, LogEvent.MESSAGE, output));
+    @SuppressWarnings("unused")
+    @OnWebSocketError
+    public void handleError(Throwable error) {
+        LOG.warn("Error in websocket", error);
     }
 
     /**
      * Send ping event.
      */
     @SuppressWarnings("unchecked")
-    public void ping() {
+    private void ping() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("event", LogEvent.PING.name());
-        logMessage(jsonObject.toString());
+        jsonObject.put("event", SocketEvent.PING.name());
+        push(jsonObject);
     }
 
-    /**
-     * Creates proper JSON message for log event.
-     * @param processId
-     * @param logEvent
-     * @param message
-     * @return
-     */
-    @SuppressWarnings("unchecked")
-    private String createMessage(String processId, LogEvent logEvent, String message) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("processId", processId);
-        jsonObject.put("event", logEvent.name());
-        jsonObject.put("msg", message);
-        return jsonObject.toString();
-    }
 
     /**
-     * Push log message to connected clients.
-     * @param message
+     * Push event to connected clients.
+     *
+     * @param event the event to send to the connected clients
      */
     @SuppressWarnings({"PMD.CloseResource"})
-    private void logMessage(String message) {
-        Iterator<Connection> itor = connections.iterator();
-        while (itor.hasNext()) {
-            Connection connection = itor.next();
-            if (connection != null && connection.isOpen()) {
-                try {
-                    connection.sendMessage(message);
-                } catch (IOException e) {
-                    LOG.error("Error sending message", e);
-                }
-            } else {
-                itor.remove();
-            }
+    protected void push(JSONObject event) {
+        for (Session session : sessions) {
+            sendToSession(session, event);
         }
     }
+
+    private void sendToSession(Session session, JSONObject event) {
+        try {
+            if (session != null && session.isOpen()) {
+                session.getRemote().sendString(event.toString());
+            }
+        } catch (IOException e) {
+            LOG.error("Error sending message", e);
+        }
+    }
+
 }

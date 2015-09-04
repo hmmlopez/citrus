@@ -16,6 +16,7 @@
 
 package com.consol.citrus.validation.matcher.core;
 
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.ValidationException;
 import com.consol.citrus.validation.matcher.ValidationMatcher;
 
@@ -26,9 +27,8 @@ import com.consol.citrus.validation.matcher.ValidationMatcher;
  */
 public class ContainsValidationMatcher implements ValidationMatcher {
 
-    public void validate(String fieldName, String value, String control) throws ValidationException {
-        
-        if (!value.contains(control)) {
+    public void validate(String fieldName, String value, String control, TestContext context) throws ValidationException {
+        if (value == null || !value.contains(control)) {
             throw new ValidationException(this.getClass().getSimpleName()
                     + " failed for field '" + fieldName
                     + "'. Received value '" + value

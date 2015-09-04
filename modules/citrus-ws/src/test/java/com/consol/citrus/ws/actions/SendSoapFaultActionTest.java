@@ -16,189 +16,202 @@
 
 package com.consol.citrus.ws.actions;
 
-import static org.easymock.EasyMock.*;
-
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.endpoint.Endpoint;
+import com.consol.citrus.endpoint.EndpointConfiguration;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.messaging.Producer;
+import com.consol.citrus.testng.AbstractTestNGUnitTest;
+import com.consol.citrus.ws.message.SoapFault;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.springframework.integration.Message;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.consol.citrus.actions.SendMessageAction;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.message.MessageSender;
-import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import com.consol.citrus.ws.message.CitrusSoapMessageHeaders;
-import com.consol.citrus.ws.message.builder.SoapFaultAwareMessageBuilder;
+import java.util.Locale;
+
+import static org.easymock.EasyMock.*;
 
 /**
  * @author Christoph Deppisch
  */
 public class SendSoapFaultActionTest extends AbstractTestNGUnitTest {
 
-    private MessageSender messageSender = EasyMock.createMock(MessageSender.class);
-    
+    private Endpoint endpoint = EasyMock.createMock(Endpoint.class);
+    private Producer producer = EasyMock.createMock(Producer.class);
+    private EndpointConfiguration endpointConfiguration = EasyMock.createMock(EndpointConfiguration.class);
+
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendSoapFault() {
-        SendMessageAction sendSoapFaultAction = new SendMessageAction();
-        sendSoapFaultAction.setMessageSender(messageSender);
+        SendSoapFaultAction sendSoapFaultAction = new SendSoapFaultAction();
+        sendSoapFaultAction.setEndpoint(endpoint);
         
-        SoapFaultAwareMessageBuilder messageBuilder = new SoapFaultAwareMessageBuilder();
-        messageBuilder.setFaultCode("{http://citrusframework.org}ws:TEC-1000");
-        messageBuilder.setFaultString("Internal server error");
+        sendSoapFaultAction.setFaultCode("{http://citrusframework.org}ws:TEC-1000");
+        sendSoapFaultAction.setFaultString("Internal server error");
         
-        sendSoapFaultAction.setMessageBuilder(messageBuilder);
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
-                Message<?> sentMessage = (Message)EasyMock.getCurrentArguments()[0];
-                Assert.assertNotNull(sentMessage.getHeaders().get(CitrusSoapMessageHeaders.SOAP_FAULT));
-                Assert.assertEquals(sentMessage.getHeaders().get(CitrusSoapMessageHeaders.SOAP_FAULT), 
-                        "{{http://citrusframework.org}ws:TEC-1000}{Internal server error}{en}");
+                Message sentMessage = (Message)EasyMock.getCurrentArguments()[0];
+                Assert.assertTrue(sentMessage instanceof SoapFault);
+
+                SoapFault soapFault = (SoapFault) sentMessage;
+                Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
+                Assert.assertEquals(soapFault.getFaultString(), "Internal server error");
+                Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
                 
                 return null;
             }
         }).once();
         
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, producer, endpointConfiguration);
         
         sendSoapFaultAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendSoapFaultWithActor() {
-        SendMessageAction sendSoapFaultAction = new SendMessageAction();
-        sendSoapFaultAction.setMessageSender(messageSender);
+        SendSoapFaultAction sendSoapFaultAction = new SendSoapFaultAction();
+        sendSoapFaultAction.setEndpoint(endpoint);
         
-        SoapFaultAwareMessageBuilder messageBuilder = new SoapFaultAwareMessageBuilder();
-        messageBuilder.setFaultCode("{http://citrusframework.org}ws:TEC-1000");
-        messageBuilder.setFaultString("Internal server error");
-        messageBuilder.setFaultActor("SERVER");
+        sendSoapFaultAction.setFaultCode("{http://citrusframework.org}ws:TEC-1000");
+        sendSoapFaultAction.setFaultString("Internal server error");
+        sendSoapFaultAction.setFaultActor("SERVER");
         
-        sendSoapFaultAction.setMessageBuilder(messageBuilder);
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
-                Message<?> sentMessage = (Message)EasyMock.getCurrentArguments()[0];
-                Assert.assertNotNull(sentMessage.getHeaders().get(CitrusSoapMessageHeaders.SOAP_FAULT));
-                Assert.assertEquals(sentMessage.getHeaders().get(CitrusSoapMessageHeaders.SOAP_FAULT), 
-                        "{{http://citrusframework.org}ws:TEC-1000}{Internal server error}{en}{SERVER}");
+                Message sentMessage = (Message)EasyMock.getCurrentArguments()[0];
+                Assert.assertTrue(sentMessage instanceof SoapFault);
+
+                SoapFault soapFault = (SoapFault) sentMessage;
+                Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
+                Assert.assertEquals(soapFault.getFaultString(), "Internal server error");
+                Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
+                Assert.assertEquals(soapFault.getFaultActor(), "SERVER");
                 
                 return null;
             }
         }).once();
         
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, producer, endpointConfiguration);
         
         sendSoapFaultAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendSoapFaultMissingFaultString() {
-        SendMessageAction sendSoapFaultAction = new SendMessageAction();
-        sendSoapFaultAction.setMessageSender(messageSender);
+        SendSoapFaultAction sendSoapFaultAction = new SendSoapFaultAction();
+        sendSoapFaultAction.setEndpoint(endpoint);
         
-        SoapFaultAwareMessageBuilder messageBuilder = new SoapFaultAwareMessageBuilder();
-        messageBuilder.setFaultCode("{http://citrusframework.org}ws:TEC-1000");
+        sendSoapFaultAction.setFaultCode("{http://citrusframework.org}ws:TEC-1000");
         
-        sendSoapFaultAction.setMessageBuilder(messageBuilder);
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
-                Message<?> sentMessage = (Message)EasyMock.getCurrentArguments()[0];
-                Assert.assertNotNull(sentMessage.getHeaders().get(CitrusSoapMessageHeaders.SOAP_FAULT));
-                Assert.assertEquals(sentMessage.getHeaders().get(CitrusSoapMessageHeaders.SOAP_FAULT), 
-                        "{{http://citrusframework.org}ws:TEC-1000}");
+                Message sentMessage = (Message)EasyMock.getCurrentArguments()[0];
+                Assert.assertTrue(sentMessage instanceof SoapFault);
+
+                SoapFault soapFault = (SoapFault) sentMessage;
+                Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
+                Assert.assertNull(soapFault.getFaultString());
+                Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
                 
                 return null;
             }
         }).once();
         
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, producer, endpointConfiguration);
         
         sendSoapFaultAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendSoapFaultWithVariableSupport() {
-        SendMessageAction sendSoapFaultAction = new SendMessageAction();
-        sendSoapFaultAction.setMessageSender(messageSender);
+        SendSoapFaultAction sendSoapFaultAction = new SendSoapFaultAction();
+        sendSoapFaultAction.setEndpoint(endpoint);
         
-        SoapFaultAwareMessageBuilder messageBuilder = new SoapFaultAwareMessageBuilder();
-        messageBuilder.setFaultCode("citrus:concat('{http://citrusframework.org}ws:', ${faultCode})");
-        messageBuilder.setFaultString("${faultString}");
-        
-        sendSoapFaultAction.setMessageBuilder(messageBuilder);
+        sendSoapFaultAction.setFaultCode("citrus:concat('{http://citrusframework.org}ws:', ${faultCode})");
+        sendSoapFaultAction.setFaultString("${faultString}");
         
         context.setVariable("faultCode", "TEC-1000");
         context.setVariable("faultString", "Internal server error");
+
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
         
-        reset(messageSender);
-        
-        messageSender.send((Message)anyObject());
+        producer.send(anyObject(Message.class), anyObject(TestContext.class));
         expectLastCall().andAnswer(new IAnswer<Object>() {
             public Object answer() throws Throwable {
-                Message<?> sentMessage = (Message)EasyMock.getCurrentArguments()[0];
-                Assert.assertNotNull(sentMessage.getHeaders().get(CitrusSoapMessageHeaders.SOAP_FAULT));
-                Assert.assertEquals(sentMessage.getHeaders().get(CitrusSoapMessageHeaders.SOAP_FAULT), 
-                        "{{http://citrusframework.org}ws:TEC-1000}{Internal server error}{en}");
+                Message sentMessage = (Message)EasyMock.getCurrentArguments()[0];
+                Assert.assertTrue(sentMessage instanceof SoapFault);
+
+                SoapFault soapFault = (SoapFault) sentMessage;
+                Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
+                Assert.assertEquals(soapFault.getFaultString(), "Internal server error");
+                Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
                 
                 return null;
             }
         }).once();
         
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, producer, endpointConfiguration);
         
         sendSoapFaultAction.execute(context);
-        
-        verify(messageSender);
+
+        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
     public void testSendSoapFaultMissingFaultCode() {
-        SendMessageAction sendSoapFaultAction = new SendMessageAction();
-        sendSoapFaultAction.setMessageSender(messageSender);
+        SendSoapFaultAction sendSoapFaultAction = new SendSoapFaultAction();
+        sendSoapFaultAction.setEndpoint(endpoint);
         
-        SoapFaultAwareMessageBuilder messageBuilder = new SoapFaultAwareMessageBuilder();
-        sendSoapFaultAction.setMessageBuilder(messageBuilder);
-        
-        reset(messageSender);
-        expect(messageSender.getActor()).andReturn(null).anyTimes();
-        
-        replay(messageSender);
+        reset(endpoint, producer, endpointConfiguration);
+        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
+        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        expect(endpointConfiguration.getTimeout()).andReturn(5000L).anyTimes();
+
+        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        replay(endpoint, producer, endpointConfiguration);
         
         try {
             sendSoapFaultAction.execute(context);
         } catch(CitrusRuntimeException e) {
             Assert.assertEquals(e.getLocalizedMessage(), "Missing fault code definition for SOAP fault generation. Please specify a proper SOAP fault code!");
-            verify(messageSender);
+            verify(endpoint, producer, endpointConfiguration);
             return;
         }
         

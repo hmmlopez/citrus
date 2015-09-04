@@ -16,10 +16,11 @@
 
 package com.consol.citrus.validation.matcher.core;
 
-import java.util.regex.PatternSyntaxException;
-
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.ValidationException;
 import com.consol.citrus.validation.matcher.ValidationMatcher;
+
+import java.util.regex.PatternSyntaxException;
 
 /**
  * ValidationMatcher based on String.matches()
@@ -28,9 +29,9 @@ import com.consol.citrus.validation.matcher.ValidationMatcher;
  */
 public class MatchesValidationMatcher implements ValidationMatcher {
 
-    public void validate(String fieldName, String value, String control) throws ValidationException {
-        
-    	boolean success = false;
+    public void validate(String fieldName, String value, String control, TestContext context) throws ValidationException {
+    	boolean success;
+
     	try {
     		success = value.matches(control);
     	} catch (PatternSyntaxException e) {

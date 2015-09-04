@@ -16,33 +16,42 @@
 
 package com.consol.citrus.dsl.definition;
 
-import java.io.IOException;
-
-import org.springframework.core.io.Resource;
-import org.springframework.integration.Message;
-import org.springframework.oxm.Marshaller;
-
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.util.FileUtils;
-import com.consol.citrus.ws.SoapAttachment;
 import com.consol.citrus.ws.actions.SendSoapMessageAction;
+import com.consol.citrus.ws.message.SoapAttachment;
+import com.consol.citrus.ws.message.SoapMessageHeaders;
+import org.springframework.core.io.Resource;
+
+import java.io.IOException;
 
 /**
  * Send action definition adding SOAP specific properties like SOAP attachment and
  * fork mode.
  * 
  * @author Christoph Deppisch
+ * @deprecated since 2.3 in favor of using {@link com.consol.citrus.dsl.builder.SendSoapMessageBuilder}
  */
-public class SendSoapMessageActionDefinition extends SendMessageActionDefinition {
+public class SendSoapMessageActionDefinition extends SendMessageActionDefinition<SendSoapMessageAction, SendSoapMessageActionDefinition> {
 
     /**
      * Default constructor using action.
      * @param action
      */
     public SendSoapMessageActionDefinition(SendSoapMessageAction action) {
-        super(action, null);
+        super(action);
     }
-    
+
+    /**
+     * Sets special SOAP action message header.
+     * @param soapAction
+     * @return
+     */
+    public SendSoapMessageActionDefinition soapAction(String soapAction) {
+        header(SoapMessageHeaders.SOAP_ACTION, soapAction);
+        return this;
+    }
+
     /**
      * Sets the attachment with string content.
      * @param contentId
@@ -50,14 +59,16 @@ public class SendSoapMessageActionDefinition extends SendMessageActionDefinition
      * @param content
      * @return
      */
-    public SendSoapMessageActionDefinition attatchment(String contentId, String contentType, String content) {
-        getAction().setContentId(contentId);
-        getAction().setContentType(contentType);
-        getAction().setAttachmentData(content);
-        
+    public SendSoapMessageActionDefinition attachment(String contentId, String contentType, String content) {
+        SoapAttachment attachment = new SoapAttachment();
+        attachment.setContentId(contentId);
+        attachment.setContentType(contentType);
+        attachment.setContent(content);
+
+        getAction().getAttachments().add(attachment);
         return this;
     }
-    
+
     /**
      * Sets the attachment with content resource.
      * @param contentId
@@ -65,102 +76,51 @@ public class SendSoapMessageActionDefinition extends SendMessageActionDefinition
      * @param contentResource
      * @return
      */
-    public SendSoapMessageActionDefinition attatchment(String contentId, String contentType, Resource contentResource) {
-        getAction().setContentId(contentId);
-        getAction().setContentType(contentType);
-        
+    public SendSoapMessageActionDefinition attachment(String contentId, String contentType, Resource contentResource) {
+        SoapAttachment attachment = new SoapAttachment();
+        attachment.setContentId(contentId);
+        attachment.setContentType(contentType);
+
         try {
-            getAction().setAttachmentData(FileUtils.readToString(contentResource));
+            attachment.setContent(FileUtils.readToString(contentResource));
         } catch (IOException e) {
             throw new CitrusRuntimeException("Failed to read attachment resource", e);
         }
-        
+
+        getAction().getAttachments().add(attachment);
+
         return this;
     }
-    
+
     /**
      * Sets the charset name for this send action definition's attachment.
-     * @param charset
+     * @param charsetName
      * @return
      */
     public SendSoapMessageActionDefinition charset(String charsetName) {
-        getAction().setCharsetName(charsetName);
+        if (!getAction().getAttachments().isEmpty()) {
+            getAction().getAttachments().get(getAction().getAttachments().size() - 1).setCharsetName(charsetName);
+        }
         return this;
     }
-    
+
     /**
      * Sets the attachment from Java object instance.
      * @param attachment
      * @return
      */
-    public SendSoapMessageActionDefinition attatchment(SoapAttachment attachment) {
-        getAction().setContentId(attachment.getContentId());
-        getAction().setContentType(attachment.getContentType());
-        getAction().setAttachmentData(attachment.getContent());
-        
-        getAction().setCharsetName(attachment.getCharsetName());
-        
+    public SendSoapMessageActionDefinition attachment(SoapAttachment attachment) {
+        getAction().getAttachments().add(attachment);
         return this;
     }
-    
-    /**
-     * Sets the fork mode for this send action definition.
-     * @param forkMode
-     * @return
-     */
-    public SendSoapMessageActionDefinition fork(boolean forkMode) {
-        getAction().setForkMode(forkMode);
-        return this;
-    }
-    
-    @Override
-    public SendSoapMessageActionDefinition message(Message<String> message) {
-        return (SendSoapMessageActionDefinition) super.message(message);
-    }
-    
-    @Override
-    public SendSoapMessageActionDefinition payload(Object payload, Marshaller marshaller) {
-        return (SendSoapMessageActionDefinition) super.payload(payload, marshaller);
-    }
-    
-    @Override
-    public SendSoapMessageActionDefinition payload(Resource payloadResource) {
-        return (SendSoapMessageActionDefinition) super.payload(payloadResource);
-    }
-    
-    @Override
-    public SendSoapMessageActionDefinition payload(String payload) {
-        return (SendSoapMessageActionDefinition) super.payload(payload);
-    }
-    
-    @Override
-    public SendSoapMessageActionDefinition header(String name, Object value) {
-        return (SendSoapMessageActionDefinition) super.header(name, value);
-    }
-    
-    @Override
-    public SendSoapMessageActionDefinition description(String description) {
-        return (SendSoapMessageActionDefinition) super.description(description);
-    }
-    
-    @Override
-    public SendSoapMessageActionDefinition extractFromHeader(String headerName, String variable) {
-        return (SendSoapMessageActionDefinition) super.extractFromHeader(headerName, variable);
-    }
-    
-    @Override
-    public SendSoapMessageActionDefinition extractFromPayload(String xpath, String variable) {
-        return (SendSoapMessageActionDefinition) super.extractFromPayload(xpath, variable);
-    }
-    
+
     @Override
     public SendSoapMessageActionDefinition soap() {
         return this;
     }
-    
+
     @Override
-    public SendSoapMessageAction getAction() {
-        return (SendSoapMessageAction)super.getAction();
+    public SendHttpMessageActionDefinition http() {
+        throw new CitrusRuntimeException("Invalid use of http and soap action definition");
     }
-    
 }

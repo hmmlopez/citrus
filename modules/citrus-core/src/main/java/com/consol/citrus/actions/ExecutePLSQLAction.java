@@ -16,12 +16,14 @@
 
 package com.consol.citrus.actions;
 
-import java.util.*;
-
-import org.springframework.dao.DataAccessException;
-
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
+import org.springframework.dao.DataAccessException;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * Class executes PLSQL statements either declared inline as PLSQL statements or given by an
@@ -37,11 +39,18 @@ public class ExecutePLSQLAction extends AbstractDatabaseConnectingTestAction {
     /** boolean flag marking that possible SQL errors will be ignored */
     private boolean ignoreErrors = false;
 
+    /**
+     * Default constructor.
+     */
+    public ExecutePLSQLAction() {
+        setName("plsql");
+    }
+
     @Override
     public void doExecute(TestContext context) {
-        if (script != null) {
+        if (StringUtils.hasText(script)) {
             statements = createStatementsFromScript(context);
-        } else {
+        } else if (StringUtils.hasText(sqlResourcePath)) {
             statements = createStatementsFromFileResource(context);
         }
 
@@ -72,7 +81,7 @@ public class ExecutePLSQLAction extends AbstractDatabaseConnectingTestAction {
      * @return list of SQL statements.
      */
     private List<String> createStatementsFromScript(TestContext context) {
-        List<String> stmts = new ArrayList<String>();
+        List<String> stmts = new ArrayList<>();
         
         script = context.replaceDynamicContentInString(script);
         if (log.isDebugEnabled()) {
@@ -81,7 +90,10 @@ public class ExecutePLSQLAction extends AbstractDatabaseConnectingTestAction {
 
         StringTokenizer tok = new StringTokenizer(script, getStatemendEndingCharacter());
         while (tok.hasMoreTokens()) {
-            stmts.add(tok.nextToken().trim());
+            String next = tok.nextToken().trim();
+            if (StringUtils.hasText(next)) {
+                stmts.add(next);
+            }
         }
         
         return stmts;
@@ -94,23 +106,25 @@ public class ExecutePLSQLAction extends AbstractDatabaseConnectingTestAction {
     
     @Override
     protected String decorateLastScriptLine(String line) {
-        return line.trim().substring(0, (line.trim().length()-1));
+        return line.trim().substring(0, (line.trim().length() - 1));
     }
 
     /**
      * Setter for inline script.
      * @param script
      */
-    public void setScript(String script) {
+    public ExecutePLSQLAction setScript(String script) {
         this.script = script;
+        return this;
     }
 
     /**
      * Ignore errors during execution.
      * @param ignoreErrors boolean flag to set
      */
-    public void setIgnoreErrors(boolean ignoreErrors) {
+    public ExecutePLSQLAction setIgnoreErrors(boolean ignoreErrors) {
         this.ignoreErrors = ignoreErrors;
+        return this;
     }
 
     /**

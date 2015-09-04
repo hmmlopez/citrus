@@ -16,10 +16,12 @@
 
 package com.consol.citrus.functions.core;
 
-import java.util.List;
-
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.InvalidFunctionUsageException;
 import com.consol.citrus.functions.Function;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
 
 /**
  * Returning the length of a given string argument.
@@ -29,15 +31,15 @@ import com.consol.citrus.functions.Function;
 public class StringLengthFunction implements Function {
 
     /**
-     * @see com.consol.citrus.functions.Function#execute(java.util.List)
+     * @see com.consol.citrus.functions.Function#execute(java.util.List, com.consol.citrus.context.TestContext)
      * @throws InvalidFunctionUsageException
      */
-    public String execute(List<String> parameterList) {
-        if (parameterList == null || parameterList.isEmpty()) {
+    public String execute(List<String> parameterList, TestContext context) {
+        if (CollectionUtils.isEmpty(parameterList)) {
             throw new InvalidFunctionUsageException("Function parameters must not be empty");
         }
 
-        return Integer.valueOf((parameterList.get(0)).length()).toString();
+        return String.valueOf((parameterList.get(0)).length());
     }
 
 }

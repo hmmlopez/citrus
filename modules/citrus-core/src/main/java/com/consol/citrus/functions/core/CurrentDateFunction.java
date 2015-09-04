@@ -16,14 +16,15 @@
 
 package com.consol.citrus.functions.core;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.functions.Function;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
 
 /**
  * Function returning the actual date as formatted string value. User specifies format string
@@ -31,37 +32,29 @@ import com.consol.citrus.functions.Function;
  * 
  * @author Christoph Deppisch
  */
-public class CurrentDateFunction implements Function {
+public class CurrentDateFunction extends AbstractDateFunction {
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(CurrentDateFunction.class);
 
     /**
-     * @see com.consol.citrus.functions.Function#execute(java.util.List)
+     * @see com.consol.citrus.functions.Function#execute(java.util.List, com.consol.citrus.context.TestContext)
      * @throws CitrusRuntimeException
      */
-    public String execute(List<String> parameterList) {
+    public String execute(List<String> parameterList, TestContext context) {
         Calendar calendar = Calendar.getInstance();
         
         SimpleDateFormat dateFormat;
         String result = "";
         
-        if (parameterList != null && parameterList.size() > 0) {
+        if (!CollectionUtils.isEmpty(parameterList)) {
             dateFormat = new SimpleDateFormat(parameterList.get(0));
         } else {
-            dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+            dateFormat = getDefaultDateFormat();
         }
 
         if (parameterList != null && parameterList.size() > 1) {
-            String offsetString = parameterList.get(1);
-            calendar.add(Calendar.YEAR, getDateValueOffset(offsetString, 'y'));
-            calendar.add(Calendar.MONTH, getDateValueOffset(offsetString, 'M'));
-            calendar.add(Calendar.DAY_OF_YEAR, getDateValueOffset(offsetString, 'd'));
-            calendar.add(Calendar.HOUR, getDateValueOffset(offsetString, 'h'));
-            calendar.add(Calendar.MINUTE, getDateValueOffset(offsetString, 'm'));
-            calendar.add(Calendar.SECOND, getDateValueOffset(offsetString, 's'));
+            applyDateOffset(calendar, parameterList.get(1));
         }
 
         try {
@@ -72,40 +65,5 @@ public class CurrentDateFunction implements Function {
         }
 
         return result;
-    }
-
-    /**
-     * Parse offset string and add or subtract date offset value.
-     * 
-     * @param offsetString
-     * @param c
-     * @return
-     */
-    private int getDateValueOffset(String offsetString, char c) {
-        ArrayList<Character> charList = new ArrayList<Character>();
-
-        int index = offsetString.indexOf(c);
-        if (index != -1) {
-            for (int i = index-1; i >= 0; i--) {
-                if (Character.isDigit(offsetString.charAt(i))) {
-                    charList.add(0, offsetString.charAt(i));
-                } else {
-
-                    StringBuffer offsetValue = new StringBuffer();
-                    offsetValue.append("0");
-                    for (int j = 0; j < charList.size(); j++) {
-                        offsetValue.append(charList.get(j));
-                    }
-
-                    if (offsetString.charAt(i) == '-') {
-                        return Integer.valueOf("-" + offsetValue.toString());
-                    } else {
-                        return Integer.valueOf(offsetValue.toString());
-                    }
-                }
-            }
-        }
-
-        return 0;
     }
 }

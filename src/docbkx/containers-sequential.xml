@@ -24,14 +24,16 @@
     &lt;/actions&gt;
 &lt;/testcase&gt;</programlisting>
 
-    <para><emphasis>Java DSL</emphasis></para>
-    <programlisting language="java">protected void configure() {
-    sequential(
-        stopTime(),
-        sleep(1.0),
-        echo("Hello Citrus"),
-        stopTime()
-    );
+    <para><emphasis>Java DSL designer and runner</emphasis></para>
+    <programlisting language="java">@CitrusTest
+public void sequentialTest() {
+    sequential()
+        .actions(
+            stopTime(),
+            sleep(1.0),
+            echo("Hello Citrus"),
+            stopTime()
+        );
 }</programlisting>
     
 </section>

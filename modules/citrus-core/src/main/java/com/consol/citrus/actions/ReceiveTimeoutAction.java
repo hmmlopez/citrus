@@ -16,15 +16,16 @@
 
 package com.consol.citrus.actions;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.integration.Message;
-import org.springframework.util.StringUtils;
-
 import com.consol.citrus.context.TestContext;
+import com.consol.citrus.endpoint.Endpoint;
 import com.consol.citrus.exceptions.ActionTimeoutException;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.message.MessageReceiver;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.messaging.Consumer;
+import com.consol.citrus.messaging.SelectiveConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 /**
  * Action expecting a timeout on a message destination, this means that no message 
@@ -37,26 +38,35 @@ public class ReceiveTimeoutAction extends AbstractTestAction {
     /** Time to wait until timeout */
     private long timeout = 1000L;
 
-    /** MessageReceiver instance */
-    private MessageReceiver messageReceiver;
+    /** Message endpoint */
+    private Endpoint endpoint;
+
+    /** Message endpoint uri */
+    private String endpointUri;
 
     /** Message selector string */
     private String messageSelector;
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(ReceiveTimeoutAction.class);
+
+    /**
+     * Default constructor.
+     */
+    public ReceiveTimeoutAction() {
+        setName("receive-timeout");
+    }
 
     @Override
     public void doExecute(TestContext context) {
         try {
-            Message<?> receivedMessage;
-            
-            if (StringUtils.hasText(messageSelector)) {
-                receivedMessage = messageReceiver.receiveSelected(messageSelector, timeout);
+            Message receivedMessage;
+            Consumer consumer = getOrCreateEndpoint(context).createConsumer();
+
+            if (StringUtils.hasText(messageSelector) && consumer instanceof SelectiveConsumer) {
+                receivedMessage = ((SelectiveConsumer)consumer).receive(messageSelector, context, timeout);
             } else {
-                receivedMessage = messageReceiver.receive(timeout); 
+                receivedMessage = consumer.receive(context, timeout);
             }
 
             if (receivedMessage != null) {
@@ -73,27 +83,54 @@ public class ReceiveTimeoutAction extends AbstractTestAction {
     }
 
     /**
+     * Creates or gets the endpoint instance.
+     * @param context
+     * @return
+     */
+    public Endpoint getOrCreateEndpoint(TestContext context) {
+        if (endpoint != null) {
+            return endpoint;
+        } else if (StringUtils.hasText(endpointUri)) {
+            endpoint = context.getEndpointFactory().create(endpointUri, context);
+            return endpoint;
+        } else {
+            throw new CitrusRuntimeException("Neither endpoint nor endpoint uri is set properly!");
+        }
+    }
+
+    /**
      * Setter for receive timeout.
      * @param timeout
      */
-    public void setTimeout(long timeout) {
+    public ReceiveTimeoutAction setTimeout(long timeout) {
         this.timeout = timeout;
+        return this;
     }
 
     /**
      * Set message selector string.
      * @param messageSelector
      */
-    public void setMessageSelector(String messageSelector) {
+    public ReceiveTimeoutAction setMessageSelector(String messageSelector) {
         this.messageSelector = messageSelector;
+        return this;
     }
-    
+
     /**
-     * Set the message receiver instance.
-     * @param messageReceiver the messageReceiver to set
+     * Set message endpoint instance.
+     * @param endpoint the message endpoint
      */
-    public void setMessageReceiver(MessageReceiver messageReceiver) {
-        this.messageReceiver = messageReceiver;
+    public ReceiveTimeoutAction setEndpoint(Endpoint endpoint) {
+        this.endpoint = endpoint;
+        return this;
+    }
+
+    /**
+     * Get the message endpoint.
+     * @return the message endpoint
+     */
+    public Endpoint getEndpoint() {
+        return endpoint;
     }
 
     /**
@@ -113,10 +150,19 @@ public class ReceiveTimeoutAction extends AbstractTestAction {
     }
 
     /**
-     * Gets the messageReceiver.
-     * @return the messageReceiver
+     * Gets the endpoint uri.
+     * @return
      */
-    public MessageReceiver getMessageReceiver() {
-        return messageReceiver;
+    public String getEndpointUri() {
+        return endpointUri;
+    }
+
+    /**
+     * Sets the endpoint uri.
+     * @param endpointUri
+     */
+    public ReceiveTimeoutAction setEndpointUri(String endpointUri) {
+        this.endpointUri = endpointUri;
+        return this;
     }
 }

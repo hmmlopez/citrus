@@ -16,26 +16,26 @@
 
 package com.consol.citrus.validation.script;
 
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.exceptions.ValidationException;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.message.MessageType;
+import com.consol.citrus.script.ScriptTypes;
+import com.consol.citrus.validation.AbstractMessageValidator;
+import com.consol.citrus.validation.context.ValidationContext;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
-
-import java.util.List;
-
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.integration.Message;
 import org.springframework.util.StringUtils;
 
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.exceptions.ValidationException;
-import com.consol.citrus.message.MessageType;
-import com.consol.citrus.script.ScriptTypes;
-import com.consol.citrus.validation.AbstractMessageValidator;
-import com.consol.citrus.validation.context.ValidationContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.List;
 
 /**
  * Groovy script message validator passing the message to a validation script.
@@ -48,9 +48,7 @@ import com.consol.citrus.validation.context.ValidationContext;
  */
 public class GroovyScriptMessageValidator extends AbstractMessageValidator<ScriptValidationContext> {
 
-    /**
-     * Logger
-     */
+    /** Logger */
     private static Logger log = LoggerFactory.getLogger(GroovyScriptMessageValidator.class);
     
     /** Static code snippet for groovy script validation */
@@ -74,15 +72,19 @@ public class GroovyScriptMessageValidator extends AbstractMessageValidator<Scrip
     /**
      * Validates the message with test context and script validation context.
      */
-    public void validateMessage(Message<?> receivedMessage, TestContext context, ScriptValidationContext validationContext) 
+    public void validateMessage(Message receivedMessage, TestContext context, ScriptValidationContext validationContext)
         throws ValidationException {
         try {
             String validationScript = validationContext.getValidationScript(context);
             
             if (StringUtils.hasText(validationScript)) {
                 log.info("Start groovy message validation");
-                
-                GroovyClassLoader loader = new GroovyClassLoader(GroovyScriptMessageValidator.class.getClassLoader());
+
+                GroovyClassLoader loader = AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
+                    public GroovyClassLoader run() {
+                        return new GroovyClassLoader(GroovyScriptMessageValidator.class.getClassLoader());
+                    }
+                });
                 Class<?> groovyClass = loader.parseClass(TemplateBasedScriptBuilder.fromTemplateResource(scriptTemplateResource)
                                                             .withCode(validationScript)
                                                             .build());
@@ -107,9 +109,7 @@ public class GroovyScriptMessageValidator extends AbstractMessageValidator<Scrip
         }
     }
 
-    /**
-     * Returns the needed validation context for this validation mechanism.
-     */
+    @Override
     public ScriptValidationContext findValidationContext(List<ValidationContext> validationContexts) {
         for (ValidationContext validationContext : validationContexts) {
             if (validationContext instanceof ScriptValidationContext && 
@@ -121,10 +121,8 @@ public class GroovyScriptMessageValidator extends AbstractMessageValidator<Scrip
         return null;
     }
 
-    /**
-     * Checks if the message type is supported. 
-     */
-    public boolean supportsMessageType(String messageType) {
+    @Override
+    public boolean supportsMessageType(String messageType, Message message) {
         // support all known message types other than XML
         return MessageType.knows(messageType) && !messageType.equalsIgnoreCase(MessageType.XML.toString());
     }

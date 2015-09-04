@@ -40,9 +40,9 @@ public class SleepActionParser implements BeanDefinitionParser {
 
         DescriptionElementParser.doParse(element, beanDefinition);
 
-        BeanDefinitionParserUtils.setPropertyValue(beanDefinition, element.getAttribute("time"), "delay");
-
-        beanDefinition.addPropertyValue("name", element.getLocalName());
+        BeanDefinitionParserUtils.setPropertyValue(beanDefinition, element.getAttribute("time"), "seconds");
+        BeanDefinitionParserUtils.setPropertyValue(beanDefinition, element.getAttribute("seconds"), "seconds");
+        BeanDefinitionParserUtils.setPropertyValue(beanDefinition, element.getAttribute("milliseconds"), "milliseconds");
 
         return beanDefinition.getBeanDefinition();
     }

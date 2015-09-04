@@ -16,19 +16,21 @@
 
 package com.consol.citrus.ssh;
 
-import java.io.*;
-
-import com.consol.citrus.message.MessageHandler;
+import com.consol.citrus.endpoint.EndpointAdapter;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.ssh.client.SshEndpointConfiguration;
+import com.consol.citrus.ssh.model.SshRequest;
+import com.consol.citrus.ssh.model.SshResponse;
 import com.consol.citrus.util.FileUtils;
 import org.apache.sshd.server.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.integration.Message;
-import org.springframework.integration.support.MessageBuilder;
 import org.springframework.util.FileCopyUtils;
 
+import java.io.*;
+
 /**
- * A command for delegation to a message handler
+ * A command for delegation to a endpoint adapter
  *
  * @author Roland Huss
  * @since 1.3
@@ -38,11 +40,14 @@ public class SshCommand implements Command, Runnable {
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(SshCommand.class);
 
-    /** Message handler for creating requests/responses **/
-    private MessageHandler messageHandler;
+    /** Endpoint adapter for creating requests/responses **/
+    private final EndpointAdapter endpointAdapter;
+
+    /** Ssh endpoint configuration */
+    private final SshEndpointConfiguration endpointConfiguration;
 
     /** Command to execute **/
-    private String command;
+    private final String command;
 
     /** standard input/output/error streams; **/
     private InputStream stdin;
@@ -55,83 +60,66 @@ public class SshCommand implements Command, Runnable {
     private String user;
 
     /**
-     * Constructor taking a command and the messagehandler as arguments
-     * @param pCommand command performend
-     * @param pMessageHandler message handler
+     * Constructor taking a command and the endpoint adapter as arguments
+     * @param command command performed
+     * @param endpointAdapter endpoint adapter
+     * @param endpointConfiguration
      */
-    public SshCommand(String pCommand, MessageHandler pMessageHandler) {
-        messageHandler = pMessageHandler;
-        command = pCommand;
+    public SshCommand(String command, EndpointAdapter endpointAdapter, SshEndpointConfiguration endpointConfiguration) {
+        this.endpointAdapter = endpointAdapter;
+        this.command = command;
+        this.endpointConfiguration = endpointConfiguration;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void start(Environment env) throws IOException {
         user = env.getEnv().get(Environment.ENV_USER);
         new Thread(this, "CitrusSshCommand: " + command).start();
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    @Override
     public void run() {
         try {
             String input = FileUtils.readToString(stdin);
-            SshRequest req = new SshRequest(command,input);
+            SshRequest sshRequest = new SshRequest(command, input);
 
-            SshResponse resp = sendToMessageHandler(req);
+            Message response = endpointAdapter.handleMessage(endpointConfiguration.getMessageConverter().convertInbound(sshRequest, endpointConfiguration)
+                    .setHeader("user", user));
 
-            copyToStream(resp.getStderr(),stderr);
-            copyToStream(resp.getStdout(),stdout);
-            exitCallback.onExit(resp.getExit());
+            SshResponse sshResponse = (SshResponse) endpointConfiguration.getMessageConverter().convertOutbound(response, endpointConfiguration);
+
+            copyToStream(sshResponse.getStderr(), stderr);
+            copyToStream(sshResponse.getStdout(), stdout);
+            exitCallback.onExit(sshResponse.getExit());
         } catch (IOException exp) {
-            exitCallback.onExit(1,exp.getMessage());
+            exitCallback.onExit(1, exp.getMessage());
         }
     }
 
-    /**
-     * Delegate to message handler implementation.
-     * @param pReq
-     * @return
-     */
-    private SshResponse sendToMessageHandler(SshRequest pReq) {
-        XmlMapper mapper = new XmlMapper();
-        Message<?> response = messageHandler.handleMessage(
-                MessageBuilder.withPayload(mapper.toXML(pReq))
-                              .setHeader("user", user)
-                              .build());
-        String msgResp = (String) response.getPayload();
-        return (SshResponse) mapper.fromXML(msgResp);
-    }
-
-
-    /** {@inheritDoc} */
+    @Override
     public void destroy() {
         log.warn("Destroy has been called");
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void setInputStream(InputStream in) {
         stdin = in;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void setOutputStream(OutputStream out) {
         stdout = out;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void setErrorStream(OutputStream err) {
         stderr = err;
     }
 
-    /** {@inheritDoc} */
+    @Override
     public void setExitCallback(ExitCallback callback) {
         exitCallback = callback;
     }
-
-    // ====================================================================
 
     /**
      * Copy character sequence to outbput stream.

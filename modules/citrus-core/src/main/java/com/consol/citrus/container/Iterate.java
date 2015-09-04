@@ -31,17 +31,24 @@ import com.consol.citrus.context.TestContext;
  * 
  * @author Christoph Deppisch
  */
-public class Iterate extends AbstractIteratingTestAction {
+public class Iterate extends AbstractIteratingActionContainer {
     /** Index increment step */
     private int step = 1;
 
     /**
-     * @see com.consol.citrus.container.AbstractIteratingTestAction#executeIteration(com.consol.citrus.context.TestContext)
+     * Default constructor.
+     */
+    public Iterate() {
+        setName("iterate");
+    }
+
+    /**
+     * @see AbstractIteratingActionContainer#executeIteration(com.consol.citrus.context.TestContext)
      * @throws com.consol.citrus.exceptions.CitrusRuntimeException
      */
     @Override
     public void executeIteration(TestContext context) {
-        while (checkCondition()) {
+        while (checkCondition(context)) {
             executeActions(context);
 
             index = index + step ;

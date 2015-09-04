@@ -16,22 +16,30 @@
 
 package com.consol.citrus.context;
 
-import java.util.*;
-import java.util.Map.Entry;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
+import com.consol.citrus.TestCase;
+import com.consol.citrus.endpoint.EndpointFactory;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.exceptions.VariableNullValueException;
 import com.consol.citrus.functions.FunctionRegistry;
 import com.consol.citrus.functions.FunctionUtils;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.report.MessageListeners;
+import com.consol.citrus.report.TestListeners;
 import com.consol.citrus.validation.MessageValidatorRegistry;
+import com.consol.citrus.validation.interceptor.MessageConstructionInterceptors;
 import com.consol.citrus.validation.matcher.ValidationMatcherRegistry;
 import com.consol.citrus.variable.GlobalVariables;
 import com.consol.citrus.variable.VariableUtils;
+import com.consol.citrus.xml.namespace.NamespaceContextBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Class holding and managing test variables. The test context also provides utility methods
@@ -53,18 +61,36 @@ public class TestContext {
     
     /** Function registry holding all available functions */
     private FunctionRegistry functionRegistry = new FunctionRegistry();
+
+    /** Endpoint factory creates endpoint instances */
+    private EndpointFactory endpointFactory;
     
     /** Registered message validators */
-    private MessageValidatorRegistry messageValidatorRegistry;
+    private MessageValidatorRegistry messageValidatorRegistry = new MessageValidatorRegistry();
     
     /** Registered validation matchers */
     private ValidationMatcherRegistry validationMatcherRegistry = new ValidationMatcherRegistry();
+
+    /** List of test listeners to be informed on test events */
+    private TestListeners testListeners = new TestListeners();
+
+    /** List of message listeners to be informed on inbound and outbound message exchange */
+    private MessageListeners messageListeners = new MessageListeners();
+
+    /** List of global message construction interceptors */
+    private MessageConstructionInterceptors messageConstructionInterceptors = new MessageConstructionInterceptors();
+
+    /** Central namespace context builder */
+    private NamespaceContextBuilder namespaceContextBuilder = new NamespaceContextBuilder();
+
+    /** Spring bean application context */
+    private ApplicationContext applicationContext;
     
     /**
      * Default constructor
      */
     public TestContext() {
-        variables = new LinkedHashMap<String, Object>();
+        variables = new ConcurrentHashMap<String, Object>();
     }
     
     /**
@@ -147,15 +173,19 @@ public class TestContext {
      * @param map optionally having variable entries.
      * @return the constructed map without variable entries.
      */
-    public Map<String, Object> resolveDynamicValuesInMap(final Map<String, ?> map) {
-        Map<String, Object> target = new HashMap<String, Object>(map.size());
+    public Map<String, Object> resolveDynamicValuesInMap(final Map<String, Object> map) {
+        Map<String, Object> target = new HashMap<>(map.size());
 
-        for (Entry<String, ?> entry : map.entrySet()) {
+        for (Entry<String, Object> entry : map.entrySet()) {
             String key = entry.getKey();
-            String value = (String) entry.getValue();
+            Object value = entry.getValue();
 
-            //put value into target map, but check if value is variable or function first
-            target.put(key, replaceDynamicContentInString(value));
+            if (value instanceof String) {
+                //put value into target map, but check if value is variable or function first
+                target.put(key, replaceDynamicContentInString((String) value));
+            } else {
+                target.put(key, value);
+            }
         }
         return target;
     }
@@ -233,6 +263,31 @@ public class TestContext {
             return FunctionUtils.resolveFunction(expression, this);
         }
         return expression;
+    }
+
+    /**
+     * Handles error creating a new CitrusRuntimeException and
+     * informs test listeners.
+     * @param testName
+     * @param packageName
+     * @param message
+     * @param cause
+     * @return
+     */
+    public CitrusRuntimeException handleError(String testName, String packageName, String message, Exception cause) {
+        // Create empty dummy test case for logging purpose
+        TestCase dummyTest = new TestCase();
+        dummyTest.setName(testName);
+        dummyTest.setPackageName(packageName);
+
+        CitrusRuntimeException exception = new CitrusRuntimeException(message, cause);
+
+        // inform test listeners with failed test
+        testListeners.onTestStart(dummyTest);
+        testListeners.onTestFailure(dummyTest, exception);
+        testListeners.onTestFinish(dummyTest);
+
+        return exception;
     }
     
     /**
@@ -316,5 +371,124 @@ public class TestContext {
     public void setValidationMatcherRegistry(ValidationMatcherRegistry validationMatcherRegistry) {
         this.validationMatcherRegistry = validationMatcherRegistry;
     }
-    
+
+    /**
+     * Gets the message listeners.
+     * @return
+     */
+    public MessageListeners getMessageListeners() {
+        return messageListeners;
+    }
+
+    /**
+     * Set the message listeners.
+     * @param messageListeners
+     */
+    public void setMessageListeners(MessageListeners messageListeners) {
+        this.messageListeners = messageListeners;
+    }
+
+    /**
+     * Gets the test listeners.
+     * @return
+     */
+    public TestListeners getTestListeners() {
+        return testListeners;
+    }
+
+    /**
+     * Set the test listeners.
+     * @param testListeners
+     */
+    public void setTestListeners(TestListeners testListeners) {
+        this.testListeners = testListeners;
+    }
+
+    /**
+     * Gets the message construction interceptors.
+     * @return
+     */
+    public MessageConstructionInterceptors getMessageConstructionInterceptors() {
+        return messageConstructionInterceptors;
+    }
+
+    /**
+     * Sets the messsage construction interceptors.
+     * @param messageConstructionInterceptors
+     */
+    public void setMessageConstructionInterceptors(MessageConstructionInterceptors messageConstructionInterceptors) {
+        this.messageConstructionInterceptors = messageConstructionInterceptors;
+    }
+
+    /**
+     * Gets the endpoint factory.
+     * @return
+     */
+    public EndpointFactory getEndpointFactory() {
+        return endpointFactory;
+    }
+
+    /**
+     * Sets the endpoint factory.
+     * @param endpointFactory
+     */
+    public void setEndpointFactory(EndpointFactory endpointFactory) {
+        this.endpointFactory = endpointFactory;
+    }
+
+    /**
+     * Sets the namespace context builder.
+     * @param namespaceContextBuilder
+     */
+    public void setNamespaceContextBuilder(NamespaceContextBuilder namespaceContextBuilder) {
+        this.namespaceContextBuilder = namespaceContextBuilder;
+    }
+
+    /**
+     * Gets the namespace context builder.
+     * @return
+     */
+    public NamespaceContextBuilder getNamespaceContextBuilder() {
+        return namespaceContextBuilder;
+    }
+
+    /**
+     * Gets the Spring bean application context.
+     * @return
+     */
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    /**
+     * Sets the Spring bean application context.
+     * @param applicationContext
+     */
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
+    /**
+     * Informs message listeners if present that inbound message was received.
+     * @param receivedMessage
+     */
+    public void onInboundMessage(Message receivedMessage) {
+        if (messageListeners != null && !messageListeners.isEmpty()) {
+            messageListeners.onInboundMessage(receivedMessage, this);
+        } else {
+            log.debug("Received message is:" + System.getProperty("line.separator") + (receivedMessage != null ? receivedMessage.toString() : ""));
+        }
+    }
+
+    /**
+     * Informs message listeners if present that new outbound message is about to be sent.
+     * @param message
+     */
+    public void onOutboundMessage(Message message) {
+        if (messageListeners != null && !messageListeners.isEmpty()) {
+            messageListeners.onOutboundMessage(message, this);
+        } else {
+            log.info("Sent message is:" + System.getProperty("line.separator") + message.toString());
+        }
+    }
 }

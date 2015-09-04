@@ -16,156 +16,115 @@
 
 package com.consol.citrus.ws.actions;
 
-import java.io.IOException;
-
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.integration.Message;
-import org.springframework.util.StringUtils;
-
 import com.consol.citrus.actions.SendMessageAction;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.message.Message;
 import com.consol.citrus.util.FileUtils;
-import com.consol.citrus.variable.VariableExtractor;
-import com.consol.citrus.ws.SoapAttachment;
-import com.consol.citrus.ws.message.WebServiceMessageSender;
+import com.consol.citrus.ws.message.SoapAttachment;
+import com.consol.citrus.ws.message.SoapMessage;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Message sender implementation sending SOAP messages.
- * 
- *  This special implementation adds SOAP attachment support to normal
- *  message sender.
+ * Message send action able to add SOAP attachment support to normal message sending action.
  *  
  * @author Christoph Deppisch
  */
 public class SendSoapMessageAction extends SendMessageAction {
 
-    /** SOAP attachment data */
-    private String attachmentData;
-    
-    /** SOAP attachment data as external file resource path */
-    private String attachmentResourcePath;
-    
-    /** SOAP attachment */
-    private SoapAttachment attachment = new SoapAttachment();
-    
+    /** Logger */
+    private static Logger log = LoggerFactory.getLogger(SendSoapMessageAction.class);
+
+    /** SOAP attachments */
+    private List<SoapAttachment> attachments = new ArrayList<SoapAttachment>();
+
+    /** enable/disable mtom attachments */
+    private boolean mtomEnabled = false;
+
+    /** Marker for inline mtom binary data */
+    public static final String CID_MARKER = "cid:";
+
     @Override
-    public void doExecute(final TestContext context) {
-        final Message<?> message = createMessage(context);
-        
-        // extract variables from before sending message so we can save dynamic message ids
-        for (VariableExtractor variableExtractor : getVariableExtractors()) {
-            variableExtractor.extractVariables(message, context);
-        }
-        
-        if (!(messageSender instanceof WebServiceMessageSender)) {
-            throw new CitrusRuntimeException("Sending SOAP messages requires a " +
-            		"'com.consol.citrus.ws.message.WebServiceMessageSender' but was '" + messageSender.getClass().getName() + "'");
-        }
-        
-        final String attachmentContent;
+    protected SoapMessage createMessage(TestContext context, String messageType) {
+        Message message = super.createMessage(context, getMessageType());
+
+        SoapMessage soapMessage = new SoapMessage(message).mtomEnabled(mtomEnabled);
         try {
-            if (StringUtils.hasText(attachmentData)) {
-                attachmentContent = context.replaceDynamicContentInString(attachmentData);
-            } else if (attachmentResourcePath != null) {
-                attachmentContent = context.replaceDynamicContentInString(FileUtils.readToString(FileUtils.getFileResource(attachmentResourcePath, context)));
-            } else {
-                attachmentContent = null;
-            }
-        
-            if (isForkMode()) {
-                SimpleAsyncTaskExecutor taskExecutor = new SimpleAsyncTaskExecutor();
-                taskExecutor.execute(new Runnable() {
-                    public void run() {
-                        sendSoapMessage(message, attachmentContent);
+            for (SoapAttachment attachment : attachments) {
+                attachment.resolveDynamicContent(context);
+
+                if (mtomEnabled) {
+                    String messagePayload = soapMessage.getPayload(String.class);
+                    String cid = CID_MARKER + attachment.getContentId();
+
+                    if (attachment.isMtomInline() && messagePayload.contains(cid)) {
+                        byte[] attachmentBinaryData = FileUtils.readToString(attachment.getInputStream(), Charset.forName(attachment.getCharsetName())).getBytes(Charset.forName(attachment.getCharsetName()));
+                        if (attachment.getEncodingType().equals(SoapAttachment.ENCODING_BASE64_BINARY)) {
+                            log.info("Adding inline base64Binary data for attachment: %s", cid);
+                            messagePayload = messagePayload.replaceAll(cid, Base64.encodeBase64String(attachmentBinaryData));
+                        } else if (attachment.getEncodingType().equals(SoapAttachment.ENCODING_HEX_BINARY)) {
+                            log.info("Adding inline hexBinary data for attachment: %s", cid);
+                            messagePayload = messagePayload.replaceAll(cid, Hex.encodeHexString(attachmentBinaryData).toUpperCase());
+                        } else {
+                            throw new CitrusRuntimeException(String.format("Unsupported encoding type '%s' for SOAP attachment: %s - choose one of %s or %s",
+                                    attachment.getEncodingType(), cid, SoapAttachment.ENCODING_BASE64_BINARY, SoapAttachment.ENCODING_HEX_BINARY));
+                        }
+                    } else {
+                        messagePayload = messagePayload.replaceAll(cid, String.format("<xop:Include xmlns:xop=\"http://www.w3.org/2004/08/xop/include\" href=\"%s\"/>", cid));
+                        soapMessage.addAttachment(attachment);
                     }
-                });
-            } else {
-                sendSoapMessage(message, attachmentContent);
+
+                    soapMessage.setPayload(messagePayload);
+                } else {
+                    soapMessage.addAttachment(attachment);
+                }
             }
         } catch (IOException e) {
             throw new CitrusRuntimeException(e);
         }
+
+        return soapMessage;
+    }
+
+    /**
+     * Gets the attachments.
+     * @return the attachments
+     */
+    public List<SoapAttachment> getAttachments() {
+        return attachments;
+    }
+
+    /**
+     * Sets the control attachments.
+     * @param attachments the control attachments
+     */
+    public SendSoapMessageAction setAttachments(List<SoapAttachment> attachments) {
+        this.attachments = attachments;
+        return this;
     }
     
     /**
-     * Sends the SOAP message with the {@link WebServiceMessageSender}.
-     * 
-     * @param message the message to send.
-     * @param attachmentContent the optional attachmentContent.
+     * Enable or disable mtom attachments
+     * @param mtomEnabled
      */
-    private void sendSoapMessage(Message<?> message, String attachmentContent) {
-        WebServiceMessageSender webServiceMessageSender = (WebServiceMessageSender) messageSender;
-        if (attachmentContent != null) {
-            attachment.setContent(attachmentContent);
-            
-            webServiceMessageSender.send(message, attachment);
-        } else {
-            webServiceMessageSender.send(message);
-        }
+    public SendSoapMessageAction setMtomEnabled(boolean mtomEnabled) {
+        this.mtomEnabled = mtomEnabled;
+        return this;
     }
 
     /**
-     * Set the Attachment data file resource.
-     * @param attachment the attachment to set
+     * Gets mtom attachments enabled
+     * @return 
      */
-    public void setAttachmentResourcePath(String attachment) {
-        this.attachmentResourcePath = attachment;
-    }
-
-    /**
-     * Set the content type, delegates to soap attachment.
-     * @param contentType the contentType to set
-     */
-    public void setContentType(String contentType) {
-        attachment.setContentType(contentType);
-    }
-
-    /**
-     * Set the content id, delegates to soap attachment.
-     * @param contentId the contentId to set
-     */
-    public void setContentId(String contentId) {
-        attachment.setContentId(contentId);
-    }
-    
-    /**
-     * Set the charset name, delegates to soap attachment.
-     * @param charsetName the charsetName to set
-     */
-    public void setCharsetName(String charsetName) {
-        attachment.setCharsetName(charsetName);
-    }
-
-    /**
-     * Set the attachment data as string value.
-     * @param attachmentData the attachmentData to set
-     */
-    public void setAttachmentData(String attachmentData) {
-        this.attachmentData = attachmentData;
-    }
-
-    /**
-     * Gets the attachmentData.
-     * @return the attachmentData
-     */
-    public String getAttachmentData() {
-        return attachmentData;
-    }
-
-    /**
-     * Gets the attachmentResource.
-     * @return the attachmentResource
-     */
-    public String getAttachmentResourcePath() {
-        return attachmentResourcePath;
-    }
-
-    /**
-     * Gets the attachment.
-     * @return the attachment
-     */
-    public SoapAttachment getAttachment() {
-        return attachment;
+    public boolean getMtomEnabled() {
+        return this.mtomEnabled;
     }
 }

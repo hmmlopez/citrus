@@ -1,46 +1,63 @@
 (function() {
     define(["TemplateManager"], function(TemplateManager) {
         var ProjectView = Backbone.View.extend({
-        
-          events: {
-              "click #button-browse" : "showFileTree",
-              "click #button-close" : "hideFileTree",
-              "click #button-select" : "selectProject"
-          },
-          
-          render: function() {
-              $(this.el).html(TemplateManager.template('ProjectView',{}));
-              
-              $('#file-tree').fileTree({ 
-                  root: '/',
-                  script: 'project',
-                  multiFolder: false,
-                  expandSpeed: 1, 
-                  collapseSpeed: 1
-              }, function(file) {
-                  $('input[name="projecthome"]').val(file);
-                  $('#file-tree').hide();
-              });
-              
-              return this;
-          },
-          
-          showFileTree: function() {
-              $('#dialog-file-tree').modal();
-          },
-          
-          hideFileTree: function() {
-              $('#dialog-file-tree').modal('hide');
-          },
-          
-          selectProject: function() {
-              var selected = $('ul.jqueryFileTree li.expanded').last().children('a:first').attr('rel');
-              $('input[name="projecthome"]').val(selected);
-              $('#dialog-file-tree').modal('hide');
-          }
-        
+
+            status: false,
+            project: {},
+
+            initialize: function() {
+                $.ajax({
+                    url: "project/active",
+                    type: 'GET',
+                    dataType: "json",
+                    success: _.bind(function(response) {
+                        this.project = response;
+                    }, this),
+                    async: false
+                });
+            },
+
+            render: function() {
+                $(this.el).html(TemplateManager.template('ProjectView', { project: this.project, latestTests: this.getLatestTests(), testReport: this.getTestReport() }));
+                return this;
+            },
+
+            getLatestTests: function() {
+                var latestTests = {};
+                $.ajax({
+                    url: "testcase/",
+                    type: 'GET',
+                    dataType: "json",
+                    success: _.bind(function(response) {
+                        latestTests = response;
+                    }, this),
+                    async: false
+                });
+
+                latestTests = _.sortBy(latestTests, function(test) {
+                    return test.lastModified;
+                });
+
+                return _.last(latestTests, 8).reverse();
+            },
+
+            getTestReport: function() {
+                var testReport = {};
+                $.ajax({
+                    url: "project/testreport",
+                    type: 'GET',
+                    dataType: "json",
+                    success: _.bind(function(response) {
+                        testReport = response;
+                    }, this),
+                    async: false
+                });
+
+                return testReport;
+            }
+
         });
-        
+
         return ProjectView;
     });
 }).call(this);
