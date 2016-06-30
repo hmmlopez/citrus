@@ -86,8 +86,18 @@ public class HttpMessage extends DefaultMessage {
      * Sets the Http response status code.
      * @param statusCode
      */
-    public HttpMessage statusCode(HttpStatus statusCode) {
-        setHeader(HttpMessageHeaders.HTTP_STATUS_CODE, Integer.valueOf(statusCode.value()));
+    public HttpMessage status(HttpStatus statusCode) {
+        statusCode(Integer.valueOf(statusCode.value()));
+        reasonPhrase(statusCode.name());
+        return this;
+    }
+
+    /**
+     * Sets the Http response status code.
+     * @param statusCode
+     */
+    public HttpMessage statusCode(Integer statusCode) {
+        setHeader(HttpMessageHeaders.HTTP_STATUS_CODE, statusCode);
         return this;
     }
 
@@ -105,6 +115,7 @@ public class HttpMessage extends DefaultMessage {
      * @param requestUri
      */
     public HttpMessage uri(String requestUri) {
+        setHeader(DynamicEndpointUriResolver.ENDPOINT_URI_HEADER_NAME, requestUri);
         setHeader(HttpMessageHeaders.HTTP_REQUEST_URI, requestUri);
         return this;
     }
@@ -167,6 +178,17 @@ public class HttpMessage extends DefaultMessage {
         header(HttpMessageHeaders.HTTP_QUERY_PARAMS, queryParams);
         header(DynamicEndpointUriResolver.QUERY_PARAM_HEADER_NAME, queryParams);
 
+        return this;
+    }
+
+    /**
+     * Sets request path that is dynamically added to base uri.
+     * @param path
+     * @return
+     */
+    public HttpMessage path(String path) {
+        header(HttpMessageHeaders.HTTP_REQUEST_URI, path);
+        header(DynamicEndpointUriResolver.REQUEST_PATH_HEADER_NAME, path);
         return this;
     }
 
@@ -283,6 +305,20 @@ public class HttpMessage extends DefaultMessage {
 
         if (version != null) {
             return version.toString();
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets the request path after the context path.
+     * @return
+     */
+    public String getPath() {
+        Object path = getHeader(DynamicEndpointUriResolver.REQUEST_PATH_HEADER_NAME);
+
+        if (path != null) {
+            return path.toString();
         }
 
         return null;

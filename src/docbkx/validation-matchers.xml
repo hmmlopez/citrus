@@ -205,7 +205,7 @@
       <para>The field value has to be a date value otherwise the matcher will fail to parse the date. The matcher requires
       a date format which is <emphasis>dd.MM.yyyy</emphasis> by default. You can change this date format as follows:</para>
 
-      <programlisting>&lt;someDate&gt;@isWeekday('MONDAY('yyyy-MM-dd'))@&lt;/someDate&gt;</programlisting>
+      <programlisting>&lt;someDate&gt;@isWeekday(MONDAY('yyyy-MM-dd'))@&lt;/someDate&gt;</programlisting>
 
       <para>Now the matcher uses the custom date format in order to parse the date value for evaluation. The validation matcher
       also works with date time values. In this case you have to give a valid date time format respectively
@@ -227,5 +227,64 @@
       <programlisting>&lt;date&gt;@variable()@&lt;/date&gt;</programlisting>
 
       <para>This creates a new variable <emphasis>date</emphasis> with the actual element value as variable value.</para>
+    </section>
+
+    <section id="validation-matcher-daterange">
+      <title>dateRange()</title>
+
+      <para>The matcher works on date values and checks that a given date is within the expected date range. The user
+        defines the expected date range by specifying a from-date, a to-date and optionally a date format. The matcher
+        fails when the given date lies outside the expected date range.</para>
+
+      <programlisting>&lt;someDate&gt;@dateRange('01-12-2015', '31-12-2015', 'dd-MM-yyyy')@&lt;/someDate&gt;</programlisting>
+
+      <para>Possible valid values would be 'some date' &gt;= '01-12-2015' and 'some date' &lt;= '31-12-2015'</para>
+
+      <para>The date-format is optional and when omitted it is assumed that all dates match the default date format
+        <emphasis>yyyy-MM-dd</emphasis>. When specifying a custom date format use java's date format as a reference for
+        valid date formats. Only dates were used in the example above but we could just as easily used date and time
+        as shown in the example below</para>
+
+      <programlisting>&lt;someDate&gt;@dateRange('2015.12.01 07:00:00', '2015.12.01 19:00:00', 'yyyy.MM.dd HH:mm:ss')@&lt;/someDate&gt;</programlisting>
+    </section>
+
+    <section id="validation-matcher-hamcrest">
+      <title>assertThat()</title>
+
+      <para>Hamcrest is a very powerful matcher library with extraordinary matcher implementations. You can use Hamcrest matchers also as Citrus validation matcher.</para>
+
+      <programlisting>&lt;someValue&gt;@assertThat(equalTo(foo))@&lt;/someValue&gt;</programlisting>
+
+      <para>In the listing above we are using the <emphasis>equalTo()</emphasis> matcher. All Hamcrest matchers are surrounded by a <emphasis>assertThat</emphasis> expression.
+      You are able to combine several Hamcrest matchers then in order to construct very powerful validation logic. See the following examples on what is possible then:</para>
+
+      <programlisting>&lt;someValue&gt;@assertThat(equalTo(value))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(not(equalTo(other))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(is(not(other))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(not(is(other))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(equalToIgnoringCase(VALUE)@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(containsString(lue)@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(not(containsString(other))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(startsWith(val)@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(endsWith(lue)@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(anyOf(startsWith(val), endsWith(lue))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(allOf(startsWith(val), endsWith(lue))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(isEmptyString()@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(not(isEmptyString())@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(isEmptyOrNullString()@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(nullValue()@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(notNullValue()@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(empty()@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(not(empty())@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(greaterThan(4)@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(allOf(greaterThan(4), lessThan(6), not(lessThan(5)))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(is(not(greaterThan(5)))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(greaterThanOrEqualTo(5)@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(lessThan(5)@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(not(lessThan(1))@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(lessThanOrEqualTo(4)@&lt;/someValue&gt;
+&lt;someValue&gt;@assertThat(hasSize(5))@&lt;/someValue&gt;</programlisting>
+
+      <para>Citrus will automatically perform validation matchers on the element value. Only if all matchers are satisfied the validation will pass.</para>
     </section>
 </chapter>

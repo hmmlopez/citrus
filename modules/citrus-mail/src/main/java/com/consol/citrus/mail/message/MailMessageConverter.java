@@ -16,6 +16,7 @@
 
 package com.consol.citrus.mail.message;
 
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.mail.client.MailEndpointConfiguration;
 import com.consol.citrus.mail.model.*;
@@ -52,14 +53,14 @@ public class MailMessageConverter implements MessageConverter<MimeMailMessage, M
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 
     @Override
-    public MimeMailMessage convertOutbound(Message message, MailEndpointConfiguration endpointConfiguration) {
+    public MimeMailMessage convertOutbound(Message message, MailEndpointConfiguration endpointConfiguration, TestContext context) {
         MailMessage mailMessage = getMailMessage(message, endpointConfiguration);
 
         try {
             MimeMessage mimeMessage = endpointConfiguration.getJavaMailSender().createMimeMessage();
             MimeMailMessage mimeMailMessage = new MimeMailMessage(new MimeMessageHelper(mimeMessage, mailMessage.getBody().hasAttachments(), mailMessage.getBody().getCharsetName()));
 
-            convertOutbound(mimeMailMessage, new DefaultMessage(mailMessage, message.copyHeaders()), endpointConfiguration);
+            convertOutbound(mimeMailMessage, new DefaultMessage(mailMessage, message.getHeaders()), endpointConfiguration, context);
 
             return mimeMailMessage;
         } catch (MessagingException e) {
@@ -68,7 +69,7 @@ public class MailMessageConverter implements MessageConverter<MimeMailMessage, M
     }
 
     @Override
-    public void convertOutbound(MimeMailMessage mimeMailMessage, Message message, MailEndpointConfiguration endpointConfiguration) {
+    public void convertOutbound(MimeMailMessage mimeMailMessage, Message message, MailEndpointConfiguration endpointConfiguration, TestContext context) {
         MailMessage mailMessage = getMailMessage(message, endpointConfiguration);
 
         try {
@@ -101,7 +102,7 @@ public class MailMessageConverter implements MessageConverter<MimeMailMessage, M
     }
 
     @Override
-    public Message convertInbound(MimeMailMessage message, MailEndpointConfiguration endpointConfiguration) {
+    public Message convertInbound(MimeMailMessage message, MailEndpointConfiguration endpointConfiguration, TestContext context) {
         try {
             Map<String, Object> messageHeaders = createMessageHeaders(message);
             MailMessage mailMessage = createMailMessage(messageHeaders);
@@ -304,11 +305,7 @@ public class MailMessageConverter implements MessageConverter<MimeMailMessage, M
             reader = new BufferedReader(new StringReader(textBody));
 
             String line = reader.readLine();
-            while (StringUtils.hasText(line)) {
-                if (line.trim().equals(".")) {
-                    break;
-                }
-
+            while (line != null && !line.equals(".")) {
                 body.append(line);
                 body.append(System.getProperty("line.separator"));
                 line = reader.readLine();
@@ -348,7 +345,7 @@ public class MailMessageConverter implements MessageConverter<MimeMailMessage, M
         }
 
         if (mailMessage == null) {
-            throw new CitrusRuntimeException("Unable to create proper mail message from paylaod: " + payload);
+            throw new CitrusRuntimeException("Unable to create proper mail message from payload: " + payload);
         }
 
         return mailMessage;

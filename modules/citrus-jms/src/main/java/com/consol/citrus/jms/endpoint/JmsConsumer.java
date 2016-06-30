@@ -56,7 +56,7 @@ public class JmsConsumer extends AbstractSelectiveMessageConsumer {
             destinationName = endpointConfiguration.getDefaultDestinationName();
         }
 
-        log.info("Waiting for JMS message on destination: '" + destinationName + "'");
+        log.debug("Receiving JMS message on destination: '" + destinationName + "'");
 
         endpointConfiguration.getJmsTemplate().setReceiveTimeout(timeout);
         javax.jms.Message receivedJmsMessage;
@@ -71,7 +71,7 @@ public class JmsConsumer extends AbstractSelectiveMessageConsumer {
             throw new ActionTimeoutException("Action timed out while receiving JMS message on '" + destinationName + "'");
         }
 
-        Message receivedMessage = endpointConfiguration.getMessageConverter().convertInbound(receivedJmsMessage, endpointConfiguration);
+        Message receivedMessage = endpointConfiguration.getMessageConverter().convertInbound(receivedJmsMessage, endpointConfiguration, context);
 
         log.info("Received JMS message on destination: '" + destinationName + "'");
         context.onInboundMessage(receivedMessage);

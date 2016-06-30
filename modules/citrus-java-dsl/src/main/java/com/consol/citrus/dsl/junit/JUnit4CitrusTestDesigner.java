@@ -18,22 +18,22 @@ package com.consol.citrus.dsl.junit;
 
 import com.consol.citrus.*;
 import com.consol.citrus.actions.*;
-import com.consol.citrus.annotations.CitrusTest;
+import com.consol.citrus.container.AbstractActionContainer;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.dsl.builder.*;
 import com.consol.citrus.dsl.design.*;
-import com.consol.citrus.dsl.util.PositionHandle;
+import com.consol.citrus.dsl.simulation.TestSimulator;
 import com.consol.citrus.endpoint.Endpoint;
-import com.consol.citrus.junit.AbstractJUnit4CitrusTest;
 import com.consol.citrus.junit.CitrusJUnit4Runner;
 import com.consol.citrus.server.Server;
-import com.consol.citrus.ws.client.WebServiceClient;
-import com.consol.citrus.ws.server.WebServiceServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.util.ReflectionUtils;
 
-import javax.jms.ConnectionFactory;
 import javax.sql.DataSource;
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Map;
 
@@ -44,46 +44,50 @@ import java.util.Map;
  * @author Christoph Deppisch
  * @since 2.3
  */
-public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implements TestDesigner {
+public class JUnit4CitrusTestDesigner extends JUnit4CitrusTest implements TestDesigner, TestSimulator {
+
+    /** Logger */
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
     /** Test builder delegate */
-    private DefaultTestDesigner testDesigner;
+    private TestDesigner testDesigner;
 
-    /**
-     * Initialize test case and variables. Must be done with each test run.
-     */
-    public void init() {
-        testDesigner = new DefaultTestDesigner(applicationContext);
-        name(this.getClass().getSimpleName());
-        packageName(this.getClass().getPackage().getName());
+    @Override
+    public void simulate(Method method, TestContext context, ApplicationContext applicationContext) {
+        setApplicationContext(applicationContext);
+        testDesigner = new TestDesignerSimulation(createTestDesigner(new CitrusJUnit4Runner.CitrusFrameworkMethod(method, method.getName(), method.getDeclaringClass().getPackage().getName()), context).getTestCase(), applicationContext, context);
     }
 
     @Override
-    protected void run(CitrusJUnit4Runner.CitrusFrameworkMethod frameworkMethod) {
-        if (frameworkMethod.getMethod().getAnnotation(CitrusTest.class) != null) {
-            init();
-            name(frameworkMethod.getTestName());
-            packageName(frameworkMethod.getPackageName());
+    protected TestDesigner createTestDesigner(CitrusJUnit4Runner.CitrusFrameworkMethod frameworkMethod, TestContext context) {
+        testDesigner = super.createTestDesigner(frameworkMethod, context);
+        return testDesigner;
+    }
 
-            ReflectionUtils.invokeMethod(frameworkMethod.getMethod(), this);
-
-            if (citrus == null) {
-                citrus = Citrus.newInstance(applicationContext);
-            }
-
-            TestContext ctx = prepareTestContext(citrus.createTestContext());
-            TestCase testCase = testDesigner.getTestCase();
-            citrus.run(testCase, ctx);
+    @Override
+    protected void invokeTestMethod(CitrusJUnit4Runner.CitrusFrameworkMethod frameworkMethod, TestCase testCase, TestContext context) {
+        if (isConfigure(frameworkMethod.getMethod())) {
+            configure();
+            citrus.run(testCase, context);
         } else {
-            super.run(frameworkMethod);
+            super.invokeTestMethod(frameworkMethod, testCase, context);
         }
     }
 
     @Override
+    protected final boolean isDesignerMethod(Method method) {
+        return true;
+    }
+
+    @Override
+    protected final boolean isRunnerMethod(Method method) {
+        return false;
+    }
+
+    @Override
     protected void executeTest() {
-        init();
-        configure();
-        super.executeTest();
+        run(new CitrusJUnit4Runner.CitrusFrameworkMethod(ReflectionUtils.findMethod(this.getClass(), "configure"),
+                this.getClass().getSimpleName(), this.getClass().getPackage().getName()));
     }
 
     /**
@@ -94,9 +98,23 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     protected void configure() {
     }
 
+    /**
+     * Checks if the given method is this designer's configure method.
+     * @param method
+     * @return
+     */
+    private boolean isConfigure(Method method) {
+        return method.getDeclaringClass().equals(this.getClass()) && method.getName().equals("configure");
+    }
+
     @Override
     public TestCase getTestCase() {
         return testDesigner.getTestCase();
+    }
+
+    @Override
+    public void testClass(Class<?> type) {
+        testDesigner.testClass(type);
     }
 
     @Override
@@ -145,8 +163,13 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
-    public void applyBehavior(TestBehavior behavior) {
-        testDesigner.applyBehavior(behavior);
+    public ApplyTestBehaviorAction applyBehavior(TestBehavior behavior) {
+        return testDesigner.applyBehavior(behavior);
+    }
+
+    @Override
+    public <T extends AbstractActionContainer> AbstractTestContainerBuilder<T> container(T container) {
+        return testDesigner.container(container);
     }
 
     @Override
@@ -215,11 +238,6 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
-    public PurgeJmsQueuesBuilder purgeQueues(ConnectionFactory connectionFactory) {
-        return testDesigner.purgeQueues(connectionFactory);
-    }
-
-    @Override
     public PurgeJmsQueuesBuilder purgeQueues() {
         return testDesigner.purgeQueues();
     }
@@ -230,8 +248,8 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
-    public ReceiveSoapMessageBuilder receive(WebServiceServer server) {
-        return testDesigner.receive(server);
+    public PurgeEndpointsBuilder purgeEndpoints() {
+        return testDesigner.purgeEndpoints();
     }
 
     @Override
@@ -245,11 +263,6 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
-    public SendSoapMessageBuilder send(WebServiceClient client) {
-        return testDesigner.send(client);
-    }
-
-    @Override
     public SendMessageBuilder send(Endpoint messageEndpoint) {
         return testDesigner.send(messageEndpoint);
     }
@@ -260,11 +273,13 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public SendSoapFaultBuilder sendSoapFault(String messageEndpointName) {
         return testDesigner.sendSoapFault(messageEndpointName);
     }
 
     @Override
+    @Deprecated
     public SendSoapFaultBuilder sendSoapFault(Endpoint messageEndpoint) {
         return testDesigner.sendSoapFault(messageEndpoint);
     }
@@ -282,6 +297,11 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     @Override
     public SleepAction sleep(double seconds) {
         return testDesigner.sleep(seconds);
+    }
+
+    @Override
+    public WaitActionBuilder waitFor() {
+        return testDesigner.waitFor();
     }
 
     @Override
@@ -340,6 +360,7 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public AssertExceptionBuilder assertException(TestAction testAction) {
         return testDesigner.assertException(testAction);
     }
@@ -350,6 +371,7 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public CatchExceptionBuilder catchException(TestAction ... actions) {
         return testDesigner.catchException(actions);
     }
@@ -360,6 +382,7 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public AssertSoapFaultBuilder assertSoapFault(TestAction testAction) {
         return testDesigner.assertSoapFault(testAction);
     }
@@ -370,6 +393,7 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public ConditionalBuilder conditional(TestAction ... actions) {
         return testDesigner.conditional(actions);
     }
@@ -380,6 +404,7 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public IterateBuilder iterate(TestAction ... actions) {
         return testDesigner.iterate(actions);
     }
@@ -390,6 +415,7 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public ParallelBuilder parallel(TestAction ... actions) {
         return testDesigner.parallel(actions);
     }
@@ -400,6 +426,7 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public RepeatOnErrorBuilder repeatOnError(TestAction ... actions) {
         return testDesigner.repeatOnError(actions);
     }
@@ -410,6 +437,7 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public RepeatBuilder repeat(TestAction ... actions) {
         return testDesigner.repeat(actions);
     }
@@ -420,6 +448,7 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
     public SequenceBuilder sequential(TestAction ... actions) {
         return testDesigner.sequential(actions);
     }
@@ -430,11 +459,58 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
     }
 
     @Override
+    @Deprecated
+    public TimerBuilder timer(TestAction ... actions) {
+        return testDesigner.timer(actions);
+    }
+
+    @Override
+    public StopTimerAction stopTimer(String timerId) {
+        return testDesigner.stopTimer(timerId);
+    }
+
+    @Override
+    public StopTimerAction stopTimers() {
+        return testDesigner.stopTimers();
+    }
+
+    @Override
+    public TimerBuilder timer() {
+        return testDesigner.timer();
+    }
+
+    @Override
+    public DockerActionBuilder docker() {
+        return testDesigner.docker();
+    }
+
+    @Override
+    public HttpActionBuilder http() {
+        return testDesigner.http();
+    }
+
+    @Override
+    public SoapActionBuilder soap() {
+        return testDesigner.soap();
+    }
+
+    @Override
+    public CamelRouteActionBuilder camel() {
+        return testDesigner.camel();
+    }
+
+    @Override
+    public ZooActionBuilder zookeeper() {
+        return testDesigner.zookeeper();
+    }
+
+    @Override
     public TemplateBuilder applyTemplate(String name) {
         return testDesigner.applyTemplate(name);
     }
 
     @Override
+    @Deprecated
     public FinallySequenceBuilder doFinally(TestAction ... actions) {
         return testDesigner.doFinally(actions);
     }
@@ -444,17 +520,16 @@ public class JUnit4CitrusTestDesigner extends AbstractJUnit4CitrusTest implement
         return testDesigner.doFinally();
     }
 
-    @Override
-    public PositionHandle positionHandle() {
-        return testDesigner.positionHandle();
-    }
-
     /**
      * Get the test variables.
      * @return
      */
     protected Map<String, Object> getVariables() {
-        return testDesigner.getVariables();
+        if (testDesigner instanceof DefaultTestDesigner) {
+            return ((DefaultTestDesigner) testDesigner).getVariables();
+        } else {
+            return testDesigner.getTestCase().getVariableDefinitions();
+        }
     }
 
 }

@@ -84,8 +84,10 @@ public class WebServiceEndpoint implements MessageEndpoint {
         Assert.notNull(messageContext.getRequest(), "Request must not be null - unable to send message");
         
         Message requestMessage = endpointConfiguration.getMessageConverter().convertInbound(messageContext.getRequest(), messageContext, endpointConfiguration);
-        
-        log.info("Received SOAP request:\n" + requestMessage.toString());
+
+        if (log.isDebugEnabled()) {
+            log.debug("Received SOAP request:\n" + requestMessage.toString());
+        }
         
         //delegate request processing to endpoint adapter
         Message replyMessage = endpointAdapter.handleMessage(requestMessage);
@@ -95,7 +97,9 @@ public class WebServiceEndpoint implements MessageEndpoint {
         }
         
         if (replyMessage != null && replyMessage.getPayload() != null) {
-            log.info("Sending SOAP response:\n" + replyMessage.toString());
+            if (log.isDebugEnabled()) {
+                log.debug("Sending SOAP response:\n" + replyMessage.toString());
+            }
             
             SoapMessage response = (SoapMessage) messageContext.getResponse();
             
@@ -109,7 +113,9 @@ public class WebServiceEndpoint implements MessageEndpoint {
             addSoapHeaders(response, replyMessage);
             addMimeHeaders(response, replyMessage);
         } else {
-            log.info("No reply message from endpoint adapter '" + endpointAdapter + "'");
+            if (log.isDebugEnabled()) {
+                log.debug("No reply message from endpoint adapter '" + endpointAdapter + "'");
+            }
             log.warn("No SOAP response for calling client");
         }
     }
@@ -122,11 +128,11 @@ public class WebServiceEndpoint implements MessageEndpoint {
      * @throws IOException 
      */
     private boolean simulateHttpStatusCode(Message replyMessage) throws IOException {
-        if (replyMessage == null || CollectionUtils.isEmpty(replyMessage.copyHeaders())) {
+        if (replyMessage == null || CollectionUtils.isEmpty(replyMessage.getHeaders())) {
             return false;
         }
         
-        for (Entry<String, Object> headerEntry : replyMessage.copyHeaders().entrySet()) {
+        for (Entry<String, Object> headerEntry : replyMessage.getHeaders().entrySet()) {
             if (headerEntry.getKey().equalsIgnoreCase(SoapMessageHeaders.HTTP_STATUS_CODE)) {
                 WebServiceConnection connection = TransportContextHolder.getTransportContext().getConnection();
                 
@@ -151,7 +157,7 @@ public class WebServiceEndpoint implements MessageEndpoint {
      * @param replyMessage the internal reply message.
      */
     private void addMimeHeaders(SoapMessage response, Message replyMessage) {
-        for (Entry<String, Object> headerEntry : replyMessage.copyHeaders().entrySet()) {
+        for (Entry<String, Object> headerEntry : replyMessage.getHeaders().entrySet()) {
             if (headerEntry.getKey().toLowerCase().startsWith(SoapMessageHeaders.HTTP_PREFIX)) {
                 String headerName = headerEntry.getKey().substring(SoapMessageHeaders.HTTP_PREFIX.length());
                 
@@ -191,7 +197,7 @@ public class WebServiceEndpoint implements MessageEndpoint {
      * @param replyMessage
      */
     private void addSoapHeaders(SoapMessage response, Message replyMessage) throws TransformerException {
-        for (Entry<String, Object> headerEntry : replyMessage.copyHeaders().entrySet()) {
+        for (Entry<String, Object> headerEntry : replyMessage.getHeaders().entrySet()) {
             if (MessageHeaderUtils.isSpringInternalHeader(headerEntry.getKey()) ||
                     headerEntry.getKey().startsWith(DEFAULT_JMS_HEADER_PREFIX)) {
                 continue;

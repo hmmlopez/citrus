@@ -17,19 +17,11 @@
 package com.consol.citrus.message;
 
 import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.util.TypeConversionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.ConversionNotSupportedException;
-import org.springframework.beans.SimpleTypeConverter;
-import org.springframework.core.io.InputStreamSource;
 import org.springframework.util.CollectionUtils;
-import org.springframework.xml.transform.StringSource;
-import org.w3c.dom.Node;
 
-import javax.xml.transform.Source;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamSource;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -68,10 +60,9 @@ public class DefaultMessage implements Message {
      * @param message
      */
     public DefaultMessage(Message message) {
-        this(message.getPayload(), message.copyHeaders());
+        this(message.getPayload());
 
-        this.headers.put(MessageHeaders.ID, message.getId());
-        this.headers.put(MessageHeaders.TIMESTAMP, message.getHeader(MessageHeaders.TIMESTAMP));
+        this.headers.putAll(message.getHeaders());
 
         for (String data : message.getHeaderData()) {
             addHeaderData(data);
@@ -95,7 +86,7 @@ public class DefaultMessage implements Message {
         this.payload = payload;
         this.headers = headers;
 
-        this.headers.put(MessageHeaders.ID, UUID.randomUUID());
+        this.headers.put(MessageHeaders.ID, UUID.randomUUID().toString());
         this.headers.put(MessageHeaders.TIMESTAMP, System.currentTimeMillis());
     }
 
@@ -158,34 +149,7 @@ public class DefaultMessage implements Message {
 
     @Override
     public <T> T getPayload(Class<T> type) {
-        if (type.isInstance(payload)) {
-            return type.cast(payload);
-        }
-
-        if (type.isAssignableFrom(Source.class)) {
-            if (getPayload().getClass().isAssignableFrom(String.class)) {
-                return (T) new StringSource(getPayload(String.class));
-            } else if (getPayload().getClass().isAssignableFrom(Node.class)) {
-                return (T) new DOMSource((Node) getPayload());
-            } else if (getPayload().getClass().isAssignableFrom(InputStreamSource.class)) {
-                try {
-                    return (T) new StreamSource(((InputStreamSource)getPayload()).getInputStream());
-                } catch (IOException e) {
-                    log.warn("Failed to create stream source from message payload", e);
-                }
-            }
-        }
-
-        try {
-            return new SimpleTypeConverter().convertIfNecessary(payload, type);
-        } catch (ConversionNotSupportedException e) {
-            if (String.class.equals(type)) {
-                log.warn(String.format("Using payload object toString representation: %s", e.getMessage()));
-                return (T) payload.toString();
-            }
-
-            throw e;
-        }
+        return TypeConversionUtils.convertIfNecessary(getPayload(), type);
     }
 
     @Override
@@ -199,9 +163,7 @@ public class DefaultMessage implements Message {
     }
 
     @Override
-    public Map<String, Object> copyHeaders() {
-        LinkedHashMap copy = new LinkedHashMap(headers.size());
-        copy.putAll(headers);
-        return copy;
+    public Map<String, Object> getHeaders() {
+        return headers;
     }
 }

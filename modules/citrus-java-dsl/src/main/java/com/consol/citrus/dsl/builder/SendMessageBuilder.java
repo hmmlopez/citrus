@@ -16,18 +16,21 @@
 
 package com.consol.citrus.dsl.builder;
 
-import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.Citrus;
+import com.consol.citrus.TestAction;
 import com.consol.citrus.actions.SendMessageAction;
-import com.consol.citrus.dsl.util.PositionHandle;
+import com.consol.citrus.dsl.actions.DelegatingTestAction;
 import com.consol.citrus.endpoint.Endpoint;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.message.*;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.message.MessageType;
 import com.consol.citrus.util.FileUtils;
 import com.consol.citrus.validation.builder.*;
 import com.consol.citrus.validation.json.*;
 import com.consol.citrus.validation.xml.XpathMessageConstructionInterceptor;
-import com.consol.citrus.variable.MessageHeaderVariableExtractor;
 import com.consol.citrus.validation.xml.XpathPayloadVariableExtractor;
+import com.consol.citrus.variable.MessageHeaderVariableExtractor;
+import com.consol.citrus.variable.dictionary.DataDictionary;
 import com.consol.citrus.ws.actions.SendSoapMessageAction;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
@@ -37,8 +40,6 @@ import org.springframework.util.Assert;
 import org.springframework.xml.transform.StringResult;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Action builder creates a send message action with several message payload and header
@@ -47,13 +48,13 @@ import java.util.Map;
  * @author Christoph Deppisch
  * @since 2.3
  */
-public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessageBuilder> extends AbstractTestActionBuilder<A> {
+public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessageBuilder> extends AbstractTestActionBuilder<DelegatingTestAction<TestAction>> {
 
     /** Self reference for generics support */
     private final T self;
 
     /** Message type for this action builder */
-    private MessageType messageType = MessageType.valueOf(CitrusConstants.DEFAULT_MESSAGE_TYPE);
+    private String messageType = Citrus.DEFAULT_MESSAGE_TYPE;
 
     /** Variable extractors filled within this builder */
     private MessageHeaderVariableExtractor headerExtractor;
@@ -67,16 +68,12 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
     /** Basic application context */
     private ApplicationContext applicationContext;
 
-    /** Handle for test action position in test case sequence use when switching to SOAP specific builder */
-    private PositionHandle positionHandle;
-
     /**
      * Default constructor with test action.
      * @param action
      */
     public SendMessageBuilder(A action) {
-        super(action);
-        this.self = (T) this;
+        this(new DelegatingTestAction(action));
     }
 
     /**
@@ -87,12 +84,21 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
     }
 
     /**
+     * Constructor using delegate test action.
+     * @param action
+     */
+    public SendMessageBuilder(DelegatingTestAction<TestAction> action) {
+        super(action);
+        this.self = (T) this;
+    }
+
+    /**
      * Sets the message endpoint to send messages to.
      * @param messageEndpoint
      * @return
      */
     public SendMessageBuilder endpoint(Endpoint messageEndpoint) {
-        action.setEndpoint(messageEndpoint);
+        getAction().setEndpoint(messageEndpoint);
         return this;
     }
 
@@ -102,17 +108,7 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
      * @return
      */
     public SendMessageBuilder endpoint(String messageEndpointUri) {
-        action.setEndpointUri(messageEndpointUri);
-        return this;
-    }
-
-    /**
-     * Sets the position handle as internal marker where in test action sequence this action was set.
-     * @param positionHandle
-     * @return
-     */
-    public SendMessageBuilder position(PositionHandle positionHandle) {
-        this.positionHandle = positionHandle;
+        getAction().setEndpointUri(messageEndpointUri);
         return this;
     }
 
@@ -122,7 +118,7 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
      * @return
      */
     public T fork(boolean forkMode) {
-        action.setForkMode(forkMode);
+        getAction().setForkMode(forkMode);
         return self;
     }
     
@@ -132,25 +128,27 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
      * @return
      */
     public T message(Message message) {
-        if (message.getPayload() != null && message.getPayload() instanceof String) {
-            PayloadTemplateMessageBuilder messageBuilder = getPayloadTemplateMessageBuilder();
-            messageBuilder.setPayloadData(message.getPayload(String.class));
-
-            Map<String, Object> headers = new HashMap<String, Object>();
-            for (String headerName : message.copyHeaders().keySet()) {
-                if (!MessageHeaderUtils.isSpringInternalHeader(headerName) &&
-                        !headerName.startsWith(MessageHeaders.MESSAGE_PREFIX)) {
-                    headers.put(headerName, message.getHeader(headerName));
-                }
-            }
-
-            messageBuilder.getMessageHeaders().putAll(headers);
-            action.setMessageBuilder(messageBuilder);
-        } else {
-            action.setMessageBuilder(new StaticMessageContentBuilder(message));
-        }
-
+        StaticMessageContentBuilder staticMessageContentBuilder = StaticMessageContentBuilder.withMessage(message);
+        staticMessageContentBuilder.setMessageHeaders(getMessageContentBuilder().getMessageHeaders());
+        getAction().setMessageBuilder(staticMessageContentBuilder);
         return self;
+    }
+
+    /**
+     * Sets the payload data on the message builder implementation.
+     * @param payload
+     * @return
+     */
+    protected void setPayload(String payload) {
+        MessageContentBuilder messageContentBuilder = getMessageContentBuilder();
+
+        if (messageContentBuilder instanceof PayloadTemplateMessageBuilder) {
+            ((PayloadTemplateMessageBuilder) messageContentBuilder).setPayloadData(payload);
+        } else if (messageContentBuilder instanceof StaticMessageContentBuilder) {
+            ((StaticMessageContentBuilder) messageContentBuilder).getMessage().setPayload(payload);
+        } else {
+            throw new CitrusRuntimeException("Unable to set payload on message builder type: " + messageContentBuilder.getClass());
+        }
     }
     
     /**
@@ -159,7 +157,7 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
      * @return
      */
     public T payload(String payload) {
-        getPayloadTemplateMessageBuilder().setPayloadData(payload);
+        setPayload(payload);
         return self;
     }
     
@@ -170,14 +168,14 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
      */
     public T payload(Resource payloadResource) {
         try {
-            getPayloadTemplateMessageBuilder().setPayloadData(FileUtils.readToString(payloadResource));
+            setPayload(FileUtils.readToString(payloadResource));
         } catch (IOException e) {
             throw new CitrusRuntimeException("Failed to read payload resource", e);
         }
     
         return self;
     }
-    
+
     /**
      * Sets payload POJO object which is marshalled to a character sequence using the given object to xml mapper.
      * @param payload
@@ -195,15 +193,7 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
             throw new CitrusRuntimeException("Failed to marshal object graph for message payload", e);
         }
         
-        if (action.getMessageBuilder() != null && action.getMessageBuilder() instanceof PayloadTemplateMessageBuilder) {
-            ((PayloadTemplateMessageBuilder)action.getMessageBuilder()).setPayloadData(result.toString());
-        } else {
-            PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
-            messageBuilder.setPayloadData(result.toString());
-            
-            action.setMessageBuilder(messageBuilder);
-        }
-        
+        setPayload(result.toString());
         return self;
     }
 
@@ -272,8 +262,18 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
      * @return
      */
     public T messageType(MessageType messageType) {
+        messageType(messageType.name());
+        return self;
+    }
+
+    /**
+     * Sets a explicit message type for this receive action.
+     * @param messageType
+     * @return
+     */
+    public T messageType(String messageType) {
         this.messageType = messageType;
-        action.setMessageType(messageType.toString());
+        getAction().setMessageType(messageType);
         return self;
     }
 
@@ -283,27 +283,11 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
      * @return the message builder in use
      */
     protected AbstractMessageContentBuilder getMessageContentBuilder() {
-        if (action.getMessageBuilder() != null && action.getMessageBuilder() instanceof AbstractMessageContentBuilder) {
-            return (AbstractMessageContentBuilder) action.getMessageBuilder();
+        if (getAction().getMessageBuilder() != null && getAction().getMessageBuilder() instanceof AbstractMessageContentBuilder) {
+            return (AbstractMessageContentBuilder) getAction().getMessageBuilder();
         } else {
             PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
-            action.setMessageBuilder(messageBuilder);
-            return messageBuilder;
-        }
-    }
-
-    /**
-     * Forces a payload template message builder.
-     * @return
-     */
-    protected PayloadTemplateMessageBuilder getPayloadTemplateMessageBuilder() {
-        MessageContentBuilder messageContentBuilder = getMessageContentBuilder();
-
-        if (messageContentBuilder instanceof PayloadTemplateMessageBuilder) {
-            return (PayloadTemplateMessageBuilder) messageContentBuilder;
-        } else {
-            PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
-            action.setMessageBuilder(messageBuilder);
+            getAction().setMessageBuilder(messageBuilder);
             return messageBuilder;
         }
     }
@@ -317,8 +301,8 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
     public T extractFromHeader(String headerName, String variable) {
         if (headerExtractor == null) {
             headerExtractor = new MessageHeaderVariableExtractor();
-            
-            action.getVariableExtractors().add(headerExtractor);
+
+            getAction().getVariableExtractors().add(headerExtractor);
         }
         
         headerExtractor.getHeaderMappings().put(headerName, variable);
@@ -350,13 +334,13 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
         if (xpathMessageConstructionInterceptor == null) {
             xpathMessageConstructionInterceptor = new XpathMessageConstructionInterceptor();
 
-            if (action.getMessageBuilder() != null) {
-                (action.getMessageBuilder()).add(xpathMessageConstructionInterceptor);
+            if (getAction().getMessageBuilder() != null) {
+                (getAction().getMessageBuilder()).add(xpathMessageConstructionInterceptor);
             } else {
                 PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
                 messageBuilder.getMessageInterceptors().add(xpathMessageConstructionInterceptor);
 
-                action.setMessageBuilder(messageBuilder);
+                getAction().setMessageBuilder(messageBuilder);
             }
         }
 
@@ -374,13 +358,13 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
         if (jsonPathMessageConstructionInterceptor == null) {
             jsonPathMessageConstructionInterceptor = new JsonPathMessageConstructionInterceptor();
 
-            if (action.getMessageBuilder() != null) {
-                (action.getMessageBuilder()).add(jsonPathMessageConstructionInterceptor);
+            if (getAction().getMessageBuilder() != null) {
+                (getAction().getMessageBuilder()).add(jsonPathMessageConstructionInterceptor);
             } else {
                 PayloadTemplateMessageBuilder messageBuilder = new PayloadTemplateMessageBuilder();
                 messageBuilder.getMessageInterceptors().add(jsonPathMessageConstructionInterceptor);
 
-                action.setMessageBuilder(messageBuilder);
+                getAction().setMessageBuilder(messageBuilder);
             }
         }
 
@@ -395,7 +379,7 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
         if (xpathExtractor == null) {
             xpathExtractor = new XpathPayloadVariableExtractor();
 
-            action.getVariableExtractors().add(xpathExtractor);
+            getAction().getVariableExtractors().add(xpathExtractor);
         }
 
         return xpathExtractor;
@@ -408,7 +392,7 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
         if (jsonPathExtractor == null) {
             jsonPathExtractor = new JsonPathVariableExtractor();
 
-            action.getVariableExtractors().add(jsonPathExtractor);
+            getAction().getVariableExtractors().add(jsonPathExtractor);
         }
 
         return jsonPathExtractor;
@@ -424,26 +408,47 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
     }
 
     /**
+     * Sets explicit data dictionary for this receive action.
+     * @param dictionary
+     * @return
+     */
+    public T dictionary(DataDictionary dictionary) {
+        getAction().setDataDictionary(dictionary);
+        return self;
+    }
+
+    /**
+     * Sets explicit data dictionary by name.
+     * @param dictionaryName
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    public T dictionary(String dictionaryName) {
+        Assert.notNull(applicationContext, "Citrus application context is not initialized!");
+        DataDictionary dictionary = applicationContext.getBean(dictionaryName, DataDictionary.class);
+
+        getAction().setDataDictionary(dictionary);
+        return self;
+    }
+
+    /**
      * Enable SOAP specific properties on this message sending action.
      * @return
+     * @deprecated since 2.6 in favor of using {@link SoapActionBuilder}
      */
     public SendSoapMessageBuilder soap() {
         SendSoapMessageAction sendSoapMessageAction = new SendSoapMessageAction();
-        sendSoapMessageAction.setActor(action.getActor());
-        sendSoapMessageAction.setMessageType(messageType.toString());
-        sendSoapMessageAction.setDescription(action.getDescription());
-        sendSoapMessageAction.setMessageBuilder(action.getMessageBuilder());
-        sendSoapMessageAction.setEndpoint(action.getEndpoint());
-        sendSoapMessageAction.setEndpointUri(action.getEndpointUri());
-        sendSoapMessageAction.setVariableExtractors(action.getVariableExtractors());
+        sendSoapMessageAction.setActor(getAction().getActor());
+        sendSoapMessageAction.setMessageType(messageType);
+        sendSoapMessageAction.setDescription(getAction().getDescription());
+        sendSoapMessageAction.setMessageBuilder(getAction().getMessageBuilder());
+        sendSoapMessageAction.setEndpoint(getAction().getEndpoint());
+        sendSoapMessageAction.setEndpointUri(getAction().getEndpointUri());
+        sendSoapMessageAction.setVariableExtractors(getAction().getVariableExtractors());
 
-        if (positionHandle != null) {
-            positionHandle.switchTestAction(sendSoapMessageAction);
-        } else {
-            action = (A) sendSoapMessageAction;
-        }
+        action.setDelegate(sendSoapMessageAction);
 
-        SendSoapMessageBuilder builder = new SendSoapMessageBuilder(sendSoapMessageAction);
+        SendSoapMessageBuilder builder = new SendSoapMessageBuilder(action);
         builder.withApplicationContext(applicationContext);
 
         return builder;
@@ -460,12 +465,20 @@ public class SendMessageBuilder<A extends SendMessageAction, T extends SendMessa
      *
      *
      * @return HTTP specific builder.
+     * @deprecated since 2.6 in favor of using {@link HttpActionBuilder}
      */
     public SendHttpMessageBuilder http() {
         SendHttpMessageBuilder builder = new SendHttpMessageBuilder(action);
-        builder.position(positionHandle);
         builder.withApplicationContext(applicationContext);
 
         return builder;
+    }
+
+    /**
+     * Provides access to receive message action delegate.
+     * @return
+     */
+    protected SendMessageAction getAction() {
+        return (SendMessageAction) action.getDelegate();
     }
 }

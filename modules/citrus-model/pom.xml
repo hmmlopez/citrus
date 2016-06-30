@@ -5,7 +5,7 @@
   <parent>
     <artifactId>citrus</artifactId>
     <groupId>com.consol.citrus</groupId>
-    <version>2.4-SNAPSHOT</version>
+    <version>2.7-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -25,6 +25,11 @@
     <module>model-vertx</module>
     <module>model-camel</module>
     <module>model-ftp</module>
+    <module>model-docker</module>
+    <module>model-rmi</module>
+    <module>model-jmx</module>
+    <module>model-cucumber</module>
+    <module>model-zookeeper</module>
   </modules>
 
   <dependencies>
@@ -47,6 +52,13 @@
     <plugins>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <failIfNoTests>false</failIfNoTests>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <failIfNoTests>false</failIfNoTests>
         </configuration>

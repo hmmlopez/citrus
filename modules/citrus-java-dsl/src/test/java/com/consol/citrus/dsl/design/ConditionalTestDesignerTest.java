@@ -24,10 +24,12 @@ import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import static org.hamcrest.Matchers.is;
+
 public class ConditionalTestDesignerTest extends AbstractTestNGUnitTest {
     @Test
     public void testConditionalBuilderNested() {
-        MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
             @Override
             public void configure() {
                 conditional(echo("${var}")).when("${var} = 5");
@@ -48,7 +50,7 @@ public class ConditionalTestDesignerTest extends AbstractTestNGUnitTest {
 
     @Test
     public void testConditionalBuilder() {
-        MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
             @Override
             public void configure() {
                 conditional().when("${var} = 5").actions(echo("${var}"));
@@ -69,7 +71,7 @@ public class ConditionalTestDesignerTest extends AbstractTestNGUnitTest {
 
     @Test
     public void testConditionalBuilderConditionExpression() {
-        MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
             @Override
             public void configure() {
                 conditional().when(new ConditionExpression() {
@@ -78,6 +80,27 @@ public class ConditionalTestDesignerTest extends AbstractTestNGUnitTest {
                         return context.getVariable("var").equals("Hello");
                     }
                 }).actions(echo("${var}"));
+            }
+        };
+
+        builder.configure();
+
+        TestCase test = builder.getTestCase();
+        Assert.assertEquals(test.getActionCount(), 1);
+        Assert.assertEquals(test.getActions().get(0).getClass(), Conditional.class);
+        Assert.assertEquals(test.getActions().get(0).getName(), "conditional");
+
+        Conditional container = (Conditional)test.getActions().get(0);
+        Assert.assertEquals(container.getActionCount(), 1);
+        Assert.assertNotNull(container.getConditionExpression());
+    }
+
+    @Test
+    public void testConditionalBuilderHamcrestConditionExpression() {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
+            @Override
+            public void configure() {
+                conditional().when("${var}", is("Hello")).actions(echo("${var}"));
             }
         };
 

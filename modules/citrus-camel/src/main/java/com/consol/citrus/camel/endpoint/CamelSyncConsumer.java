@@ -60,7 +60,9 @@ public class CamelSyncConsumer extends CamelConsumer implements ReplyProducer {
 
     @Override
     public Message receive(TestContext context, long timeout) {
-        log.info("Receiving message from camel endpoint: '" + endpointConfiguration.getEndpointUri() + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("Receiving message from camel endpoint: '" + endpointConfiguration.getEndpointUri() + "'");
+        }
 
         Exchange exchange = getConsumerTemplate().receive(endpointConfiguration.getEndpointUri(), timeout);
 
@@ -70,7 +72,7 @@ public class CamelSyncConsumer extends CamelConsumer implements ReplyProducer {
 
         log.info("Received message from camel endpoint: '" + endpointConfiguration.getEndpointUri() + "'");
 
-        Message message = endpointConfiguration.getMessageConverter().convertInbound(exchange, endpointConfiguration);
+        Message message = endpointConfiguration.getMessageConverter().convertInbound(exchange, endpointConfiguration, context);
         context.onInboundMessage(message);
 
         String correlationKeyName = endpointConfiguration.getCorrelator().getCorrelationKeyName(getName());
@@ -92,13 +94,15 @@ public class CamelSyncConsumer extends CamelConsumer implements ReplyProducer {
 
         buildOutMessage(exchange, message);
 
-        log.info("Sending reply message to camel endpoint: '" + exchange.getFromEndpoint() + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("Sending reply message to camel endpoint: '" + exchange.getFromEndpoint() + "'");
+        }
 
         getConsumerTemplate().doneUoW(exchange);
 
         context.onOutboundMessage(message);
 
-        log.info("Message was successfully sent to camel endpoint: '" + exchange.getFromEndpoint() + "'");
+        log.info("Message was sent to camel endpoint: '" + exchange.getFromEndpoint() + "'");
     }
 
     /**
@@ -109,7 +113,7 @@ public class CamelSyncConsumer extends CamelConsumer implements ReplyProducer {
      */
     private void buildOutMessage(Exchange exchange, Message message) {
         org.apache.camel.Message reply = exchange.getOut();
-        for (Map.Entry<String, Object> header : message.copyHeaders().entrySet()) {
+        for (Map.Entry<String, Object> header : message.getHeaders().entrySet()) {
             if (!header.getKey().startsWith(MessageHeaders.PREFIX)) {
                 reply.setHeader(header.getKey(), header.getValue());
             }

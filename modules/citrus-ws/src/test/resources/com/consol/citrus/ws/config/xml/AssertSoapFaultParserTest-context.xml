@@ -8,75 +8,89 @@
                                   http://www.citrusframework.org/schema/ws/testcase http://www.citrusframework.org/schema/ws/testcase/citrus-ws-testcase.xsd">
     <testcase name="AssertSoapFaultParserTest">
         <actions>
-            <ws:assert fault-code="{http://www.citrusframework.org/faults}FAULT-1001">
-                <echo>
-                    <message>Foo</message>
-                </echo>
-            </ws:assert>
+            <ws:assert-fault fault-code="{http://www.citrusframework.org/faults}FAULT-1001">
+                <ws:when>
+                    <echo>
+                        <message>Foo</message>
+                    </echo>
+                </ws:when>
+            </ws:assert-fault>
 
-            <ws:assert fault-code="{http://www.citrusframework.org/faults}FAULT-1002"
+            <ws:assert-fault fault-code="{http://www.citrusframework.org/faults}FAULT-1002"
                        fault-string="FaultString">
-                <echo>
-                    <message>Foo</message>
-                </echo>
-            </ws:assert>
+                <ws:when>
+                    <echo>
+                        <message>Foo</message>
+                    </echo>
+                </ws:when>
+            </ws:assert-fault>
                         
-            <ws:assert fault-code="{http://www.citrusframework.org/faults}FAULT-1003"
+            <ws:assert-fault fault-code="{http://www.citrusframework.org/faults}FAULT-1003"
                        fault-string="FaultString"
                        fault-actor="FaultActor">
                 <ws:fault-detail>
                   <![CDATA[FaultDetail]]>
                 </ws:fault-detail>
-                <echo>
-                    <message>Foo</message>
-                </echo>
-            </ws:assert>
+                <ws:when>
+                    <echo>
+                        <message>Foo</message>
+                    </echo>
+                </ws:when>
+            </ws:assert-fault>
             
-            <ws:assert fault-code="{http://www.citrusframework.org/faults}FAULT-1004"
+            <ws:assert-fault fault-code="{http://www.citrusframework.org/faults}FAULT-1004"
                        fault-string="FaultString" 
                        fault-validator="customSoapFaultValidator">
                 <ws:fault-detail file="classpath:com/consol/citrus/ws/actions/test-fault-detail.xml"/>
-                <echo>
-                    <message>Foo</message>
-                </echo>
-            </ws:assert>
+                <ws:when>
+                    <echo>
+                        <message>Foo</message>
+                    </echo>
+                </ws:when>
+            </ws:assert-fault>
             
-            <ws:assert fault-code="{http://www.citrusframework.org/faults}FAULT-1003"
+            <ws:assert-fault fault-code="{http://www.citrusframework.org/faults}FAULT-1003"
                        fault-string="FaultString"
                        fault-actor="FaultActor">
                 <ws:fault-detail schema-repository="fooSchemaRepository">
                   <![CDATA[FaultDetail]]>
                 </ws:fault-detail>
-                <echo>
-                    <message>Foo</message>
-                </echo>
-            </ws:assert>
+                <ws:when>
+                    <echo>
+                        <message>Foo</message>
+                    </echo>
+                </ws:when>
+            </ws:assert-fault>
             
-            <ws:assert fault-code="{http://www.citrusframework.org/faults}FAULT-1003"
+            <ws:assert-fault fault-code="{http://www.citrusframework.org/faults}FAULT-1003"
                        fault-string="FaultString"
                        fault-actor="FaultActor">
                 <ws:fault-detail schema="fooSchema">
                   <![CDATA[FaultDetail]]>
                 </ws:fault-detail>
-                <echo>
-                    <message>Foo</message>
-                </echo>
-            </ws:assert>
+                <ws:when>
+                    <echo>
+                        <message>Foo</message>
+                    </echo>
+                </ws:when>
+            </ws:assert-fault>
             
-            <ws:assert fault-code="{http://www.citrusframework.org/faults}FAULT-1003"
+            <ws:assert-fault fault-code="{http://www.citrusframework.org/faults}FAULT-1003"
                        fault-string="FaultString"
                        fault-actor="FaultActor">
                 <ws:fault-detail schema-validation="false">
                   <![CDATA[FaultDetail]]>
                 </ws:fault-detail>
-                <echo>
-                    <message>Foo</message>
-                </echo>
-            </ws:assert>
+                <ws:when>
+                    <echo>
+                        <message>Foo</message>
+                    </echo>
+                </ws:when>
+            </ws:assert-fault>
         </actions>
     </testcase>
     
-    <spring:bean id="customSoapFaultValidator" class="org.easymock.EasyMock" factory-method="createMock">
+    <spring:bean id="customSoapFaultValidator" class="org.mockito.Mockito" factory-method="mock">
         <spring:constructor-arg value="com.consol.citrus.ws.validation.SoapFaultValidator"/>
     </spring:bean>
     

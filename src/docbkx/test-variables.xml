@@ -45,7 +45,7 @@ variable(&quot;customerId&quot;, &quot;123456789&quot;);</programlisting>
     &lt;citrus:variable name=&quot;userName&quot; value=&quot;TestUser&quot;/&gt;
 &lt;/citrus:global-variables&gt;</programlisting>
 
-    <para>We add the Spring bean component to the <emphasis>'citrus-context.xml'</emphasis> application context file. The component
+    <para>We add the Spring bean component to the application context file. The component
     receives a list of name-value variable elements. You can reference the global variables in your test cases as usual.</para>
 
     <para>Another possibility to set global variables is to load those from external property files. This may give you more powerful
@@ -66,6 +66,37 @@ variable(&quot;customerId&quot;, &quot;123456789&quot;);</programlisting>
     <programlisting>user=Citrus
 greeting=Hello ${user}!
 date=citrus:currentDate('yyyy-MM-dd')</programlisting>
+  </section>
+
+  <section id="testcase-variables-cdata">
+    <title>Create variables with CDATA</title>
+
+    <para>When using th XML test case DSL we can not have XML variable values out of the box. This would interfere with the XML DSL
+    elements defined in the Citrus testcase XSD schema. You can use CDATA sections within the variable value element in order to do this
+    though.</para>
+
+    <programlisting>&lt;variables&gt;
+    &lt;variable name=&quot;persons&quot;&gt;
+        &lt;value&gt;
+            &lt;data&gt;
+                &lt;![CDATA[
+                  &lt;persons&gt;
+                    &lt;person&gt;
+                      &lt;name&gt;Theodor&lt;/name&gt;
+                      &lt;age&gt;10&lt;/age&gt;
+                    &lt;/person&gt;
+                    &lt;person&gt;
+                      &lt;name&gt;Alvin&lt;/name&gt;
+                      &lt;age&gt;9&lt;/age&gt;
+                    &lt;/person&gt;
+                  &lt;/persons&gt;
+                ]]&gt;
+            &lt;/data&gt;
+        &lt;/value&gt;
+    &lt;/variable&gt;
+&lt;/variables&gt;</programlisting>
+
+    <para>That is how you can use XML variable values in the XML DSL. In the Java DSL we do not have these problems.</para>
   </section>
 
   <section id="testcase-variables-groovy">

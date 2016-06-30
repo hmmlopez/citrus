@@ -25,7 +25,8 @@ import com.consol.citrus.script.ScriptTypes;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import com.consol.citrus.validation.script.ScriptValidationContext;
 import com.consol.citrus.validation.script.sql.SqlResultSetScriptValidator;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testng.Assert;
@@ -34,7 +35,7 @@ import org.testng.annotations.Test;
 import java.io.*;
 import java.util.*;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Christoph Deppisch
@@ -42,26 +43,21 @@ import static org.easymock.EasyMock.*;
  */
 public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
 
-    private JdbcTemplate jdbcTemplate = EasyMock.createMock(JdbcTemplate.class);
-    private Resource resource = EasyMock.createMock(Resource.class);
-    private File file = EasyMock.createMock(File.class);
-    
-    private SqlResultSetScriptValidator validator = EasyMock.createMock(SqlResultSetScriptValidator.class);
+    private JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
+    private Resource resource = Mockito.mock(Resource.class);
+
+    private SqlResultSetScriptValidator validator = Mockito.mock(SqlResultSetScriptValidator.class);
     
     @Test
     public void testExecuteSQLQueryWithResource() throws IOException {
         List<Map<String, Object>> results = new ArrayList<>();
         results.add(Collections.<String, Object>singletonMap("NAME", "Leonard"));
 
-        reset(jdbcTemplate, resource, file);
-        expect(resource.getFile()).andReturn(file).once();
-        expect(file.getAbsolutePath()).andReturn("classpath:com/consol/citrus/dsl/runner/query-script.sql").once();
+        reset(jdbcTemplate);
 
-        expect(jdbcTemplate.queryForList(anyString())).andReturn(results).once();
-        expect(jdbcTemplate.queryForList(anyString())).andReturn(Collections.singletonList(Collections.<String, Object>singletonMap("CNT_EPISODES", "100000"))).once();
-        replay(jdbcTemplate, resource, file);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        when(jdbcTemplate.queryForList(anyString())).thenReturn(results)
+                                                    .thenReturn(Collections.singletonList(Collections.<String, Object>singletonMap("CNT_EPISODES", "100000")));
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 variable("episodeId", "citrus:randomNumber(5)");
@@ -70,7 +66,7 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
                     @Override
                     public void configure(ExecuteSQLQueryBuilder builder) {
                         builder.jdbcTemplate(jdbcTemplate)
-                                .sqlResource(resource)
+                                .sqlResource(new ClassPathResource("com/consol/citrus/dsl/runner/query-script.sql"))
                                 .validate("NAME", "Leonard")
                                 .validate("CNT_EPISODES", "100000")
                                 .extract("NAME", "actorName");
@@ -79,7 +75,7 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
             }
         };
 
-        TestContext context = builder.createTestContext();
+        TestContext context = builder.getTestContext();
         Assert.assertNotNull(context.getVariable("NAME"));
         Assert.assertNotNull(context.getVariable("actorName"));
         Assert.assertNotNull(context.getVariable("CNT_EPISODES"));
@@ -102,10 +98,10 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getExtractVariables().entrySet().iterator().next().toString(), "NAME=actorName");
         Assert.assertNull(action.getScriptValidationContext());
         Assert.assertEquals(action.getJdbcTemplate(), jdbcTemplate);
-        Assert.assertEquals(action.getSqlResourcePath(), "classpath:com/consol/citrus/dsl/runner/query-script.sql");
+        Assert.assertEquals(action.getStatements().size(), 2);
+        Assert.assertNull(action.getSqlResourcePath());
         Assert.assertNull(action.getValidator());
-        
-        verify(jdbcTemplate, resource, file);
+
     }
     
     @Test
@@ -115,11 +111,9 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         results.add(Collections.<String, Object>singletonMap("NAME", "Sheldon"));
 
         reset(jdbcTemplate);
-        expect(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).andReturn(results).once();
-        expect(jdbcTemplate.queryForList("SELECT COUNT(*) as CNT_EPISODES FROM EPISODES")).andReturn(Collections.singletonList(Collections.<String, Object>singletonMap("CNT_EPISODES", "9999"))).once();
-        replay(jdbcTemplate);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        when(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).thenReturn(results);
+        when(jdbcTemplate.queryForList("SELECT COUNT(*) as CNT_EPISODES FROM EPISODES")).thenReturn(Collections.singletonList(Collections.<String, Object>singletonMap("CNT_EPISODES", "9999")));
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 query(new BuilderSupport<ExecuteSQLQueryBuilder>() {
@@ -136,7 +130,7 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
             }
         };
 
-        TestContext context = builder.createTestContext();
+        TestContext context = builder.getTestContext();
         Assert.assertNotNull(context.getVariable("NAME"));
         Assert.assertNotNull(context.getVariable("CNT_EPISODES"));
         Assert.assertNotNull(context.getVariable("cntEpisodes"));
@@ -163,7 +157,6 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getJdbcTemplate(), jdbcTemplate);
         Assert.assertNull(action.getValidator());
 
-        verify(jdbcTemplate);
     }
 
     @Test
@@ -173,10 +166,8 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         results.add(Collections.<String, Object>singletonMap("NAME", "Sheldon"));
 
         reset(jdbcTemplate);
-        expect(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).andReturn(results).once();
-        replay(jdbcTemplate);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        when(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).thenReturn(results);
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 query(new BuilderSupport<ExecuteSQLQueryBuilder>() {
@@ -207,7 +198,6 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getStatements().toString(), "[SELECT NAME FROM ACTORS]");
         Assert.assertEquals(action.getJdbcTemplate(), jdbcTemplate);
 
-        verify(jdbcTemplate);
     }
     
     @Test
@@ -215,12 +205,10 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         List<Map<String, Object>> results = new ArrayList<>();
         results.add(Collections.<String, Object>singletonMap("NAME", "Radj"));
 
-        reset(jdbcTemplate, resource, file);
-        expect(resource.getInputStream()).andReturn(new ByteArrayInputStream("assert rows[0].NAME == 'Radj'".getBytes())).once();
-        expect(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).andReturn(results).once();
-        replay(jdbcTemplate, resource, file);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        reset(jdbcTemplate, resource);
+        when(resource.getInputStream()).thenReturn(new ByteArrayInputStream("assert rows[0].NAME == 'Radj'".getBytes()));
+        when(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).thenReturn(results);
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 query(new BuilderSupport<ExecuteSQLQueryBuilder>() {
@@ -249,8 +237,7 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getStatements().size(), 1);
         Assert.assertEquals(action.getStatements().toString(), "[SELECT NAME FROM ACTORS]");
         Assert.assertEquals(action.getJdbcTemplate(), jdbcTemplate);
-        
-        verify(jdbcTemplate, resource, file);
+
     }
     
     @Test
@@ -260,10 +247,8 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         results.add(Collections.<String, Object>singletonMap("NAME", "Sheldon"));
 
         reset(jdbcTemplate);
-        expect(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).andReturn(results).once();
-        replay(jdbcTemplate);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        when(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).thenReturn(results);
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 query(new BuilderSupport<ExecuteSQLQueryBuilder>() {
@@ -293,7 +278,6 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getStatements().toString(), "[SELECT NAME FROM ACTORS]");
         Assert.assertEquals(action.getJdbcTemplate(), jdbcTemplate);
 
-        verify(jdbcTemplate);
     }
     
     @Test
@@ -303,12 +287,10 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         results.add(Collections.<String, Object>singletonMap("NAME", "Howard"));
         results.add(Collections.<String, Object>singletonMap("NAME", "Sheldon"));
 
-        reset(jdbcTemplate, resource, file);
-        expect(resource.getInputStream()).andReturn(new ByteArrayInputStream("assert rows[1].NAME == 'Howard'".getBytes())).once();
-        expect(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).andReturn(results).once();
-        replay(jdbcTemplate, resource, file);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        reset(jdbcTemplate, resource);
+        when(resource.getInputStream()).thenReturn(new ByteArrayInputStream("assert rows[1].NAME == 'Howard'".getBytes()));
+        when(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).thenReturn(results);
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 query(new BuilderSupport<ExecuteSQLQueryBuilder>() {
@@ -337,8 +319,7 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getStatements().size(), 1);
         Assert.assertEquals(action.getStatements().toString(), "[SELECT NAME FROM ACTORS]");
         Assert.assertEquals(action.getJdbcTemplate(), jdbcTemplate);
-        
-        verify(jdbcTemplate, resource, file);
+
     }
 
     @Test
@@ -349,12 +330,8 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         results.add(Collections.<String, Object>singletonMap("NAME", "Sheldon"));
 
         reset(jdbcTemplate, validator);
-        expect(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).andReturn(results).once();
-        validator.validateSqlResultSet(anyObject(List.class), anyObject(ScriptValidationContext.class), anyObject(TestContext.class));
-        expectLastCall().once();
-        replay(jdbcTemplate, validator);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        when(jdbcTemplate.queryForList("SELECT NAME FROM ACTORS")).thenReturn(results);
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 query(new BuilderSupport<ExecuteSQLQueryBuilder>() {
@@ -386,7 +363,7 @@ public class ExecuteSQLQueryTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getJdbcTemplate(), jdbcTemplate);
         Assert.assertEquals(action.getValidator(), validator);
 
-        verify(jdbcTemplate, validator);
+        verify(validator).validateSqlResultSet(any(List.class), any(ScriptValidationContext.class), any(TestContext.class));
     }
 
     /**

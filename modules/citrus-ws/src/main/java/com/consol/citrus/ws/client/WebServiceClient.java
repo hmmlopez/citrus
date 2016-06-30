@@ -105,9 +105,8 @@ public class WebServiceClient extends AbstractEndpoint implements Producer, Repl
             endpointUri = getEndpointConfiguration().getDefaultUri();
         }
 
-        log.info("Sending SOAP message to endpoint: '" + endpointUri + "'");
-
         if (log.isDebugEnabled()) {
+            log.debug("Sending SOAP message to endpoint: '" + endpointUri + "'");
             log.debug("Message to send is:\n" + soapMessage.toString());
         }
 
@@ -116,12 +115,10 @@ public class WebServiceClient extends AbstractEndpoint implements Producer, Repl
                     "' Currently only 'java.lang.String' is supported as payload type.");
         }
 
-        SoapRequestMessageCallback requestCallback = new SoapRequestMessageCallback(soapMessage, getEndpointConfiguration());
+        SoapRequestMessageCallback requestCallback = new SoapRequestMessageCallback(soapMessage, getEndpointConfiguration(), context);
 
-        SoapResponseMessageCallback responseCallback = new SoapResponseMessageCallback(getEndpointConfiguration());
-        getEndpointConfiguration().getWebServiceTemplate().setFaultMessageResolver(new InternalFaultMessageResolver(correlationKey, endpointUri));
-
-        log.info("Sending SOAP message to endpoint: '" + endpointUri + "'");
+        SoapResponseMessageCallback responseCallback = new SoapResponseMessageCallback(getEndpointConfiguration(), context);
+        getEndpointConfiguration().getWebServiceTemplate().setFaultMessageResolver(new InternalFaultMessageResolver(correlationKey, endpointUri, context));
 
         boolean result;
         // send and receive message
@@ -131,11 +128,13 @@ public class WebServiceClient extends AbstractEndpoint implements Producer, Repl
             result = getEndpointConfiguration().getWebServiceTemplate().sendAndReceive(requestCallback, responseCallback);
         }
 
+        log.info("SOAP message was sent to endpoint: '" + endpointUri + "'");
+
         if (result) {
-            log.info("Received SOAP response from endpoint: '" + endpointUri + "'");
+            log.info("Received SOAP response on endpoint: '" + endpointUri + "'");
             correlationManager.store(correlationKey, responseCallback.getResponse());
         } else {
-            log.info("No SOAP response from endpoint: '" + endpointUri + "'");
+            log.info("Received no SOAP response from endpoint: '" + endpointUri + "'");
         }
     }
 
@@ -200,13 +199,17 @@ public class WebServiceClient extends AbstractEndpoint implements Producer, Repl
         /** The endpoint that was initially invoked */
         private String endpointUri;
 
+        /** Test context */
+        private TestContext context;
+
         /**
          * Default constructor provided with request message
          * associated with this fault resolver and endpoint uri.
          */
-        public InternalFaultMessageResolver(String correlationKey, String endpointUri) {
+        public InternalFaultMessageResolver(String correlationKey, String endpointUri, TestContext context) {
             this.correlationKey = correlationKey;
             this.endpointUri = endpointUri;
+            this.context = context;
         }
 
         /**
@@ -214,7 +217,7 @@ public class WebServiceClient extends AbstractEndpoint implements Producer, Repl
          */
         public void resolveFault(WebServiceMessage webServiceResponse) throws IOException {
             if (getEndpointConfiguration().getErrorHandlingStrategy().equals(ErrorHandlingStrategy.PROPAGATE)) {
-                SoapResponseMessageCallback callback = new SoapResponseMessageCallback(getEndpointConfiguration());
+                SoapResponseMessageCallback callback = new SoapResponseMessageCallback(getEndpointConfiguration(), context);
                 try {
                     callback.doWithMessage(webServiceResponse);
 
@@ -230,7 +233,7 @@ public class WebServiceClient extends AbstractEndpoint implements Producer, Repl
                         responseMessage.setPayload(faultPayload.toString());
                     }
 
-                    log.info("Received SOAP fault response from endpoint: '" + endpointUri + "'");
+                    log.info("Received SOAP fault response on endpoint: '" + endpointUri + "'");
                     correlationManager.store(correlationKey, responseMessage);
                 } catch (TransformerException e) {
                     throw new CitrusRuntimeException("Failed to handle fault response message", e);

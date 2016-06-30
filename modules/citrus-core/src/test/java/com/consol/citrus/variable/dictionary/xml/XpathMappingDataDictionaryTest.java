@@ -16,7 +16,7 @@
 
 package com.consol.citrus.variable.dictionary.xml;
 
-import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.Citrus;
 import com.consol.citrus.message.DefaultMessage;
 import com.consol.citrus.message.Message;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
@@ -35,18 +35,21 @@ import java.util.Map;
  */
 public class XpathMappingDataDictionaryTest extends AbstractTestNGUnitTest {
 
+    private final String payload = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestMessage><Text>Hello World!</Text><OtherText name=\"foo\">No changes</OtherText></TestMessage>";
+
     @Test
     public void testTranslate() throws Exception {
-        Message message = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestMessage><Text>Hello World!</Text><OtherText name=\"foo\">No changes</OtherText></TestMessage>");
+        Message message = new DefaultMessage(payload);
 
         Map<String, String> mappings = new HashMap<String, String>();
         mappings.put("//TestMessage/Text", "Hello!");
         mappings.put("//@name", "bar");
+        mappings.put("//something/else", "not_found");
 
         XpathMappingDataDictionary dictionary = new XpathMappingDataDictionary();
         dictionary.setMappings(mappings);
 
-        Message intercepted = dictionary.interceptMessage(message, CitrusConstants.DEFAULT_MESSAGE_TYPE, context);
+        Message intercepted = dictionary.interceptMessage(message, Citrus.DEFAULT_MESSAGE_TYPE, context);
         Assert.assertEquals(intercepted.getPayload(String.class).trim(), "<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestMessage>" + System.getProperty("line.separator") +
                 "   <Text>Hello!</Text>" + System.getProperty("line.separator") +
                 "   <OtherText name=\"bar\">No changes</OtherText>" + System.getProperty("line.separator") +
@@ -64,7 +67,7 @@ public class XpathMappingDataDictionaryTest extends AbstractTestNGUnitTest {
         XpathMappingDataDictionary dictionary = new XpathMappingDataDictionary();
         dictionary.setMappings(mappings);
 
-        Message intercepted = dictionary.interceptMessage(message, CitrusConstants.DEFAULT_MESSAGE_TYPE, context);
+        Message intercepted = dictionary.interceptMessage(message, Citrus.DEFAULT_MESSAGE_TYPE, context);
         Assert.assertEquals(intercepted.getPayload(String.class).trim(), "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ns1:TestMessage xmlns:ns1=\"http://www.foo.bar\">" + System.getProperty("line.separator") +
                 "   <ns1:Text>Hello!</ns1:Text>" + System.getProperty("line.separator") +
                 "   <ns1:OtherText name=\"bar\">No changes</ns1:OtherText>" + System.getProperty("line.separator") +
@@ -88,7 +91,7 @@ public class XpathMappingDataDictionaryTest extends AbstractTestNGUnitTest {
         namespaceContextBuilder.setNamespaceMappings(namespaces);
         dictionary.setNamespaceContextBuilder(namespaceContextBuilder);
 
-        Message intercepted = dictionary.interceptMessage(message, CitrusConstants.DEFAULT_MESSAGE_TYPE, context);
+        Message intercepted = dictionary.interceptMessage(message, Citrus.DEFAULT_MESSAGE_TYPE, context);
         Assert.assertEquals(intercepted.getPayload(String.class).trim(), "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ns1:TestMessage xmlns:ns1=\"http://www.foo.bar\">" + System.getProperty("line.separator") +
                 "   <ns1:Text>Hello!</ns1:Text>" + System.getProperty("line.separator") +
                 "   <ns1:OtherText name=\"bar\">No changes</ns1:OtherText>" + System.getProperty("line.separator") +
@@ -97,7 +100,7 @@ public class XpathMappingDataDictionaryTest extends AbstractTestNGUnitTest {
 
     @Test
     public void testTranslateWithVariables() throws Exception {
-        Message message = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestMessage><Text>Hello World!</Text><OtherText name=\"foo\">No changes</OtherText></TestMessage>");
+        Message message = new DefaultMessage(payload);
 
         Map<String, String> mappings = new HashMap<String, String>();
         mappings.put("//TestMessage/Text", "${hello}");
@@ -108,7 +111,7 @@ public class XpathMappingDataDictionaryTest extends AbstractTestNGUnitTest {
         XpathMappingDataDictionary dictionary = new XpathMappingDataDictionary();
         dictionary.setMappings(mappings);
 
-        Message intercepted = dictionary.interceptMessage(message, CitrusConstants.DEFAULT_MESSAGE_TYPE, context);
+        Message intercepted = dictionary.interceptMessage(message, Citrus.DEFAULT_MESSAGE_TYPE, context);
         Assert.assertEquals(intercepted.getPayload(String.class).trim(), "<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestMessage>" + System.getProperty("line.separator") +
                 "   <Text>Hello!</Text>" + System.getProperty("line.separator") +
                 "   <OtherText name=\"bar\">No changes</OtherText>" + System.getProperty("line.separator") +
@@ -117,16 +120,34 @@ public class XpathMappingDataDictionaryTest extends AbstractTestNGUnitTest {
 
     @Test
     public void testTranslateFromMappingFile() throws Exception {
-        Message message = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestMessage><Text>Hello World!</Text><OtherText name=\"foo\">No changes</OtherText></TestMessage>");
+        Message message = new DefaultMessage(payload);
 
         XpathMappingDataDictionary dictionary = new XpathMappingDataDictionary();
         dictionary.setMappingFile(new ClassPathResource("xpathmapping.properties", DataDictionary.class));
         dictionary.afterPropertiesSet();
 
-        Message intercepted = dictionary.interceptMessage(message, CitrusConstants.DEFAULT_MESSAGE_TYPE, context);
+        Message intercepted = dictionary.interceptMessage(message, Citrus.DEFAULT_MESSAGE_TYPE, context);
         Assert.assertEquals(intercepted.getPayload(String.class).trim(), "<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestMessage>" + System.getProperty("line.separator") +
                 "   <Text>Hello!</Text>" + System.getProperty("line.separator") +
                 "   <OtherText name=\"bar\">GoodBye!</OtherText>" + System.getProperty("line.separator") +
+                "</TestMessage>");
+    }
+
+    @Test
+    public void testTranslateNoResult() {
+        Message message = new DefaultMessage(payload);
+
+        Map<String, String> mappings = new HashMap<String, String>();
+        mappings.put("//TestMessage/Unknown", "Hello!");
+        mappings.put("//@name", "bar");
+
+        XpathMappingDataDictionary dictionary = new XpathMappingDataDictionary();
+        dictionary.setMappings(mappings);
+
+        Message intercepted = dictionary.interceptMessage(message, Citrus.DEFAULT_MESSAGE_TYPE, context);
+        Assert.assertEquals(intercepted.getPayload(String.class).trim(), "<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestMessage>" + System.getProperty("line.separator") +
+                "   <Text>Hello World!</Text>" + System.getProperty("line.separator") +
+                "   <OtherText name=\"bar\">No changes</OtherText>" + System.getProperty("line.separator") +
                 "</TestMessage>");
     }
 }

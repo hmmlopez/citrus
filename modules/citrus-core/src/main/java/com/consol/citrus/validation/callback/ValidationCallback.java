@@ -16,8 +16,9 @@
 
 package com.consol.citrus.validation.callback;
 
-import org.springframework.context.ApplicationContext;
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.message.Message;
+import org.springframework.context.ApplicationContextAware;
 
 /**
  * Callback called by receive message action for validation purpose. Implementations
@@ -25,18 +26,13 @@ import com.consol.citrus.message.Message;
  * 
  * @author Christoph Deppisch
  */
-public interface ValidationCallback {
+public interface ValidationCallback extends ApplicationContextAware {
 
     /**
      * Validate callback method with received message.
      * 
      * @param message
+     * @param context
      */
-    void validate(Message message);
-    
-    /**
-     * Set optional application context instance on this callback.
-     * @param ctx
-     */
-    void setApplicationContext(ApplicationContext ctx);
+    void validate(Message message, TestContext context);
 }

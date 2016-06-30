@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:citrus="http://www.citrusframework.org/schema/config"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd
+       http://www.citrusframework.org/schema/config http://www.citrusframework.org/schema/config/citrus-config.xsd">
+	 
+    <!-- Empty test context used in unit tests -->
+    <citrus:schema-repository id="customSchemaRepository">
+      <citrus:schemas>
+             <citrus:reference schema="testSchema"/>
+      </citrus:schemas>
+    </citrus:schema-repository>
+
+    <bean id="testSchema" class="org.mockito.Mockito" factory-method="mock">
+      <constructor-arg value="org.springframework.xml.xsd.XsdSchema"/>
+    </bean>
+
+    <camelContext id="citrusCamelContext" xmlns="http://camel.apache.org/schema/spring">
+      <route id="default_route">
+        <from uri="direct:default"/>
+        <to uri="log:com.consol.citrus.camel?level=INFO"/>
+      </route>
+    </camelContext>
+
+</beans>

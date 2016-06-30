@@ -19,25 +19,23 @@ package com.consol.citrus.dsl.design;
 import com.consol.citrus.TestCase;
 import com.consol.citrus.script.GroovyAction;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.springframework.core.io.Resource;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 public class GroovyTestDesignerTest extends AbstractTestNGUnitTest {
-    private Resource scriptResource = EasyMock.createMock(Resource.class);
-    private Resource scriptTemplate = EasyMock.createMock(Resource.class);
-    private File file = EasyMock.createMock(File.class);
+    private Resource scriptResource = Mockito.mock(Resource.class);
+    private Resource scriptTemplate = Mockito.mock(Resource.class);
+    private File file = Mockito.mock(File.class);
             
     @Test
     public void testGroovyBuilderWithResource() throws IOException {
-        MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
             @Override
             public void configure() {
                 groovy(scriptResource)
@@ -46,9 +44,7 @@ public class GroovyTestDesignerTest extends AbstractTestNGUnitTest {
         };
         
         reset(scriptResource);
-        expect(scriptResource.getInputStream()).andReturn(new ByteArrayInputStream("someScript".getBytes())).once();
-        replay(scriptResource);
-
+        when(scriptResource.getInputStream()).thenReturn(new ByteArrayInputStream("someScript".getBytes()));
         builder.configure();
 
         TestCase test = builder.getTestCase();
@@ -59,13 +55,12 @@ public class GroovyTestDesignerTest extends AbstractTestNGUnitTest {
         GroovyAction action = (GroovyAction)test.getActions().get(0);
         Assert.assertEquals(action.getScript(), "someScript");
         Assert.assertEquals(action.isUseScriptTemplate(), false);
-        
-        verify(scriptResource);
+
     }
     
     @Test
     public void testGroovyBuilderWithScript() {
-        MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
             @Override
             public void configure() {
                 groovy("println 'Groovy!'")
@@ -86,7 +81,7 @@ public class GroovyTestDesignerTest extends AbstractTestNGUnitTest {
     
     @Test
     public void testGroovyBuilderWithTemplate() throws IOException {
-        MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
             @Override
             public void configure() {
                 groovy("println 'Groovy!'")
@@ -95,10 +90,9 @@ public class GroovyTestDesignerTest extends AbstractTestNGUnitTest {
         };
         
         reset(scriptTemplate, file);
-        expect(scriptTemplate.getFile()).andReturn(file).once();
-        expect(file.getAbsolutePath()).andReturn("classpath:some.file").once();
-        replay(scriptTemplate, file);
-
+        when(scriptTemplate.getFile()).thenReturn(file);
+        when(scriptTemplate.getInputStream()).thenReturn(new ByteArrayInputStream("println 'hello'".getBytes()));
+        when(file.getAbsolutePath()).thenReturn("classpath:some.file");
         builder.configure();
 
         TestCase test = builder.getTestCase();
@@ -106,13 +100,13 @@ public class GroovyTestDesignerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(test.getActions().get(0).getClass(), GroovyAction.class);
         
         GroovyAction action = (GroovyAction)test.getActions().get(0);
-        Assert.assertEquals(action.getScriptTemplatePath(), "classpath:some.file");
+        Assert.assertEquals(action.getScriptTemplate(), "println 'hello'");
         Assert.assertEquals(action.isUseScriptTemplate(), true);
     }
     
     @Test
     public void testGroovyBuilderWithTemplatePath() {
-        MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
             @Override
             public void configure() {
                 groovy("println 'Groovy!'")

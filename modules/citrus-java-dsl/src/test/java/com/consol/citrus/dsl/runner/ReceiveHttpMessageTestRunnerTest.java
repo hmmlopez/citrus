@@ -21,20 +21,22 @@ import com.consol.citrus.actions.ReceiveMessageAction;
 import com.consol.citrus.container.SequenceAfterTest;
 import com.consol.citrus.container.SequenceBeforeTest;
 import com.consol.citrus.context.TestContext;
-import com.consol.citrus.dsl.builder.BuilderSupport;
-import com.consol.citrus.dsl.builder.ReceiveMessageBuilder;
+import com.consol.citrus.dsl.actions.DelegatingTestAction;
+import com.consol.citrus.dsl.builder.*;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.http.client.HttpClient;
 import com.consol.citrus.http.client.HttpEndpointConfiguration;
 import com.consol.citrus.http.message.HttpMessage;
 import com.consol.citrus.http.message.HttpMessageHeaders;
+import com.consol.citrus.http.server.HttpServer;
 import com.consol.citrus.message.MessageType;
 import com.consol.citrus.messaging.SelectiveConsumer;
 import com.consol.citrus.report.TestActionListeners;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
+import com.consol.citrus.validation.builder.StaticMessageContentBuilder;
 import com.consol.citrus.validation.xml.XmlMessageValidationContext;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -43,34 +45,80 @@ import org.testng.annotations.Test;
 
 import java.util.HashMap;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Christoph Deppisch
  */
 public class ReceiveHttpMessageTestRunnerTest extends AbstractTestNGUnitTest {
 
-    private SelectiveConsumer messageConsumer = EasyMock.createMock(SelectiveConsumer.class);
-    private HttpEndpointConfiguration configuration = EasyMock.createMock(HttpEndpointConfiguration.class);
-    private HttpClient httpClient = EasyMock.createMock(HttpClient.class);
-    private ApplicationContext applicationContextMock = EasyMock.createMock(ApplicationContext.class);
+    private SelectiveConsumer messageConsumer = Mockito.mock(SelectiveConsumer.class);
+    private HttpEndpointConfiguration configuration = Mockito.mock(HttpEndpointConfiguration.class);
+    private HttpClient httpClient = Mockito.mock(HttpClient.class);
+    private HttpServer httpServer = Mockito.mock(HttpServer.class);
+    private ApplicationContext applicationContextMock = Mockito.mock(ApplicationContext.class);
 
     @Test
     public void testHttpRequestProperties() {
+        reset(httpServer, messageConsumer, configuration);
+        when(httpServer.createConsumer()).thenReturn(messageConsumer);
+        when(httpServer.getEndpointConfiguration()).thenReturn(configuration);
+        when(configuration.getTimeout()).thenReturn(100L);
+        when(httpServer.getActor()).thenReturn(null);
+        when(messageConsumer.receive(any(TestContext.class), anyLong())).thenReturn(new HttpMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")
+                .method(HttpMethod.GET)
+                .path("/test/foo")
+                .queryParam("param1", "value1")
+                .queryParam("param2", "value2"));
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
+            @Override
+            public void execute() {
+                http(new BuilderSupport<HttpActionBuilder>() {
+                    @Override
+                    public void configure(HttpActionBuilder builder) {
+                        builder.server(httpServer)
+                                .get("/test/foo")
+                                .queryParam("param1", "value1")
+                                .queryParam("param2", "value2")
+                                .payload("<TestRequest><Message>Hello World!</Message></TestRequest>");
+                    }
+                });
+            }
+        };
+
+        TestCase test = builder.getTestCase();
+        Assert.assertEquals(test.getActionCount(), 1);
+        Assert.assertEquals(((DelegatingTestAction)test.getActions().get(0)).getDelegate().getClass(), ReceiveMessageAction.class);
+
+        ReceiveMessageAction action = (ReceiveMessageAction) ((DelegatingTestAction)test.getActions().get(0)).getDelegate();
+        Assert.assertEquals(action.getName(), "receive");
+
+        Assert.assertEquals(action.getEndpoint(), httpServer);
+        Assert.assertEquals(action.getValidationContexts().size(), 1L);
+        Assert.assertEquals(action.getValidationContexts().get(0).getClass(), XmlMessageValidationContext.class);
+
+        StaticMessageContentBuilder messageBuilder = (StaticMessageContentBuilder) action.getMessageBuilder();
+        Assert.assertEquals(messageBuilder.getMessage().getPayload(), "<TestRequest><Message>Hello World!</Message></TestRequest>");
+        Assert.assertEquals(messageBuilder.getMessage().getHeaders().size(), 7L);
+        Assert.assertEquals(messageBuilder.getMessage().getHeaders().get(HttpMessageHeaders.HTTP_REQUEST_METHOD), HttpMethod.GET.name());
+        Assert.assertEquals(messageBuilder.getMessage().getHeaders().get(HttpMessageHeaders.HTTP_REQUEST_URI), "/test/foo");
+        Assert.assertEquals(messageBuilder.getMessage().getHeaders().get(HttpMessageHeaders.HTTP_QUERY_PARAMS), "param1=value1,param2=value2");
+    }
+
+    @Test
+    public void testHttpRequestPropertiesDeprecated() {
         reset(httpClient, messageConsumer, configuration);
-        expect(httpClient.createConsumer()).andReturn(messageConsumer).once();
-        expect(httpClient.getEndpointConfiguration()).andReturn(configuration).atLeastOnce();
-        expect(configuration.getTimeout()).andReturn(100L).atLeastOnce();
-        expect(httpClient.getActor()).andReturn(null).atLeastOnce();
-        expect(messageConsumer.receive(anyObject(TestContext.class), anyLong())).andReturn(new HttpMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")
+        when(httpClient.createConsumer()).thenReturn(messageConsumer);
+        when(httpClient.getEndpointConfiguration()).thenReturn(configuration);
+        when(configuration.getTimeout()).thenReturn(100L);
+        when(httpClient.getActor()).thenReturn(null);
+        when(messageConsumer.receive(any(TestContext.class), anyLong())).thenReturn(new HttpMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")
                 .method(HttpMethod.GET)
                 .uri("/test")
                 .contextPath("foo")
                 .queryParam("param1", "value1")
-                .queryParam("param2", "value2")).atLeastOnce();
-        replay(httpClient, messageConsumer, configuration);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+                .queryParam("param2", "value2"));
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 receive(new BuilderSupport<ReceiveMessageBuilder>() {
@@ -100,33 +148,74 @@ public class ReceiveHttpMessageTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getValidationContexts().size(), 1L);
         Assert.assertEquals(action.getValidationContexts().get(0).getClass(), XmlMessageValidationContext.class);
 
-        PayloadTemplateMessageBuilder messageBuilder = (PayloadTemplateMessageBuilder) ((XmlMessageValidationContext) action.getValidationContexts().get(0)).getMessageBuilder();
+        PayloadTemplateMessageBuilder messageBuilder = (PayloadTemplateMessageBuilder) action.getMessageBuilder();
         Assert.assertEquals(messageBuilder.getPayloadData(), "<TestRequest><Message>Hello World!</Message></TestRequest>");
         Assert.assertEquals(messageBuilder.getMessageHeaders().size(), 4L);
         Assert.assertEquals(messageBuilder.getMessageHeaders().get(HttpMessageHeaders.HTTP_REQUEST_METHOD), HttpMethod.GET.name());
         Assert.assertEquals(messageBuilder.getMessageHeaders().get(HttpMessageHeaders.HTTP_CONTEXT_PATH), "foo");
         Assert.assertEquals(messageBuilder.getMessageHeaders().get(HttpMessageHeaders.HTTP_REQUEST_URI), "/test");
         Assert.assertEquals(messageBuilder.getMessageHeaders().get(HttpMessageHeaders.HTTP_QUERY_PARAMS), "param1=value1,param2=value2");
-
-        verify(httpClient, messageConsumer, configuration);
     }
 
     @Test
     public void testHttpResponseProperties() {
         reset(httpClient, messageConsumer, configuration);
-        expect(httpClient.createConsumer()).andReturn(messageConsumer).once();
-        expect(httpClient.getEndpointConfiguration()).andReturn(configuration).atLeastOnce();
-        expect(configuration.getTimeout()).andReturn(100L).atLeastOnce();
-        expect(httpClient.getActor()).andReturn(null).atLeastOnce();
-        expect(messageConsumer.receive(anyObject(TestContext.class), anyLong())).andReturn(new HttpMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")
+        when(httpClient.createConsumer()).thenReturn(messageConsumer);
+        when(httpClient.getEndpointConfiguration()).thenReturn(configuration);
+        when(configuration.getTimeout()).thenReturn(100L);
+        when(httpClient.getActor()).thenReturn(null);
+        when(messageConsumer.receive(any(TestContext.class), anyLong())).thenReturn(new HttpMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")
                 .method(HttpMethod.GET)
                 .uri("/test")
-                .statusCode(HttpStatus.OK)
-                .reasonPhrase(HttpStatus.OK.name())
-                .version("HTTP/1.1")).atLeastOnce();
-        replay(httpClient, messageConsumer, configuration);
+                .status(HttpStatus.OK)
+                .version("HTTP/1.1"));
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
+            @Override
+            public void execute() {
+                http(new BuilderSupport<HttpActionBuilder>() {
+                    @Override
+                    public void configure(HttpActionBuilder builder) {
+                        builder.client(httpClient)
+                                .response(HttpStatus.OK)
+                                .version("HTTP/1.1")
+                                .payload("<TestRequest><Message>Hello World!</Message></TestRequest>");
+                    }
+                });
+            }
+        };
 
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        TestCase test = builder.getTestCase();
+        Assert.assertEquals(test.getActionCount(), 1);
+        Assert.assertEquals(((DelegatingTestAction)test.getActions().get(0)).getDelegate().getClass(), ReceiveMessageAction.class);
+
+        ReceiveMessageAction action = (ReceiveMessageAction) ((DelegatingTestAction)test.getActions().get(0)).getDelegate();
+        Assert.assertEquals(action.getName(), "receive");
+
+        Assert.assertEquals(action.getEndpoint(), httpClient);
+        Assert.assertEquals(action.getValidationContexts().size(), 1L);
+        Assert.assertEquals(action.getValidationContexts().get(0).getClass(), XmlMessageValidationContext.class);
+
+        StaticMessageContentBuilder messageBuilder = (StaticMessageContentBuilder) action.getMessageBuilder();
+        Assert.assertEquals(messageBuilder.getMessage().getPayload(), "<TestRequest><Message>Hello World!</Message></TestRequest>");
+        Assert.assertEquals(messageBuilder.getMessage().getHeaders().size(), 5L);
+        Assert.assertEquals(messageBuilder.getMessage().getHeaders().get(HttpMessageHeaders.HTTP_STATUS_CODE), 200);
+        Assert.assertEquals(messageBuilder.getMessage().getHeaders().get(HttpMessageHeaders.HTTP_REASON_PHRASE), "OK");
+        Assert.assertEquals(messageBuilder.getMessage().getHeaders().get(HttpMessageHeaders.HTTP_VERSION), "HTTP/1.1");
+    }
+
+    @Test
+    public void testHttpResponsePropertiesDeprecated() {
+        reset(httpClient, messageConsumer, configuration);
+        when(httpClient.createConsumer()).thenReturn(messageConsumer);
+        when(httpClient.getEndpointConfiguration()).thenReturn(configuration);
+        when(configuration.getTimeout()).thenReturn(100L);
+        when(httpClient.getActor()).thenReturn(null);
+        when(messageConsumer.receive(any(TestContext.class), anyLong())).thenReturn(new HttpMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")
+                .method(HttpMethod.GET)
+                .uri("/test")
+                .status(HttpStatus.OK)
+                .version("HTTP/1.1"));
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 receive(new BuilderSupport<ReceiveMessageBuilder>() {
@@ -154,28 +243,24 @@ public class ReceiveHttpMessageTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getValidationContexts().size(), 1L);
         Assert.assertEquals(action.getValidationContexts().get(0).getClass(), XmlMessageValidationContext.class);
 
-        PayloadTemplateMessageBuilder messageBuilder = (PayloadTemplateMessageBuilder) ((XmlMessageValidationContext) action.getValidationContexts().get(0)).getMessageBuilder();
+        PayloadTemplateMessageBuilder messageBuilder = (PayloadTemplateMessageBuilder) action.getMessageBuilder();
         Assert.assertEquals(messageBuilder.getPayloadData(), "<TestRequest><Message>Hello World!</Message></TestRequest>");
         Assert.assertEquals(messageBuilder.getMessageHeaders().size(), 4L);
         Assert.assertEquals(messageBuilder.getMessageHeaders().get(HttpMessageHeaders.HTTP_REQUEST_METHOD), HttpMethod.GET.name());
-        Assert.assertEquals(messageBuilder.getMessageHeaders().get(HttpMessageHeaders.HTTP_STATUS_CODE), "200");
+        Assert.assertEquals(messageBuilder.getMessageHeaders().get(HttpMessageHeaders.HTTP_STATUS_CODE), 200);
         Assert.assertEquals(messageBuilder.getMessageHeaders().get(HttpMessageHeaders.HTTP_REASON_PHRASE), "OK");
         Assert.assertEquals(messageBuilder.getMessageHeaders().get(HttpMessageHeaders.HTTP_VERSION), "HTTP/1.1");
-
-        verify(httpClient, messageConsumer, configuration);
     }
 
     @Test(expectedExceptions = CitrusRuntimeException.class,
             expectedExceptionsMessageRegExp = "Invalid use of http and soap action builder")
     public void testReceiveBuilderWithSoapAndHttpMixed() {
         reset(applicationContextMock);
-        expect(applicationContextMock.getBean(TestContext.class)).andReturn(applicationContext.getBean(TestContext.class)).once();
-        expect(applicationContextMock.getBean(TestActionListeners.class)).andReturn(new TestActionListeners()).once();
-        expect(applicationContextMock.getBeansOfType(SequenceBeforeTest.class)).andReturn(new HashMap<String, SequenceBeforeTest>()).once();
-        expect(applicationContextMock.getBeansOfType(SequenceAfterTest.class)).andReturn(new HashMap<String, SequenceAfterTest>()).once();
-        replay(applicationContextMock);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContextMock) {
+        when(applicationContextMock.getBean(TestContext.class)).thenReturn(applicationContext.getBean(TestContext.class));
+        when(applicationContextMock.getBean(TestActionListeners.class)).thenReturn(new TestActionListeners());
+        when(applicationContextMock.getBeansOfType(SequenceBeforeTest.class)).thenReturn(new HashMap<String, SequenceBeforeTest>());
+        when(applicationContextMock.getBeansOfType(SequenceAfterTest.class)).thenReturn(new HashMap<String, SequenceAfterTest>());
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContextMock, context) {
             @Override
             public void execute() {
                 receive(new BuilderSupport<ReceiveMessageBuilder>() {
@@ -200,6 +285,5 @@ public class ReceiveHttpMessageTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getEndpointUri(), "httpClient");
         Assert.assertEquals(action.getMessageType(), MessageType.XML.name());
 
-        verify(applicationContextMock);
     }
 }

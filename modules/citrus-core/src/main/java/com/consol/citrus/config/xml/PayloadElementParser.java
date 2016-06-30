@@ -16,13 +16,12 @@
 
 package com.consol.citrus.config.xml;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.*;
-
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.util.XMLUtils;
+import org.w3c.dom.*;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Bean definition parser for payload element used in message 
@@ -40,43 +39,25 @@ public abstract class PayloadElementParser {
     
     /**
      * Static parse method taking care of payload element.
-     * @param element
-     * @param builder
+     * @param payloadElement
      */
     public static String parseMessagePayload(Element payloadElement) {
         if (payloadElement == null) {
             return "";
         }
         
-        //remove text nodes from children (empty lines etc.)
-        NodeList childNodes = payloadElement.getChildNodes();
-        for(int i = 0; i < childNodes.getLength(); i++) {
-            if (childNodes.item(i).getNodeType() == Node.TEXT_NODE) {
-                payloadElement.removeChild(childNodes.item(i));
-            }
-        }
-        
-        if (payloadElement.hasChildNodes()) {
-            if (payloadElement.getChildNodes().getLength() > 1) {
-                throw new CitrusRuntimeException("More than one root element defined in message XML payload!");
-            }  else {
-                
-                try {
-                    Document payload = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-                    payload.appendChild(payload.importNode(payloadElement.getChildNodes().item(0), true));
-                    
-                    String payloadData = XMLUtils.serialize(payload);
-                    // temporary quickfix for unwanted testcase namespace in target payload
-                    payloadData = payloadData.replaceAll(" xmlns=\\\"http://www.citrusframework.org/schema/testcase\\\"", "");
-                    return payloadData.trim();
-                } catch (DOMException e) {
-                    throw new CitrusRuntimeException("Error while constructing message payload", e);
-                } catch (ParserConfigurationException e) {
-                    throw new CitrusRuntimeException("Error while constructing message payload", e);
-                }
-            }
-        } else { //payload has no child nodes -> empty message
-            return "";
+        try {
+            Document payload = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            payload.appendChild(payload.importNode(payloadElement, true));
+
+            String payloadData = XMLUtils.serialize(payload);
+            // temporary quickfix for unwanted testcase namespace in target payload
+            payloadData = payloadData.replaceAll(" xmlns=\\\"http://www.citrusframework.org/schema/testcase\\\"", "");
+            return payloadData.trim();
+        } catch (DOMException e) {
+            throw new CitrusRuntimeException("Error while constructing message payload", e);
+        } catch (ParserConfigurationException e) {
+            throw new CitrusRuntimeException("Error while constructing message payload", e);
         }
     }
 }

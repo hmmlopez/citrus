@@ -1,73 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <chapter id="changes-new">
-  <title>What's new in Citrus 2.3?!</title>
+  <title>What's new in Citrus 2.6?!</title>
 
-  <para>We want to give you a short overview of what has changed in Citrus 2.3. The release adds some new features and improvements to the box. Bugfixes of course are also part of the package. See the following overview on what has changed.</para>
+  <para>Citrus 2.6 comes with a set of new modules that enable completely new aspects of integration testing. Namely these are the new modules for Cucumber behavior driven development and Zookeeper support.
+  Just have a look at the following features that are shipped within the 2.6 box.</para>
 
-  <section id="new-2-3-test-runner">
-    <title>Test runner and test designer</title>
+  <section id="new-2-6-cucumber">
+    <title>Cucumber BDD support</title>
 
-    <para>One of the biggest issues with the Citrus Java DSL is the fact that the Citrus Java DSL methods first build the whole test case together before the actual execution takes place. So calling a Java DSL method <emphasis>send</emphasis> for instance just prepares
-      the sending test action. The actual sending of the message takes place to a later time when all test actions are setup and the test case is ready to run. This separation of design time and runtime of a test case leads to misunderstandings as a Java developer is used
-      to work with statements and method calls that perform immediately. Based on that the mixture of Citrus Java DSL method calls and normal Java code logic in your test may have lead to unexpected behavior. Following from that we decided to refactor the Java DSL method execution.
-      The result is a new <emphasis>TestRunner</emphasis> concept that executes all Java DSL method calls immediately. The old way of building the whole test case before execution is represented with <emphasis>TestDesigner</emphasis> concept. So both worlds are now available to you.
-      See <xref linkend="testcase"/> for details.</para>
+    <para>Behavior driven development is more and more coming up also in the integration testing environment. Cucumber is a fantastic behavior driven development library that provides support for BDD concepts with Gherkin. The
+      new Citrus integration with Cucumber enables the mix of Gherkin syntax feature scenarios with Citrus test case execution. You write feature stories as usual and create Citrus test cases with lots of actions for the integration
+      test. See details for this feature in <xref linkend="cucumber"/>.</para>
   </section>
 
-  <section id="new-2-3-websockets">
-    <title>WebSocket support</title>
+  <section id="new-2-6-zookeeper">
+    <title>Zookeeper support</title>
 
-    <para>The WebSocket message protocol builds on top of Http standard and brings bidirectional communication to the Http client-server world. With this release Citrus users are able to send and receive messages with WebSocket connections. The Http server
-      implementation is now able to define multiple WebSocket endpoints. The new Citrus WebSocket client is able to publish messages to the server via bidirectional WebSocket protocol. See <xref linkend="http-websocket"/> for details.</para>
+    <para>Zookeeper from Apache lets you manage configuration with distributed coordination. As a user you create and edit values on a Zookeeper server. Other clients then can retrieve this information. With Citrus you are able to
+      access this information from within a test case. The Zookeeper Citrus client lets you manage information on the Zookeeper server. See details for this feature in <xref linkend="zookeeper"/>.</para>
   </section>
 
-  <section id="new-2-3-json-path">
-    <title>JSONPath support</title>
+  <section id="new-2-6-restdocs">
+    <title>Spring Restdocs support</title>
 
-    <para>Citrus is able to work with Xpath expressions in several fields within the testing domain (overwrite elements, ignore elements, extract values from payloads). Now this support of manipulating message payloads via expressions is extended with
-      JSONPath. Similar to Xpath the JSONPath expression statements enable you to find elements and values within a message payload. Not very surprising the JSONPath expressions work with Json message payloads. With the new release you can overwrite, ignore
-      and manipulate Json elements using JSONPath expressions. See <xref linkend="json-path"/> for details.</para>
+    <para>Restdocs is a fantastic way of generating documentation for RESTful APIs. While exchanging request/response data with the server Restdocs creates documentation information on the data. The documentation includes field descriptions,
+      headers and snippets for body content. With new Citrus version Http clients in Citrus can add Restdoc interceptors that generate the documentation while executing the test cases. This way you are able to document what messages were exchanged
+      in tests. The Restdocs support is also available for the SOAP Http client in Citrus. See details in <xref linkend="restdocs"/>.</para>
   </section>
 
-  <section id="new-2-3-message-validators">
-    <title>Customize message validators</title>
+  <section id="new-2-6-hamcrest-conditions">
+    <title>Hamcrest matcher conditions</title>
 
-    <para>The framework offers several message validator implementations for different message formats like XML, JSON, plaintext and so on. In addition to that Citrus has a set of Groovy script message validators. All these validator implementations are active
-      by default so you are able to validate incoming messages accordingly in Citrus. Now with this release we added a more comfortable way of changing the framework validation functionality, particular when adding new customized message validator implementations.
-      See <xref linkend="validation"/> for details.</para>
+    <para>Iterating test action containers in Citrus evaluate boolean expressions for determination of how to execute the nested actions in a loop. Also the conditional container executes nested actions based on boolean expression evaluation.
+      The Citrus boolean expression support is limited to very basic operations such as lower than or greater than. Furthermore the combination of boolean expressions with variables has not been supported. Following from that we have improved the
+      boolean expression evaluation mechanism with extension to Hamcrest matchers. So now you can evaluate matchers in iterating conditions. This feature is described in <xref linkend="containers-conditional"/> and <xref linkend="containers-iterate"/>.</para>
   </section>
 
-  <section id="new-2-3-lib-ubgrade">
-    <title>Library upgrades</title>
+  <section id="new-2-6-soap-dsl">
+    <title>SOAP Java DSL</title>
 
-    <para>We have upgraded the versions of the major dependency libraries of Citrus. This includes TestNG, JUnit, Spring Framework, Spring WS, Spring Integration, Apache Camel, Arquillian, Jetty and more. So Citrus is now working with up-to-date versions of
-    the whole messaging and middleware integration gang.</para>
+    <para>Citrus provides a new Java fluent API for sending and receiving SOAP related message content. The Java DSL enhancements are
+    based on those of Http. Now you can define SOAP messages with special SOAP action headers more easily. On top of that you can handle SOAP faults
+    on client and server with the fluent API. Checkout <xref linkend="soap-webservices"/> for details.</para>
   </section>
 
-  <section id="new-2-3-upgrade">
-    <title>Upgrade from Citrus 2.2</title>
+  <section id="new-2-6-refactoring">
+    <title>Refactoring</title>
 
-    <para>Along with new features and improvements we refactored and changed some parts of Citrus so you might have to set things straight when upgrading to 2.3. See the following list of things that might be brought up to you:</para>
+    <para>Refactoring in terms of simplification and standardization is part of our daily life as a developer. We have been working
+    on improving the Java DSL fluent API for SOAP. We also introduced a more common way of handling the test action containers like iterate,
+    parallel and so on. This leads to some classes and methods that were marked as deprecated. So please have a look at your Java DSL code and if
+    you see some usage of deprecated stuff please use the new approaches as soon as possible. The deprecated stuff will definitely disappear in upcoming
+    releases.</para>
+
+    <para>Some of the changes that we have made might hit you right away. These changes are:</para>
 
     <itemizedlist>
       <listitem>
-        <para><emphasis>@CitrusTest annotation:</emphasis> We have moved the <emphasis>@CitrusTest</emphasis> annotation to a more common package. The old package was <emphasis>com.consol.citrus.dsl.annotations.CitrusTest</emphasis>.
-        The new package is <emphasis>com.consol.citrus.annotations.CitrusTest</emphasis>. So you have to change the Java import statements in your Test classes when upgrading.</para>
+        <para>
+          <emphasis>ws:assert</emphasis> element in SOAP testcase schema has been renamed to <emphasis>ws:assert-fault</emphasis>. This was done for
+          better interoperability reasons with <emphasis>assert</emphasis> action in core schema and to be compliant to <emphasis>send-fault</emphasis> action.
+        </para>
       </listitem>
       <listitem>
-        <para><emphasis>TestResult:</emphasis> We changed the <emphasis>TestResult</emphasis> instantiation when generating the test reports. The <emphasis>TestResult</emphasis> class now works with static instantiation methods for
-          success, skipped and failed tests. This only affects your code when you have created custom test reporters.</para>
-      </listitem>
-      <listitem>
-        <para><emphasis>CitrusTestBuilder deprecation:</emphasis> A major refactoring was done in the <emphasis>TestBuilder</emphasis> Java DSL code. <emphasis>com.consol.citrus.dsl.TestBuilder</emphasis> and all its subclasses were marked as deprecated and will
-        disappear in next versions. So instead we now support <emphasis>com.consol.citrus.dsl.design.TestDesigner</emphasis> which basically offers the same functionality as former TestBuilder. In addition that refactoring brought a new way of executing the Java DSL test cases.
-        Instead of building the whole test case before execution is done as a whole you can now use the <emphasis>com.consol.citrus.dsl.runner.TestRunner</emphasis> implementation in order to execute each test action in the Java DSL immediately. This is a more Java like way
-        of writing Citrus test cases as you can mix Citrus test action execution with normal Java statements as usual. Read more about the new approach in <xref linkend="testcase"/></para>
+        <para>
+          Java DSL module has had Maven dependencies to several other modules in Citrus (e.g. citrus-jms, citrus-soap). These dependencies were
+          declared as compile dependencies, which is not very nice as you might not need JMS or SOAP functionalities in your project. We have added
+          optional and provided markers to that dependencies which means that you have to decide in your project which of the modules to include.
+        </para>
+
+        <para>You may face some missing dependencies errors when running the Maven project. As a result you need to include the Citrus modules
+        (e.g. citrus-http, citrus-docker, and so on) in your project Maven POM explicitly.</para>
       </listitem>
     </itemizedlist>
   </section>
 
-  <section id="new-2-3-bugfixes">
+  <section id="new-2-6-bugfixes">
     <title>Bugfixes</title>
 
     <para>Bugs are part of our software developers world and fixing them is part of your daily business, too. Finding and solving issues

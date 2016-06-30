@@ -17,6 +17,7 @@
 package com.consol.citrus.context;
 
 import com.consol.citrus.TestCase;
+import com.consol.citrus.container.StopTimer;
 import com.consol.citrus.endpoint.EndpointFactory;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.exceptions.VariableNullValueException;
@@ -64,6 +65,9 @@ public class TestContext {
 
     /** Endpoint factory creates endpoint instances */
     private EndpointFactory endpointFactory;
+
+    /** Bean reference resolver */
+    private ReferenceResolver referenceResolver;
     
     /** Registered message validators */
     private MessageValidatorRegistry messageValidatorRegistry = new MessageValidatorRegistry();
@@ -85,7 +89,10 @@ public class TestContext {
 
     /** Spring bean application context */
     private ApplicationContext applicationContext;
-    
+
+    /** Timers registered in test context, that can be stopped */
+    protected Map<String, StopTimer> timers = new ConcurrentHashMap<>();
+
     /**
      * Default constructor
      */
@@ -198,7 +205,7 @@ public class TestContext {
      * @return the constructed list without variable entries.
      */
     public List<String> resolveDynamicValuesInList(final List<String> list) {
-        List<String> variableFreeList = new ArrayList<String>(list.size());
+        List<String> variableFreeList = new ArrayList<>(list.size());
 
         for (String entry : list) {
             //add new value after check if it is variable or function
@@ -251,7 +258,7 @@ public class TestContext {
     }
     
     /**
-     * Checks wether the given expression is a variable or function and resolves the value
+     * Checks weather the given expression is a variable or function and resolves the value
      * accordingly
      * @param expression the expression to resolve
      * @return the resolved expression value
@@ -437,6 +444,24 @@ public class TestContext {
     }
 
     /**
+     * Gets the value of the referenceResolver property.
+     *
+     * @return the referenceResolver
+     */
+    public ReferenceResolver getReferenceResolver() {
+        return referenceResolver;
+    }
+
+    /**
+     * Sets the referenceResolver property.
+     *
+     * @param referenceResolver
+     */
+    public void setReferenceResolver(ReferenceResolver referenceResolver) {
+        this.referenceResolver = referenceResolver;
+    }
+
+    /**
      * Sets the namespace context builder.
      * @param namespaceContextBuilder
      */
@@ -476,7 +501,9 @@ public class TestContext {
         if (messageListeners != null && !messageListeners.isEmpty()) {
             messageListeners.onInboundMessage(receivedMessage, this);
         } else {
-            log.debug("Received message is:" + System.getProperty("line.separator") + (receivedMessage != null ? receivedMessage.toString() : ""));
+            if (log.isDebugEnabled()) {
+                log.debug("Received message:" + System.getProperty("line.separator") + (receivedMessage != null ? receivedMessage.toString() : ""));
+            }
         }
     }
 
@@ -488,7 +515,43 @@ public class TestContext {
         if (messageListeners != null && !messageListeners.isEmpty()) {
             messageListeners.onOutboundMessage(message, this);
         } else {
-            log.info("Sent message is:" + System.getProperty("line.separator") + message.toString());
+            if (log.isDebugEnabled()) {
+                log.debug("Sent message:" + System.getProperty("line.separator") + message.toString());
+            }
+        }
+    }
+
+    /**
+     * Registers a StopTimer in the test context, so that the associated timer can be stopped later on.
+     * @param timerId a unique timer id
+     */
+    public void registerTimer(String timerId, StopTimer timer) {
+        if(timers.containsKey(timerId)) {
+            throw new CitrusRuntimeException("Timer already registered with this id");
+        }
+        timers.put(timerId, timer);
+    }
+
+    /**
+     * Stops the timer matching the supplied id
+     * @param timerId
+     * @return true if time found and stopped, matching the supplied timerId
+     */
+    public boolean stopTimer(String timerId) {
+        StopTimer timer = timers.get(timerId);
+        if(timer != null) {
+            timer.stopTimer();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Stops all timers
+     */
+    public void stopTimers() {
+        for (String timerId : timers.keySet()) {
+            stopTimer(timerId);
         }
     }
 }

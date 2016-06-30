@@ -18,16 +18,13 @@ package com.consol.citrus.dsl.design;
 
 import com.consol.citrus.*;
 import com.consol.citrus.actions.*;
+import com.consol.citrus.container.AbstractActionContainer;
 import com.consol.citrus.dsl.builder.*;
-import com.consol.citrus.dsl.util.PositionHandle;
 import com.consol.citrus.endpoint.Endpoint;
 import com.consol.citrus.server.Server;
-import com.consol.citrus.ws.client.WebServiceClient;
-import com.consol.citrus.ws.server.WebServiceServer;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
 
-import javax.jms.ConnectionFactory;
 import javax.sql.DataSource;
 import java.util.Date;
 
@@ -45,6 +42,12 @@ public interface TestDesigner extends ApplicationContextAware {
      * @return
      */
     TestCase getTestCase();
+
+    /**
+     * Set test class.
+     * @param type
+     */
+    void testClass(Class<?> type);
 
     /**
      * Set custom test case name.
@@ -108,7 +111,14 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param behavior
      */
-    void applyBehavior(TestBehavior behavior);
+    ApplyTestBehaviorAction applyBehavior(TestBehavior behavior);
+
+    /**
+     * Prepare and add a custom container implementation.
+     * @param container
+     * @return
+     */
+    <T extends AbstractActionContainer> AbstractTestContainerBuilder<T> container(T container);
 
     /**
      * Action creating a new test variable during a test.
@@ -228,20 +238,12 @@ public interface TestDesigner extends ApplicationContextAware {
     LoadPropertiesAction load(String filePath);
 
     /**
-     * Creates a new purge jms queues action definition
-     * for further configuration.
-     *
-     * @param connectionFactory
-     * @return
-     */
-    PurgeJmsQueuesBuilder purgeQueues(ConnectionFactory connectionFactory);
-
-    /**
      * Purge queues using default connection factory.
      *
      * @return
      */
     PurgeJmsQueuesBuilder purgeQueues();
+
 
     /**
      * Creates a new purge message channel action definition
@@ -252,12 +254,11 @@ public interface TestDesigner extends ApplicationContextAware {
     PurgeChannelsBuilder purgeChannels();
 
     /**
-     * Creates special SOAP receive message action definition with web service server instance.
+     * Purge endpoints.
      *
-     * @param server
      * @return
      */
-    ReceiveSoapMessageBuilder receive(WebServiceServer server);
+    PurgeEndpointsBuilder purgeEndpoints();
 
     /**
      * Creates receive message action definition with message endpoint instance.
@@ -274,14 +275,6 @@ public interface TestDesigner extends ApplicationContextAware {
      * @return
      */
     ReceiveMessageBuilder receive(String messageEndpointName);
-
-    /**
-     * Create special SOAP send message action definition with web service client instance.
-     *
-     * @param client
-     * @return
-     */
-    SendSoapMessageBuilder send(WebServiceClient client);
 
     /**
      * Create send message action definition with message endpoint instance.
@@ -306,6 +299,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param messageEndpointName
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#soap()}
      */
     SendSoapFaultBuilder sendSoapFault(String messageEndpointName);
 
@@ -315,6 +309,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param messageEndpoint
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#soap()}
      */
     SendSoapFaultBuilder sendSoapFault(Endpoint messageEndpoint);
 
@@ -339,6 +334,13 @@ public interface TestDesigner extends ApplicationContextAware {
      * @return
      */
     SleepAction sleep(double seconds);
+
+    /**
+     * Add wait action.
+     *
+     * @return
+     */
+    WaitActionBuilder waitFor();
 
     /**
      * Creates a new start server action definition
@@ -439,6 +441,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param testAction the nested testAction
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#assertException()}
      */
     AssertExceptionBuilder assertException(TestAction testAction);
 
@@ -453,6 +456,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param actions
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#catchException()}
      */
     CatchExceptionBuilder catchException(TestAction... actions);
 
@@ -467,6 +471,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param testAction
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#assertSoapFault()}
      */
     AssertSoapFaultBuilder assertSoapFault(TestAction testAction);
 
@@ -481,6 +486,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param actions
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#conditional()}
      */
     ConditionalBuilder conditional(TestAction... actions);
 
@@ -495,6 +501,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param actions
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#iterate()}
      */
     IterateBuilder iterate(TestAction... actions);
 
@@ -509,6 +516,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param actions
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#parallel()}
      */
     ParallelBuilder parallel(TestAction... actions);
 
@@ -523,6 +531,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param actions
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#repeatOnError()}
      */
     RepeatOnErrorBuilder repeatOnError(TestAction... actions);
 
@@ -537,6 +546,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param actions
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#repeat()}
      */
     RepeatBuilder repeat(TestAction... actions);
 
@@ -551,6 +561,7 @@ public interface TestDesigner extends ApplicationContextAware {
      *
      * @param actions
      * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#sequential()}
      */
     SequenceBuilder sequential(TestAction... actions);
 
@@ -559,6 +570,61 @@ public interface TestDesigner extends ApplicationContextAware {
      * @return
      */
     SequenceBuilder sequential();
+
+    /**
+     * Adds a timer container.
+     * @return
+     */
+    TimerBuilder timer();
+
+    /**
+     * Adds a timer container with nested test actions.
+     * @param actions
+     * @return
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#timer()}
+     */
+    TimerBuilder timer(TestAction... actions);
+
+    /**
+     * Stops the timer matching the supplied timerId
+     * @param timerId
+     * @return
+     */
+    StopTimerAction stopTimer(String timerId);
+
+    /**
+     * Stops all timers within the current test context
+     * @return
+     */
+    StopTimerAction stopTimers();
+
+    /**
+     * Creates a new docker execute action.
+     * @return
+     */
+    DockerActionBuilder docker();
+
+    /**
+     *
+     */
+    HttpActionBuilder http();
+
+    /**
+     *
+     */
+    SoapActionBuilder soap();
+
+    /**
+     * Creates a new Camel route action.
+     * @return
+     */
+    CamelRouteActionBuilder camel();
+
+    /**
+     * Creates a new zookeeper execute action.
+     * @return
+     */
+    ZooActionBuilder zookeeper();
 
     /**
      * Adds template container with nested test actions.
@@ -572,6 +638,7 @@ public interface TestDesigner extends ApplicationContextAware {
      * Adds sequence of test actions to finally block.
      *
      * @param actions
+     * @deprecated since 2.6 in favor of using {@link TestDesigner#doFinally()}
      */
     FinallySequenceBuilder doFinally(TestAction... actions);
 
@@ -580,9 +647,4 @@ public interface TestDesigner extends ApplicationContextAware {
      */
     FinallySequenceBuilder doFinally();
 
-    /**
-     * Gets new position handle of current test action situation.
-     * @return
-     */
-    PositionHandle positionHandle();
 }

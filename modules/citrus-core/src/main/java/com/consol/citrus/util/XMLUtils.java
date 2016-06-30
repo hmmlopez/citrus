@@ -16,7 +16,7 @@
 
 package com.consol.citrus.util;
 
-import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.Citrus;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.xml.LSResolverImpl;
 import org.slf4j.Logger;
@@ -79,6 +79,7 @@ public final class XMLUtils {
      * Prevent instantiation.
      */
     private XMLUtils() {
+        super();
     }
 
     /**
@@ -402,8 +403,8 @@ public final class XMLUtils {
      * @return
      */
     public static Charset getTargetCharset(Document doc) {
-        if (System.getProperty(CitrusConstants.CITRUS_FILE_ENCODING) != null) {
-            return Charset.forName(System.getProperty(CitrusConstants.CITRUS_FILE_ENCODING));
+        if (System.getProperty(Citrus.CITRUS_FILE_ENCODING_PROPERTY) != null) {
+            return Charset.forName(System.getProperty(Citrus.CITRUS_FILE_ENCODING_PROPERTY));
         }
 
         if (doc.getInputEncoding() != null) {
@@ -421,8 +422,8 @@ public final class XMLUtils {
      * @return charsetName if supported.
      */
     private static Charset getTargetCharset(String messagePayload) throws UnsupportedEncodingException {
-        if (System.getProperty(CitrusConstants.CITRUS_FILE_ENCODING) != null) {
-            return Charset.forName(System.getProperty(CitrusConstants.CITRUS_FILE_ENCODING));
+        if (System.getProperty(Citrus.CITRUS_FILE_ENCODING_PROPERTY) != null) {
+            return Charset.forName(System.getProperty(Citrus.CITRUS_FILE_ENCODING_PROPERTY));
         }
 
         // trim incoming payload
@@ -430,11 +431,12 @@ public final class XMLUtils {
 
         char doubleQuote = '\"';
         char singleQuote = '\'';
-        // make sure pay load has an XML encoding string
-        if (payload.startsWith("<?xml") && payload.contains("encoding") && payload.contains("?>")) {
+        // make sure payload has an XML encoding string
+        String encodingKey = "encoding";
+        if (payload.startsWith("<?xml") && payload.contains(encodingKey) && payload.contains("?>") && (payload.indexOf(encodingKey) < payload.indexOf("?>"))) {
 
             // extract only encoding part, as otherwise the rest of the complete pay load will be load
-            String encoding = payload.substring(payload.indexOf("encoding") + 8, payload.indexOf("?>"));
+            String encoding = payload.substring(payload.indexOf(encodingKey) + encodingKey.length(), payload.indexOf("?>"));
 
             char quoteChar = doubleQuote;
             int idxDoubleQuote = encoding.indexOf(doubleQuote);

@@ -65,6 +65,122 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
         
         validator.validateXMLSchema(message, new XmlMessageValidationContext());
     }
+
+    @Test
+    public void validateXMLSchemaNested() throws Exception {
+        Message message = new DefaultMessage("<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
+                "<SOAP-ENV:Header/>" +
+                "<SOAP-ENV:Body>" +
+                "<message xmlns=\"http://citrusframework.org/test\">"
+                + "<correlationId>Kx1R123456789</correlationId>"
+                + "<bookingId>Bx1G987654321</bookingId>"
+                + "<test>Hello TestFramework</test>"
+                + "</message>" +
+                "</SOAP-ENV:Body>" +
+                "</SOAP-ENV:Envelope>");
+
+        DomXmlMessageValidator validator = new DomXmlMessageValidator();
+
+        XsdSchemaRepository schemaRepository = new XsdSchemaRepository();
+        Resource schemaResource = new ClassPathResource("com/consol/citrus/validation/test.xsd");
+        SimpleXsdSchema schema = new SimpleXsdSchema(schemaResource);
+        schema.afterPropertiesSet();
+
+        schemaRepository.getSchemas().add(schema);
+        schemaRepository.getLocations().add("schemas/soap-1.1.xsd");
+        schemaRepository.afterPropertiesSet();
+
+        validator.addSchemaRepository(schemaRepository);
+
+        validator.validateXMLSchema(message, new XmlMessageValidationContext());
+    }
+
+    @Test
+    public void validateXMLSchemaNestedWithNamespaceInRoot() throws Exception {
+        Message message = new DefaultMessage("<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns=\"http://citrusframework.org/test\">" +
+                "<SOAP-ENV:Header/>" +
+                "<SOAP-ENV:Body>" +
+                "<message>"
+                + "<correlationId>Kx1R123456789</correlationId>"
+                + "<bookingId>Bx1G987654321</bookingId>"
+                + "<test>Hello TestFramework</test>"
+                + "</message>" +
+                "</SOAP-ENV:Body>" +
+                "</SOAP-ENV:Envelope>");
+
+        DomXmlMessageValidator validator = new DomXmlMessageValidator();
+
+        XsdSchemaRepository schemaRepository = new XsdSchemaRepository();
+        Resource schemaResource = new ClassPathResource("com/consol/citrus/validation/test.xsd");
+        SimpleXsdSchema schema = new SimpleXsdSchema(schemaResource);
+        schema.afterPropertiesSet();
+
+        schemaRepository.getSchemas().add(schema);
+        schemaRepository.getLocations().add("schemas/soap-1.1.xsd");
+        schemaRepository.afterPropertiesSet();
+
+        validator.addSchemaRepository(schemaRepository);
+
+        validator.validateXMLSchema(message, new XmlMessageValidationContext());
+    }
+
+    @Test(expectedExceptions = ValidationException.class, expectedExceptionsMessageRegExp = ".*Invalid content was found starting with element 'wrong'.*")
+    public void validateXMLSchemaNestedError() throws Exception {
+        Message message = new DefaultMessage("<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
+                "<SOAP-ENV:Header/>" +
+                "<SOAP-ENV:Body>" +
+                    "<message xmlns=\"http://citrusframework.org/test\">"
+                        + "<correlationId>Kx1R123456789</correlationId>"
+                        + "<wrong>Bx1G987654321</wrong>"
+                        + "<test>Hello TestFramework</test>"
+                    + "</message>" +
+                "</SOAP-ENV:Body>" +
+                "</SOAP-ENV:Envelope>");
+
+        DomXmlMessageValidator validator = new DomXmlMessageValidator();
+
+        XsdSchemaRepository schemaRepository = new XsdSchemaRepository();
+        Resource schemaResource = new ClassPathResource("com/consol/citrus/validation/test.xsd");
+        SimpleXsdSchema schema = new SimpleXsdSchema(schemaResource);
+        schema.afterPropertiesSet();
+
+        schemaRepository.getSchemas().add(schema);
+        schemaRepository.getLocations().add("schemas/soap-1.1.xsd");
+        schemaRepository.afterPropertiesSet();
+
+        validator.addSchemaRepository(schemaRepository);
+
+        validator.validateXMLSchema(message, new XmlMessageValidationContext());
+    }
+
+    @Test(expectedExceptions = ValidationException.class, expectedExceptionsMessageRegExp = ".*Invalid content was found starting with element 'wrong'.*")
+    public void validateXMLSchemaNestedWithNamespaceInRootError() throws Exception {
+        Message message = new DefaultMessage("<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns=\"http://citrusframework.org/test\">" +
+                "<SOAP-ENV:Header/>" +
+                "<SOAP-ENV:Body>" +
+                "<message>"
+                    + "<correlationId>Kx1R123456789</correlationId>"
+                    + "<wrong>Bx1G987654321</wrong>"
+                    + "<test>Hello TestFramework</test>"
+                + "</message>" +
+                "</SOAP-ENV:Body>" +
+                "</SOAP-ENV:Envelope>");
+
+        DomXmlMessageValidator validator = new DomXmlMessageValidator();
+
+        XsdSchemaRepository schemaRepository = new XsdSchemaRepository();
+        Resource schemaResource = new ClassPathResource("com/consol/citrus/validation/test.xsd");
+        SimpleXsdSchema schema = new SimpleXsdSchema(schemaResource);
+        schema.afterPropertiesSet();
+
+        schemaRepository.getSchemas().add(schema);
+        schemaRepository.getLocations().add("schemas/soap-1.1.xsd");
+        schemaRepository.afterPropertiesSet();
+
+        validator.addSchemaRepository(schemaRepository);
+
+        validator.validateXMLSchema(message, new XmlMessageValidationContext());
+    }
     
     @Test
     public void validateWithExplicitXMLSchema() throws SAXException, IOException, ParserConfigurationException {
@@ -489,10 +605,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
                     + "</root>");
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-        validationContext.setControlMessage(controlMessage);
-
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
     
     @Test
@@ -518,10 +632,9 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
         ignoreExpressions.add("//root/element/sub-element1");
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-        validationContext.setControlMessage(controlMessage);
         validationContext.setIgnoreExpressions(ignoreExpressions);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
     
     @Test(expectedExceptions = {ValidationException.class})
@@ -540,9 +653,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
     
     @Test(expectedExceptions = {ValidationException.class})
@@ -561,9 +673,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
     
     @Test(expectedExceptions = {ValidationException.class})
@@ -582,9 +693,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
     @Test
@@ -603,9 +713,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
     @Test
@@ -624,9 +733,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
     @Test
@@ -645,9 +753,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
     @Test
@@ -666,9 +773,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
     @Test
@@ -687,9 +793,44 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
+    }
+
+    @Test
+    public void testCommentBeforeRootElement() {
+        Message message = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<!-- some comment -->"
+                + "<root>"
+                + "<element>test</element>"
+                + "</root>");
+
+        Message controlMessage = new DefaultMessage("<root>"
+                + "<element>test</element>"
+                + "</root>");
+
+        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+
+        DomXmlMessageValidator validator = new DomXmlMessageValidator();
+        validator.validateMessage(message, controlMessage, context, validationContext);
+    }
+
+    @Test
+    public void testComment() {
+        Message message = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<root>"
+                + "<!-- some comment -->"
+                + "<element>test</element>"
+                + "</root>");
+
+        Message controlMessage = new DefaultMessage("<root>"
+                + "<element>test</element>"
+                + "</root>");
+
+        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+
+        DomXmlMessageValidator validator = new DomXmlMessageValidator();
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
     @Test(expectedExceptions = {ValidationException.class})
@@ -708,9 +849,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
     @Test(expectedExceptions = {ValidationException.class})
@@ -729,9 +869,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
     @Test(expectedExceptions = {ValidationException.class})
@@ -750,9 +889,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
     @Test(expectedExceptions = {ValidationException.class})
@@ -771,9 +909,8 @@ public class DomXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
 
-        validationContext.setControlMessage(controlMessage);
         DomXmlMessageValidator validator = new DomXmlMessageValidator();
-        validator.validateMessage(message, context, validationContext);
+        validator.validateMessage(message, controlMessage, context, validationContext);
     }
 
 }

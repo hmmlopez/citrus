@@ -18,10 +18,16 @@
         <include>com.consol.citrus:citrus-ssh</include>
         <include>com.consol.citrus:citrus-mail</include>
         <include>com.consol.citrus:citrus-camel</include>
+        <include>com.consol.citrus:citrus-docker</include>
+        <include>com.consol.citrus:citrus-cucumber</include>
+        <include>com.consol.citrus:citrus-zookeeper</include>
+        <include>com.consol.citrus:citrus-rmi</include>
+        <include>com.consol.citrus:citrus-jmx</include>
         <include>com.consol.citrus:citrus-vertx</include>
         <include>com.consol.citrus:citrus-ftp</include>
         <include>com.consol.citrus:citrus-java-dsl</include>
         <include>com.consol.citrus:citrus-arquillian</include>
+        <include>com.consol.citrus:citrus-restdocs</include>
         <include>com.consol.citrus.model:citrus-model-core</include>
         <include>com.consol.citrus.model:citrus-model-jms</include>
         <include>com.consol.citrus.model:citrus-model-http</include>
@@ -30,6 +36,11 @@
         <include>com.consol.citrus.model:citrus-model-ssh</include>
         <include>com.consol.citrus.model:citrus-model-mail</include>
         <include>com.consol.citrus.model:citrus-model-camel</include>
+        <include>com.consol.citrus.model:citrus-model-docker</include>
+        <include>com.consol.citrus.model:citrus-model-cucumber</include>
+        <include>com.consol.citrus.model:citrus-model-zookeeper</include>
+        <include>com.consol.citrus.model:citrus-model-rmi</include>
+        <include>com.consol.citrus.model:citrus-model-jmx</include>
         <include>com.consol.citrus.model:citrus-model-vertx</include>
         <include>com.consol.citrus.model:citrus-model-ftp</include>
       </includes>
@@ -42,96 +53,6 @@
   </moduleSets>
     
   <fileSets>
-    <!-- Citrus Samples -->
-    <fileSet>
-      <directory>../citrus-samples</directory>
-      <outputDirectory>samples</outputDirectory>
-      <useDefaultExcludes>true</useDefaultExcludes>
-      <excludes>
-        <exclude>**/target/**</exclude>
-        <exclude>**/test-output/**</exclude>
-        <exclude>**/logs/**</exclude>
-        <exclude>**/src/pom.xml</exclude>
-        <exclude>**/citrus-test/pom.xml</exclude>
-        <exclude>src/main/script/**</exclude>
-        <exclude>**/*.iml</exclude>
-        <exclude>.project</exclude>
-        <exclude>.classpath</exclude>
-        <exclude>.settings</exclude>
-      </excludes>
-      <lineEnding>unix</lineEnding>
-    </fileSet>
-    
-    <fileSet>
-      <directory>../citrus-samples/src/main/script/lib</directory>
-      <outputDirectory>samples/lib</outputDirectory>
-      <lineEnding>keep</lineEnding>
-    </fileSet>
-    
-    <fileSet>
-      <directory>../citrus-samples/src/main/script</directory>
-      <outputDirectory>samples/flightbooking/citrus-test</outputDirectory>
-      <includes>
-        <include>build.xml</include>
-      </includes>
-    </fileSet>
-    
-    <fileSet>
-      <directory>../citrus-samples/src/main/script</directory>
-      <outputDirectory>samples/greeting/citrus-test</outputDirectory>
-      <includes>
-        <include>build.xml</include>
-      </includes>
-    </fileSet>
-    
-    <fileSet>
-      <directory>../citrus-samples/src/main/script</directory>
-      <outputDirectory>samples/bookstore/citrus-test</outputDirectory>
-      <includes>
-        <include>build.xml</include>
-      </includes>
-    </fileSet>
-    
-    <fileSet>
-      <directory>../citrus-samples/src/main/script</directory>
-      <outputDirectory>samples/incident/citrus-test</outputDirectory>
-      <includes>
-        <include>build.xml</include>
-      </includes>
-    </fileSet>
-
-    <fileSet>
-      <directory>../citrus-samples/bookstore/citrus-test/src</directory>
-      <outputDirectory>samples/bookstore/citrus-test</outputDirectory>
-      <includes>
-        <include>pom.xml</include>
-      </includes>
-    </fileSet>
-
-    <fileSet>
-      <directory>../citrus-samples/incident/citrus-test/src</directory>
-      <outputDirectory>samples/incident/citrus-test</outputDirectory>
-      <includes>
-        <include>pom.xml</include>
-      </includes>
-    </fileSet>
-
-    <fileSet>
-      <directory>../citrus-samples/flightbooking/citrus-test/src</directory>
-      <outputDirectory>samples/flightbooking/citrus-test</outputDirectory>
-      <includes>
-        <include>pom.xml</include>
-      </includes>
-    </fileSet>
-
-    <fileSet>
-      <directory>../citrus-samples/greeting/citrus-test/src</directory>
-      <outputDirectory>samples/greeting/citrus-test</outputDirectory>
-      <includes>
-        <include>pom.xml</include>
-      </includes>
-    </fileSet>
-
     <!-- Reference documentation -->
     <fileSet>
       <directory>target/doc/html</directory>
@@ -183,6 +104,34 @@
     </fileSet>
     <fileSet>
       <directory>modules/citrus-model/model-camel/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>modules/citrus-model/model-docker/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>modules/citrus-model/model-cucumber/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>modules/citrus-model/model-rmi/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>modules/citrus-model/model-jmx/target</directory>
       <outputDirectory>src</outputDirectory>
       <includes>
         <include>*sources.jar</include>
@@ -259,6 +208,41 @@
       </includes>
     </fileSet>
     <fileSet>
+      <directory>modules/citrus-docker/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>modules/citrus-zookeeper/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>modules/citrus-cucumber/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>modules/citrus-rmi/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>modules/citrus-jmx/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
       <directory>modules/citrus-vertx/target</directory>
       <outputDirectory>src</outputDirectory>
       <includes>
@@ -286,6 +270,13 @@
         <include>*sources.jar</include>
       </includes>
     </fileSet>
+    <fileSet>
+      <directory>modules/citrus-restdocs/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
     
     <!-- License, readme, notice -->
     <fileSet>
@@ -302,7 +293,7 @@
   <files>
     <!-- PDF reference documentation -->
     <file>
-      <source>target/doc/pdf/citrus-reference-2.4-SNAPSHOT.pdf</source>
+      <source>target/doc/pdf/citrus-reference-2.7-SNAPSHOT.pdf</source>
       <outputDirectory>docs/reference/pdf</outputDirectory>
     </file>
   </files>

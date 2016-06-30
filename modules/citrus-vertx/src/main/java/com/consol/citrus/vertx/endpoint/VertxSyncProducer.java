@@ -18,14 +18,13 @@ package com.consol.citrus.vertx.endpoint;
 
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.ActionTimeoutException;
-import com.consol.citrus.message.*;
+import com.consol.citrus.message.Message;
 import com.consol.citrus.message.correlation.CorrelationManager;
 import com.consol.citrus.message.correlation.PollingCorrelationManager;
 import com.consol.citrus.messaging.ReplyConsumer;
+import io.vertx.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
 
 /**
  * @author Christoph Deppisch
@@ -62,22 +61,24 @@ public class VertxSyncProducer extends VertxProducer implements ReplyConsumer {
 
     @Override
     public void send(Message message, final TestContext context) {
-        log.info("Sending message to Vert.x event bus address: '" + endpointConfiguration.getAddress() + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("Sending message to Vert.x event bus address: '" + endpointConfiguration.getAddress() + "'");
+        }
 
         String correlationKeyName = endpointConfiguration.getCorrelator().getCorrelationKeyName(getName());
         final String correlationKey = endpointConfiguration.getCorrelator().getCorrelationKey(message);
         correlationManager.saveCorrelationKey(correlationKeyName, correlationKey, context);
         context.onOutboundMessage(message);
 
-        log.info("Message was successfully sent to Vert.x event bus address: '" + endpointConfiguration.getAddress() + "'");
+        log.info("Message was sent to Vert.x event bus address: '" + endpointConfiguration.getAddress() + "'");
 
         vertx.eventBus().send(endpointConfiguration.getAddress(), message.getPayload(),
-            new Handler<org.vertx.java.core.eventbus.Message>() {
+            new Handler<AsyncResult<io.vertx.core.eventbus.Message<Object>>>() {
                 @Override
-                public void handle(org.vertx.java.core.eventbus.Message event) {
-                    log.info("Received synchronous response message on event bus reply address");
+                public void handle(AsyncResult<io.vertx.core.eventbus.Message<Object>> event) {
+                    log.info("Received synchronous response on Vert.x event bus reply address");
 
-                    Message responseMessage = endpointConfiguration.getMessageConverter().convertInbound(event, endpointConfiguration);
+                    Message responseMessage = endpointConfiguration.getMessageConverter().convertInbound(event.result(), endpointConfiguration, context);
 
                     context.onInboundMessage(responseMessage);
                     correlationManager.store(correlationKey, responseMessage);

@@ -16,7 +16,9 @@
 
 package com.consol.citrus.dsl.builder;
 
+import com.consol.citrus.TestAction;
 import com.consol.citrus.actions.SendMessageAction;
+import com.consol.citrus.dsl.actions.DelegatingTestAction;
 import com.consol.citrus.endpoint.resolver.DynamicEndpointUriResolver;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.http.message.HttpMessageHeaders;
@@ -28,6 +30,7 @@ import org.springframework.http.HttpMethod;
  *
  * @author Christoph Deppisch
  * @since 2.3
+ * @deprecated since 2.6 in favour of using {@link HttpActionBuilder}
  */
 public class SendHttpMessageBuilder extends SendMessageBuilder<SendMessageAction, SendHttpMessageBuilder> {
 
@@ -37,6 +40,14 @@ public class SendHttpMessageBuilder extends SendMessageBuilder<SendMessageAction
      * @param action action defined by this definiton
      */
     public SendHttpMessageBuilder(SendMessageAction action) {
+        super(action);
+    }
+
+    /**
+     * Constructor using delegate test action.
+     * @param action
+     */
+    public SendHttpMessageBuilder(DelegatingTestAction<TestAction> action) {
         super(action);
     }
 
@@ -101,11 +112,13 @@ public class SendHttpMessageBuilder extends SendMessageBuilder<SendMessageAction
     }
 
     @Override
+    @Deprecated
     public SendHttpMessageBuilder http() {
         return this;
     }
 
     @Override
+    @Deprecated
     public SendSoapMessageBuilder soap() {
         throw new CitrusRuntimeException("Invalid use of http and soap action builder");
     }

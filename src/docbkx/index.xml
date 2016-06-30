@@ -8,15 +8,19 @@
             </imageobject>
         </mediaobject>
         <title>Citrus Framework - Reference Documentation</title>
-        <releaseinfo>2.4-SNAPSHOT</releaseinfo>
+        <releaseinfo>2.7-SNAPSHOT</releaseinfo>
         <authorgroup>
             <author>
                 <firstname>Christoph</firstname>
                 <surname>Deppisch</surname>
             </author>
+            <author>
+                <firstname>Martin</firstname>
+                <surname>Maher</surname>
+            </author>
         </authorgroup>
         <copyright>
-            <year>2015</year>
+            <year>2016</year>
             <holder>ConSol* Software GmbH</holder>
         </copyright>
     </bookinfo>
@@ -29,6 +33,7 @@
     <xi:include href='test-case.xml'/>
     <xi:include href='test-variables.xml'/>
     <xi:include href='run.xml'/>
+    <xi:include href='configuration.xml'/>
     <xi:include href='endpoints.xml'/>
     <xi:include href='validation.xml'/>
     <xi:include href='xpath.xml'/>
@@ -48,7 +53,13 @@
     <xi:include href='vertx.xml'/>
     <xi:include href='mail.xml'/>
     <xi:include href='arquillian.xml'/>
+    <xi:include href='docker.xml'/>
     <xi:include href='ssh.xml'/>
+    <xi:include href='rmi.xml'/>
+    <xi:include href='jmx.xml'/>
+    <xi:include href='cucumber.xml'/>
+    <xi:include href='zookeeper.xml'/>
+    <xi:include href='restdocs.xml'/>
     <xi:include href='endpoint-component.xml'/>
     <xi:include href='endpoint-adapter.xml'/>
     <xi:include href='functions.xml'/>
@@ -80,6 +91,9 @@
 
         <para>In the following sections we you will find out what has happened in the past Citrus releases.</para>
 
+        <xi:include href='changes-2-5.xml'/>
+        <xi:include href='changes-2-4.xml'/>
+        <xi:include href='changes-2-3.xml'/>
         <xi:include href='changes-2-2.xml'/>
         <xi:include href='changes-2-1.xml'/>
         <xi:include href='changes-2-0.xml'/>

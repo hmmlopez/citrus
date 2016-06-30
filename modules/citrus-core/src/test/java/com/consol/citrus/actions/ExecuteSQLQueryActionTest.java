@@ -16,22 +16,22 @@
 
 package com.consol.citrus.actions;
 
-import static org.easymock.EasyMock.*;
-
-import java.util.*;
-
-import org.easymock.EasyMock;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.Citrus;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.exceptions.ValidationException;
 import com.consol.citrus.script.ScriptTypes;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import com.consol.citrus.validation.script.ScriptValidationContext;
+import org.mockito.Mockito;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.*;
+
+import static org.mockito.Mockito.*;
+
 
 /**
  * @author Christoph Deppisch
@@ -40,7 +40,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
 	
     private ExecuteSQLQueryAction executeSQLQueryAction;
     
-    private JdbcTemplate jdbcTemplate = EasyMock.createMock(JdbcTemplate.class);
+    private JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
     
     @BeforeMethod
     public void setUp() {
@@ -57,22 +57,40 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
 	    resultMap.put("ORDERTYPE", "small");
 	    resultMap.put("STATUS", "in_progress");
 	    
-	    expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-	    
-	    replay(jdbcTemplate);
+	    when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
 	    
 	    List<String> stmts = Collections.singletonList(sql);
 	    executeSQLQueryAction.setStatements(stmts);
 	    
 	    executeSQLQueryAction.execute(context);
-	    
-        verify(jdbcTemplate);
-        
+
 	    Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
 	    Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
 	    Assert.assertNotNull(context.getVariable("${STATUS}"));
         Assert.assertEquals(context.getVariable("${STATUS}"), "in_progress");
 	}
+
+    @Test
+    public void testSQLStatementLowerCaseColumnNames() {
+        String sql = "select ORDERTYPE, STATUS from orders where ID=5";
+        reset(jdbcTemplate);
+
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+        resultMap.put("ordertype", "small");
+        resultMap.put("status", "in_progress");
+
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
+                List<String> stmts = Collections.singletonList(sql);
+        executeSQLQueryAction.setStatements(stmts);
+
+        executeSQLQueryAction.execute(context);
+
+        Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
+        Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
+        Assert.assertNotNull(context.getVariable("${STATUS}"));
+        Assert.assertEquals(context.getVariable("${STATUS}"), "in_progress");
+    }
 	
 	@Test
     public void testSQLMultipleStatements() {
@@ -84,16 +102,14 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap1.put("ORDERTYPE", "small");
         resultMap1.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql1)).andReturn(Collections.singletonList(resultMap1));
-        
+        when(jdbcTemplate.queryForList(sql1)).thenReturn(Collections.singletonList(resultMap1));
+
         Map<String, Object> resultMap2 = new HashMap<String, Object>();
         resultMap2.put("NAME", "Mickey Mouse");
         resultMap2.put("HEIGHT", "0,3");
         
-        expect(jdbcTemplate.queryForList(sql2)).andReturn(Collections.singletonList(resultMap2));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql2)).thenReturn(Collections.singletonList(resultMap2));
+
         List<String> stmts = new ArrayList<String>();
         stmts.add(sql1);
         stmts.add(sql2);
@@ -101,9 +117,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setStatements(stmts);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
         Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
         Assert.assertNotNull(context.getVariable("${STATUS}"));
@@ -116,30 +130,26 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
 	
 	@Test
     public void testSQLResource() {
-	    String sql1 = "SELECT ORDERTYPE, STATUS FROM orders WHERE ID=5;";
-        String sql2 = "SELECT NAME, HEIGHT FROM customers WHERE ID=1;";
+	    String sql1 = "SELECT ORDERTYPE, STATUS FROM orders WHERE ID=5";
+        String sql2 = "SELECT NAME, HEIGHT FROM customers WHERE ID=1";
         reset(jdbcTemplate);
         
         Map<String, Object> resultMap1 = new HashMap<String, Object>();
         resultMap1.put("ORDERTYPE", "small");
         resultMap1.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql1)).andReturn(Collections.singletonList(resultMap1));
+        when(jdbcTemplate.queryForList(sql1)).thenReturn(Collections.singletonList(resultMap1));
         
         Map<String, Object> resultMap2 = new HashMap<String, Object>();
         resultMap2.put("NAME", "Mickey Mouse");
         resultMap2.put("HEIGHT", "0,3");
         
-        expect(jdbcTemplate.queryForList(sql2)).andReturn(Collections.singletonList(resultMap2));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql2)).thenReturn(Collections.singletonList(resultMap2));
+
         executeSQLQueryAction.setSqlResourcePath("classpath:com/consol/citrus/actions/test-query.sql");
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
         Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
         Assert.assertNotNull(context.getVariable("${STATUS}"));
@@ -159,17 +169,13 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "small");
         resultMap.put("STATUS", null);
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
         Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
         Assert.assertNotNull(context.getVariable("${STATUS}"));
@@ -187,17 +193,13 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "small");
         resultMap.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList("select ORDERTYPE, STATUS from orders where ID=5")).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList("select ORDERTYPE, STATUS from orders where ID=5")).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
         Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
         Assert.assertNotNull(context.getVariable("${STATUS}"));
@@ -213,10 +215,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "small");
         resultMap.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -225,13 +225,42 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setExtractVariables(extractVariables);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("${orderStatus}"));
         Assert.assertEquals(context.getVariable("${orderStatus}"), "in_progress");
         Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
         Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
+        Assert.assertNotNull(context.getVariable("${STATUS}"));
+        Assert.assertEquals(context.getVariable("${STATUS}"), "in_progress");
+    }
+
+    @Test
+    public void testExtractToVariablesLowerCaseColumnNames() {
+        String sql = "select ORDERTYPE, STATUS from orders where ID=5";
+        reset(jdbcTemplate);
+
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+        resultMap.put("ordertype", "small");
+        resultMap.put("status", "in_progress");
+
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
+        List<String> stmts = Collections.singletonList(sql);
+        executeSQLQueryAction.setStatements(stmts);
+
+        Map<String, String> extractVariables = new HashMap<String, String>();
+        extractVariables.put("ordertype", "orderType");
+        extractVariables.put("STATUS", "orderStatus");
+        executeSQLQueryAction.setExtractVariables(extractVariables);
+
+        executeSQLQueryAction.execute(context);
+
+        Assert.assertNotNull(context.getVariable("${orderStatus}"));
+        Assert.assertEquals(context.getVariable("${orderStatus}"), "in_progress");
+        Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
+        Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
+        Assert.assertNotNull(context.getVariable("${orderType}"));
+        Assert.assertEquals(context.getVariable("${orderType}"), "small");
         Assert.assertNotNull(context.getVariable("${STATUS}"));
         Assert.assertEquals(context.getVariable("${STATUS}"), "in_progress");
     }
@@ -245,10 +274,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "small");
         resultMap.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -257,8 +284,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setExtractVariables(extractVariables);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
+
     }
 	
 	@Test
@@ -270,10 +296,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "small");
         resultMap.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -284,9 +308,36 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setControlResultSet(controlResultSet);
         
         executeSQLQueryAction.execute(context);
+
         
-        verify(jdbcTemplate);
-        
+        Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
+        Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
+        Assert.assertNotNull(context.getVariable("${STATUS}"));
+        Assert.assertEquals(context.getVariable("${STATUS}"), "in_progress");
+    }
+
+    @Test
+    public void testResultSetValidationLowerCase() {
+        String sql = "select ORDERTYPE, STATUS from orders where ID=5";
+        reset(jdbcTemplate);
+
+        Map<String, Object> resultMap = new HashMap<String, Object>();
+        resultMap.put("ordertype", "small");
+        resultMap.put("status", "in_progress");
+
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
+        List<String> stmts = Collections.singletonList(sql);
+        executeSQLQueryAction.setStatements(stmts);
+
+        Map<String, List<String>> controlResultSet = new HashMap<String, List<String>>();
+        controlResultSet.put("ORDERTYPE", Collections.singletonList("small"));
+        controlResultSet.put("STATUS", Collections.singletonList("in_progress"));
+
+        executeSQLQueryAction.setControlResultSet(controlResultSet);
+
+        executeSQLQueryAction.execute(context);
+
         Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
         Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
         Assert.assertNotNull(context.getVariable("${STATUS}"));
@@ -302,10 +353,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("TYPE", "small");
         resultMap.put("STATE", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -316,9 +365,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setControlResultSet(controlResultSet);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("${TYPE}"));
         Assert.assertEquals(context.getVariable("${TYPE}"), "small");
         Assert.assertNotNull(context.getVariable("${STATE}"));
@@ -334,10 +381,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "small");
         resultMap.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -355,9 +400,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
             
             return;
         }
-        
-        verify(jdbcTemplate);
-        
+
         Assert.fail("Expected test to fail with " + ValidationException.class + " but was successful");
     }
     
@@ -381,10 +424,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultRow3.put("STATUS", "finished");
         resultList.add(resultRow3);
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(resultList);
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(resultList);
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -404,9 +445,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setControlResultSet(controlResultSet);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("ORDERTYPE"));
         Assert.assertEquals(context.getVariable("ORDERTYPE"), "small");
         Assert.assertNotNull(context.getVariable("STATUS"));
@@ -433,10 +472,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultRow3.put("STATUS", "finished");
         resultList.add(resultRow3);
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(resultList);
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(resultList);
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -456,9 +493,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setControlResultSet(controlResultSet);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("ORDERTYPE"));
         Assert.assertEquals(context.getVariable("ORDERTYPE"), "small");
         Assert.assertNotNull(context.getVariable("STATUS"));
@@ -485,23 +520,21 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultRow3.put("STATUS", "finished");
         resultList.add(resultRow3);
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(resultList);
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(resultList);
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
         Map<String, List<String>> controlResultSet = new HashMap<String, List<String>>();
         List<String> ordertypeValues = new ArrayList<String>();
         ordertypeValues.add("small");
-        ordertypeValues.add(CitrusConstants.IGNORE_PLACEHOLDER);
+        ordertypeValues.add(Citrus.IGNORE_PLACEHOLDER);
         ordertypeValues.add("big");
         
         controlResultSet.put("ORDERTYPE", ordertypeValues);
         
         List<String> statusValues = new ArrayList<String>();
-        statusValues.add(CitrusConstants.IGNORE_PLACEHOLDER);
+        statusValues.add(Citrus.IGNORE_PLACEHOLDER);
         statusValues.add("in_progress");
         statusValues.add("finished");
         controlResultSet.put("STATUS", statusValues);
@@ -509,9 +542,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setControlResultSet(controlResultSet);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("ORDERTYPE"));
         Assert.assertEquals(context.getVariable("ORDERTYPE"), "small");
         Assert.assertNotNull(context.getVariable("STATUS"));
@@ -538,10 +569,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultRow3.put("STATUS", "finished");
         resultList.add(resultRow3);
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(resultList);
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(resultList);
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -553,7 +582,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         Map<String, List<String>> controlResultSet = new HashMap<String, List<String>>();
         List<String> ordertypeValues = new ArrayList<String>();
         ordertypeValues.add("small");
-        ordertypeValues.add(CitrusConstants.IGNORE_PLACEHOLDER);
+        ordertypeValues.add(Citrus.IGNORE_PLACEHOLDER);
         ordertypeValues.add("big");
         
         controlResultSet.put("ORDERTYPE", ordertypeValues);
@@ -567,9 +596,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setControlResultSet(controlResultSet);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("orderType"));
         Assert.assertEquals(context.getVariable("orderType"), "small;NULL;big");
         Assert.assertNotNull(context.getVariable("orderStatus"));
@@ -590,16 +617,14 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap1.put("ORDERTYPE", "small");
         resultMap1.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql1)).andReturn(Collections.singletonList(resultMap1));
+        when(jdbcTemplate.queryForList(sql1)).thenReturn(Collections.singletonList(resultMap1));
         
         Map<String, Object> resultMap2 = new HashMap<String, Object>();
         resultMap2.put("NAME", "Mickey Mouse");
         resultMap2.put("HEIGHT", "0,3");
         
-        expect(jdbcTemplate.queryForList(sql2)).andReturn(Collections.singletonList(resultMap2));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql2)).thenReturn(Collections.singletonList(resultMap2));
+
         List<String> stmts = new ArrayList<String>();
         stmts.add(sql1);
         stmts.add(sql2);
@@ -624,36 +649,31 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
             
             return;
         }
-        verify(jdbcTemplate);
         Assert.fail("Expected test to fail with " + ValidationException.class + " but was successful");
     }
     
     @Test
     public void testSQLStatementsWithFileResource() {
-        String sql1 = "select ORDERTYPE, STATUS from orders where ID=5;";
-        String sql2 = "select NAME, HEIGHT\nfrom customers\nwhere ID=1;";
+        String sql1 = "select ORDERTYPE, STATUS from orders where ID=5";
+        String sql2 = "select NAME, HEIGHT\nfrom customers\nwhere ID=1";
         reset(jdbcTemplate);
         
         Map<String, Object> resultMap1 = new HashMap<String, Object>();
         resultMap1.put("ORDERTYPE", "small");
         resultMap1.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql1)).andReturn(Collections.singletonList(resultMap1));
+        when(jdbcTemplate.queryForList(sql1)).thenReturn(Collections.singletonList(resultMap1));
         
         Map<String, Object> resultMap2 = new HashMap<String, Object>();
         resultMap2.put("NAME", "Mickey Mouse");
         resultMap2.put("HEIGHT", "0,3");
         
-        expect(jdbcTemplate.queryForList(sql2)).andReturn(Collections.singletonList(resultMap2));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql2)).thenReturn(Collections.singletonList(resultMap2));
+
         executeSQLQueryAction.setSqlResourcePath("classpath:com/consol/citrus/actions/test-sql-query-statements.sql");
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
         Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
         Assert.assertNotNull(context.getVariable("${STATUS}"));
@@ -673,10 +693,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "small");
         resultMap.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -687,9 +705,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setScriptValidationContext(scriptValidationContext);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
-        
+
         Assert.assertNotNull(context.getVariable("${ORDERTYPE}"));
         Assert.assertEquals(context.getVariable("${ORDERTYPE}"), "small");
         Assert.assertNotNull(context.getVariable("${STATUS}"));
@@ -715,11 +731,9 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
             results.add(columnMap);
         }
         
-        expect(jdbcTemplate.queryForList(sql1)).andReturn(Collections.singletonList(resultMap)).once();
-        expect(jdbcTemplate.queryForList(sql2)).andReturn(results).once();
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql1)).thenReturn(Collections.singletonList(resultMap));
+        when(jdbcTemplate.queryForList(sql2)).thenReturn(results);
+
         List<String> stmts = new ArrayList<String>();
         stmts.add(sql1);
         stmts.add(sql2);
@@ -734,8 +748,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setScriptValidationContext(scriptValidationContext);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
+
     }
     
     @Test
@@ -747,10 +760,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "small");
         resultMap.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -765,8 +776,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
             Assert.assertTrue(e.getCause() instanceof AssertionError);
             return;
         }
-        
-        verify(jdbcTemplate);
+
         
         Assert.fail("Missing validation exception due to script validation error");
     }
@@ -780,10 +790,8 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "small");
         resultMap.put("STATUS", "in_progress");
         
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-        
-        replay(jdbcTemplate);
-        
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
+
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
         
@@ -800,8 +808,6 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         executeSQLQueryAction.setScriptValidationContext(scriptValidationContext);
         
         executeSQLQueryAction.execute(context);
-        
-        verify(jdbcTemplate);
     }
 
     @Test
@@ -813,9 +819,7 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         resultMap.put("ORDERTYPE", "testVariableValue");
         resultMap.put("STATUS", "in_progress");
 
-        expect(jdbcTemplate.queryForList(sql)).andReturn(Collections.singletonList(resultMap));
-
-        replay(jdbcTemplate);
+        when(jdbcTemplate.queryForList(sql)).thenReturn(Collections.singletonList(resultMap));
 
         List<String> stmts = Collections.singletonList(sql);
         executeSQLQueryAction.setStatements(stmts);
@@ -829,7 +833,5 @@ public class ExecuteSQLQueryActionTest extends AbstractTestNGUnitTest {
         context.getVariables().put("testVariable", "testVariableValue");
         context.getVariables().put("progressVar", "progress");
         executeSQLQueryAction.execute(context);
-
-        verify(jdbcTemplate);
     }
 }

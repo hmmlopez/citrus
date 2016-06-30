@@ -19,43 +19,50 @@ package com.consol.citrus.container;
 import com.consol.citrus.TestAction;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Collections;
 
-import static org.easymock.EasyMock.*;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.*;
+
 
 /**
  * @author Christoph Deppisch
  */
 public class RepeatUntilTrueTest extends AbstractTestNGUnitTest {
 
-    private TestAction action = EasyMock.createMock(TestAction.class);
+    private TestAction action = Mockito.mock(TestAction.class);
 
-    @Test
-    public void testRepeat() {
+    @Test(dataProvider = "expressionProvider")
+    public void testRepeat(String expression) {
         RepeatUntilTrue repeatUntilTrue = new RepeatUntilTrue();
 
         reset(action);
-        
-        action.execute(context);
-        expectLastCall().times(4);
-        
-        replay(action);
-        
+
         repeatUntilTrue.setActions(Collections.singletonList(action));
-        
-        repeatUntilTrue.setCondition("i = 5");
+
+        repeatUntilTrue.setCondition(expression);
         repeatUntilTrue.setIndexName("i");
-        
+
         repeatUntilTrue.execute(context);
-        
+
         Assert.assertNotNull(context.getVariable("${i}"));
         Assert.assertEquals(context.getVariable("${i}"), "4");
 
-        verify(action);
+        verify(action, times(4)).execute(context);
+    }
+
+    @DataProvider
+    public Object[][] expressionProvider() {
+        return new Object[][] {
+                new Object[] {"i = 5"},
+                new Object[] {"@assertThat(is(5))@"},
+                new Object[] {"@assertThat('${i}', 'is(5)')@"}
+        };
     }
     
     @Test
@@ -63,23 +70,18 @@ public class RepeatUntilTrueTest extends AbstractTestNGUnitTest {
         RepeatUntilTrue repeatUntilTrue = new RepeatUntilTrue();
         
         reset(action);
-        
-        action.execute(context);
-        expectLastCall().once();
-        
-        replay(action);
-        
+
         repeatUntilTrue.setActions(Collections.singletonList(action));
-        
+
         repeatUntilTrue.setCondition("i gt 0");
         repeatUntilTrue.setIndexName("i");
-        
+
         repeatUntilTrue.execute(context);
-        
+
         Assert.assertNotNull(context.getVariable("${i}"));
         Assert.assertEquals(context.getVariable("${i}"), "1");
 
-        verify(action);
+        verify(action).execute(context);
     }
 
     @Test
@@ -87,11 +89,6 @@ public class RepeatUntilTrueTest extends AbstractTestNGUnitTest {
         RepeatUntilTrue repeatUntilTrue = new RepeatUntilTrue();
 
         reset(action);
-
-        action.execute(context);
-        expectLastCall().times(4);
-
-        replay(action);
 
         repeatUntilTrue.setActions(Collections.singletonList(action));
 
@@ -107,6 +104,24 @@ public class RepeatUntilTrueTest extends AbstractTestNGUnitTest {
         Assert.assertNotNull(context.getVariable("${i}"));
         Assert.assertEquals(context.getVariable("${i}"), "4");
 
-        verify(action);
+        verify(action, times(4)).execute(context);
+    }
+
+    @Test
+    public void testRepeatHamcrestConditionExpression() {
+        RepeatUntilTrue repeatUntilTrue = new RepeatUntilTrue();
+
+        reset(action);
+
+        repeatUntilTrue.setActions(Collections.singletonList(action));
+
+        repeatUntilTrue.setConditionExpression(new HamcrestConditionExpression(is(5)));
+
+        repeatUntilTrue.execute(context);
+
+        Assert.assertNotNull(context.getVariable("${i}"));
+        Assert.assertEquals(context.getVariable("${i}"), "4");
+
+        verify(action, times(4)).execute(context);
     }
 }

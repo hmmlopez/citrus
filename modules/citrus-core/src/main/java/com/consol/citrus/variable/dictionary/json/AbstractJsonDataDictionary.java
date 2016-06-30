@@ -46,6 +46,10 @@ public abstract class AbstractJsonDataDictionary extends AbstractDataDictionary<
 
     @Override
     protected Message interceptMessage(Message message, String messageType, TestContext context) {
+        if (message.getPayload() == null || !StringUtils.hasText(message.getPayload(String.class))) {
+            return message;
+        }
+
         JSONParser parser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
 
         try {
@@ -85,7 +89,8 @@ public abstract class AbstractJsonDataDictionary extends AbstractDataDictionary<
                     }
                 }
             } else {
-                jsonEntry.setValue(translate((StringUtils.hasText(jsonPath) ? jsonPath + "." + jsonEntry.getKey() : jsonEntry.getKey().toString()), jsonEntry.getValue().toString(), context));
+                jsonEntry.setValue(translate((StringUtils.hasText(jsonPath) ? jsonPath + "." + jsonEntry.getKey() : jsonEntry.getKey().toString()),
+                                              jsonEntry.getValue() != null ? jsonEntry.getValue().toString() : null, context));
             }
         }
     }

@@ -22,27 +22,26 @@ import com.consol.citrus.dsl.builder.BuilderSupport;
 import com.consol.citrus.dsl.builder.GroovyActionBuilder;
 import com.consol.citrus.script.GroovyAction;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.*;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 public class GroovyTestRunnerTest extends AbstractTestNGUnitTest {
-    private Resource scriptResource = EasyMock.createMock(Resource.class);
-    private Resource scriptTemplate = EasyMock.createMock(Resource.class);
-    private File file = EasyMock.createMock(File.class);
+    private Resource scriptResource = Mockito.mock(Resource.class);
+    private Resource scriptTemplate = Mockito.mock(Resource.class);
+    private File file = Mockito.mock(File.class);
             
     @Test
     public void testGroovyBuilderWithResource() throws IOException {
         reset(scriptResource);
-        expect(scriptResource.getInputStream()).andReturn(new ByteArrayInputStream("println 'Wow groovy!'".getBytes())).once();
-        replay(scriptResource);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        when(scriptResource.getInputStream()).thenReturn(new ByteArrayInputStream("println 'Wow groovy!'".getBytes()));
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 groovy(new BuilderSupport<GroovyActionBuilder>() {
@@ -63,13 +62,12 @@ public class GroovyTestRunnerTest extends AbstractTestNGUnitTest {
         GroovyAction action = (GroovyAction)test.getActions().get(0);
         Assert.assertEquals(action.getScript(), "println 'Wow groovy!'");
         Assert.assertEquals(action.isUseScriptTemplate(), false);
-        
-        verify(scriptResource);
+
     }
     
     @Test
     public void testGroovyBuilderWithScript() {
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 groovy(new BuilderSupport<GroovyActionBuilder>() {
@@ -93,25 +91,20 @@ public class GroovyTestRunnerTest extends AbstractTestNGUnitTest {
     
     @Test
     public void testGroovyBuilderWithTemplate() throws IOException {
-        reset(scriptTemplate, file);
-        expect(scriptTemplate.getFile()).andReturn(file).once();
-        expect(file.getAbsolutePath()).andReturn("classpath:com/consol/citrus/script/script-template.groovy").once();
-        replay(scriptTemplate, file);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 groovy(new BuilderSupport<GroovyActionBuilder>() {
                     @Override
                     public void configure(GroovyActionBuilder builder) {
                         builder.script("context.setVariable('message', 'Groovy!')")
-                                .template(scriptTemplate);
+                                .template(new ClassPathResource("com/consol/citrus/script/script-template.groovy"));
                     }
                 });
             }
         };
 
-        TestContext context = builder.createTestContext();
+        TestContext context = builder.getTestContext();
         Assert.assertNotNull(context.getVariable("message"));
         Assert.assertEquals(context.getVariable("message"), "Groovy!");
 
@@ -120,13 +113,13 @@ public class GroovyTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(test.getActions().get(0).getClass(), GroovyAction.class);
         
         GroovyAction action = (GroovyAction)test.getActions().get(0);
-        Assert.assertEquals(action.getScriptTemplatePath(), "classpath:com/consol/citrus/script/script-template.groovy");
+        Assert.assertNotNull(action.getScriptTemplate());
         Assert.assertEquals(action.isUseScriptTemplate(), true);
     }
     
     @Test
     public void testGroovyBuilderWithTemplatePath() {
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 groovy(new BuilderSupport<GroovyActionBuilder>() {
@@ -139,7 +132,7 @@ public class GroovyTestRunnerTest extends AbstractTestNGUnitTest {
             }
         };
 
-        TestContext context = builder.createTestContext();
+        TestContext context = builder.getTestContext();
         Assert.assertNotNull(context.getVariable("message"));
         Assert.assertEquals(context.getVariable("message"), "Groovy!");
 

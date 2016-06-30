@@ -23,18 +23,15 @@ import com.consol.citrus.context.TestContext;
 import com.consol.citrus.dsl.builder.*;
 import com.consol.citrus.dsl.container.FinallySequence;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
-import com.consol.citrus.jms.actions.PurgeJmsQueuesAction;
+import com.consol.citrus.message.MessageType;
 import com.consol.citrus.report.TestActionListeners;
 import com.consol.citrus.script.GroovyAction;
 import com.consol.citrus.server.Server;
-import com.consol.citrus.ws.actions.SendSoapFaultAction;
-import com.consol.citrus.ws.validation.SoapFaultValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.CollectionUtils;
 
-import javax.jms.ConnectionFactory;
 import java.util.*;
 
 /**
@@ -51,7 +48,7 @@ public class DefaultTestRunner implements TestRunner {
     private static Logger log = LoggerFactory.getLogger(DefaultTestRunner.class);
 
     /** This builders test case */
-    private final TestCase testCase = new TestCase();
+    private final TestCase testCase;
 
     /** This runners test context */
     private TestContext context;
@@ -64,18 +61,30 @@ public class DefaultTestRunner implements TestRunner {
 
     /** Default constructor */
     public DefaultTestRunner() {
+        this(new TestCase());
+        testClass(this.getClass());
         name(this.getClass().getSimpleName());
         packageName(this.getClass().getPackage().getName());
     }
 
     /**
+     * Constructor initializing test case.
+     * @param testCase
+     */
+    protected DefaultTestRunner(TestCase testCase) {
+        this.testCase = testCase;
+    }
+
+    /**
      * Constructor using Spring bean application context.
      * @param applicationContext
+     * @param context
      */
-    public DefaultTestRunner(ApplicationContext applicationContext) {
+    public DefaultTestRunner(ApplicationContext applicationContext, TestContext context) {
         this();
 
         this.applicationContext = applicationContext;
+        this.context = context;
 
         try {
             initialize();
@@ -85,8 +94,6 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     protected void initialize() {
-        createTestContext();
-
         testCase.setTestRunner(true);
         testCase.setTestActionListeners(applicationContext.getBean(TestActionListeners.class));
 
@@ -97,6 +104,11 @@ public class DefaultTestRunner implements TestRunner {
         if (!applicationContext.getBeansOfType(SequenceAfterTest.class).isEmpty()) {
             testCase.setAfterTest(CollectionUtils.arrayToList(applicationContext.getBeansOfType(SequenceAfterTest.class).values().toArray()));
         }
+    }
+
+    @Override
+    public void testClass(Class<?> type) {
+        getTestCase().setTestClass(type);
     }
 
     @Override
@@ -155,16 +167,6 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     @Override
-    public void parameter(String[] parameterNames, Object[] parameterValues) {
-        testCase.setParameters(parameterNames, parameterValues);
-
-        for (int i = 0; i < parameterNames.length; i++) {
-            log.info(String.format("Initializing test parameter '%s' as variable", parameterNames[i]));
-            context.setVariable(parameterNames[i], parameterValues[i]);
-        }
-    }
-
-    @Override
     public <T extends TestAction> T run(T testAction) {
         if (testAction instanceof TestActionContainer) {
 
@@ -191,9 +193,18 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     @Override
-    public void applyBehavior(TestBehavior behavior) {
+    public ApplyTestBehaviorAction applyBehavior(TestBehavior behavior) {
+        ApplyTestBehaviorAction action = new ApplyTestBehaviorAction(this, behavior);
         behavior.setApplicationContext(applicationContext);
-        behavior.apply(this);
+        action.execute(context);
+        return action;
+    }
+
+    @Override
+    public <T extends AbstractActionContainer> AbstractTestContainerBuilder<T> container(T container) {
+        AbstractTestContainerBuilder<T> containerBuilder = new AbstractTestContainerBuilder<T>(this, container) {};
+        this.containers.push(containerBuilder.build());
+        return containerBuilder;
     }
 
     @Override
@@ -267,13 +278,10 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     @Override
-    public PurgeJmsQueuesAction purgeQueues(BuilderSupport<PurgeJmsQueuesBuilder> configurer) {
-        PurgeJmsQueuesBuilder builder = new PurgeJmsQueuesBuilder();
+    public TestAction purgeQueues(BuilderSupport<PurgeJmsQueuesBuilder> configurer) {
+        PurgeJmsQueuesBuilder builder = new PurgeJmsQueuesBuilder()
+                .withApplicationContext(applicationContext);
         configurer.configure(builder);
-
-        if (!builder.hasConnectionFactory()) {
-            builder.connectionFactory(applicationContext.getBean("connectionFactory", ConnectionFactory.class));
-        }
         return run(builder.build());
     }
 
@@ -286,27 +294,37 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     @Override
-    public ReceiveMessageAction receive(BuilderSupport<ReceiveMessageBuilder> configurer) {
-        ReceiveMessageBuilder<ReceiveMessageAction, ReceiveMessageBuilder> builder = new ReceiveMessageBuilder();
-        builder.withApplicationContext(applicationContext);
+    public PurgeEndpointAction purgeEndpoints(BuilderSupport<PurgeEndpointsBuilder> configurer) {
+        PurgeEndpointsBuilder builder = new PurgeEndpointsBuilder()
+                .withApplicationContext(applicationContext);
         configurer.configure(builder);
         return run(builder.build());
+    }
+
+    @Override
+    public ReceiveMessageAction receive(BuilderSupport<ReceiveMessageBuilder> configurer) {
+        ReceiveMessageBuilder<ReceiveMessageAction, ReceiveMessageBuilder> builder = new ReceiveMessageBuilder()
+                .messageType(MessageType.XML)
+                .withApplicationContext(applicationContext);
+        configurer.configure(builder);
+        return (ReceiveMessageAction) run(builder.build().getDelegate());
     }
 
     @Override
     public SendMessageAction send(BuilderSupport<SendMessageBuilder> configurer) {
-        SendMessageBuilder<SendMessageAction, SendMessageBuilder> builder = new SendMessageBuilder();
-        builder.withApplicationContext(applicationContext);
+        SendMessageBuilder<SendMessageAction, SendMessageBuilder> builder = new SendMessageBuilder()
+                .withApplicationContext(applicationContext);
         configurer.configure(builder);
-        return run(builder.build());
+        return (SendMessageAction) run(builder.build().getDelegate());
     }
 
     @Override
-    public SendSoapFaultAction sendSoapFault(BuilderSupport<SendSoapFaultBuilder> configurer) {
-        SendSoapFaultBuilder builder = new SendSoapFaultBuilder();
-        builder.withApplicationContext(applicationContext);
+    @Deprecated
+    public TestAction sendSoapFault(BuilderSupport<SendSoapFaultBuilder> configurer) {
+        SendSoapFaultBuilder builder = new SendSoapFaultBuilder()
+                .withApplicationContext(applicationContext);
         configurer.configure(builder);
-        return run(builder.build());
+        return run(builder.build().getDelegate());
     }
 
     @Override
@@ -319,6 +337,13 @@ public class DefaultTestRunner implements TestRunner {
         SleepAction action = new SleepAction();
         action.setMilliseconds(String.valueOf(milliseconds));
         return run(action);
+    }
+
+    @Override
+    public WaitAction waitFor(BuilderSupport<WaitActionBuilder> configurer) {
+        WaitActionBuilder builder = new WaitActionBuilder();
+        configurer.configure(builder);
+        return run(builder.build());
     }
 
     @Override
@@ -403,12 +428,9 @@ public class DefaultTestRunner implements TestRunner {
 
     @Override
     public AssertSoapFaultBuilder assertSoapFault() {
-        AssertSoapFaultBuilder builder = new AssertSoapFaultBuilder(this);
+        AssertSoapFaultBuilder builder = new AssertSoapFaultBuilder(this)
+                .withApplicationContext(applicationContext);
         containers.push(builder.build());
-
-        if (applicationContext.containsBean("soapFaultValidator")) {
-            builder.validator(applicationContext.getBean("soapFaultValidator", SoapFaultValidator.class));
-        }
 
         return builder;
     }
@@ -456,6 +478,65 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     @Override
+    public TimerBuilder timer() {
+        TimerBuilder builder = new TimerBuilder(this);
+        containers.push(builder.build());
+        return builder;
+    }
+
+    @Override
+    public StopTimerAction stopTimer(String timerId) {
+        StopTimerAction action = new StopTimerAction();
+        action.setTimerId(timerId);
+        return run(action);
+    }
+
+    @Override
+    public StopTimerAction stopTimers() {
+        StopTimerAction action = new StopTimerAction();
+        return run(action);
+    }
+
+    @Override
+    public TestAction docker(BuilderSupport<DockerActionBuilder> configurer) {
+        DockerActionBuilder builder = new DockerActionBuilder();
+        configurer.configure(builder);
+        return run(builder.build());
+    }
+
+    @Override
+    public TestAction http(BuilderSupport<HttpActionBuilder> configurer) {
+        HttpActionBuilder builder = new HttpActionBuilder()
+                    .withApplicationContext(applicationContext);
+        configurer.configure(builder);
+        return run(builder.build()).getDelegate();
+    }
+
+    @Override
+    public TestAction soap(BuilderSupport<SoapActionBuilder> configurer) {
+        SoapActionBuilder builder = new SoapActionBuilder()
+                    .withApplicationContext(applicationContext);
+        configurer.configure(builder);
+        return run(builder.build()).getDelegate();
+    }
+
+    @Override
+    public TestAction camel(BuilderSupport<CamelRouteActionBuilder> configurer) {
+        CamelRouteActionBuilder builder = new CamelRouteActionBuilder()
+                    .withApplicationContext(applicationContext);
+        configurer.configure(builder);
+        return run(builder.build()).getDelegate();
+    }
+
+    @Override
+    public TestAction zookeeper(BuilderSupport<ZooActionBuilder> configurer) {
+        ZooActionBuilder builder = new ZooActionBuilder()
+                .withApplicationContext(applicationContext);
+        configurer.configure(builder);
+        return run(builder.build());
+    }
+
+    @Override
     public Template applyTemplate(BuilderSupport<TemplateBuilder> configurer) {
         TemplateBuilder builder = new TemplateBuilder();
         configurer.configure(builder);
@@ -473,16 +554,28 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     /**
-     * Creates new test context from Spring bean application context.
+     * Gets the test context.
      * @return
      */
-    protected TestContext createTestContext() {
-        if (context == null) {
-            context = applicationContext.getBean(TestContext.class);
-            context.setApplicationContext(applicationContext);
-        }
-
+    public TestContext getTestContext() {
         return context;
+    }
+
+    /**
+     * Sets the test context.
+     * @param context
+     */
+    public void setTestContext(TestContext context) {
+        this.context = context;
+    }
+
+    /**
+     * Gets the value of the applicationContext property.
+     *
+     * @return the applicationContext
+     */
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
     }
 
     /**
@@ -493,7 +586,8 @@ public class DefaultTestRunner implements TestRunner {
         this.applicationContext = applicationContext;
     }
 
-    protected TestCase getTestCase() {
+    @Override
+    public TestCase getTestCase() {
         return testCase;
     }
 

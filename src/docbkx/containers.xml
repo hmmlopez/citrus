@@ -17,5 +17,7 @@
   <xi:include href='containers-iterate.xml'/>
   <xi:include href='containers-repeat.xml'/>
   <xi:include href='containers-repeat-onerror.xml'/>
-  
+  <xi:include href='containers-timer.xml'/>
+  <xi:include href='containers-custom.xml'/>
+
 </chapter>

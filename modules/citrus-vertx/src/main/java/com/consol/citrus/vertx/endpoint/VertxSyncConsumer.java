@@ -25,7 +25,7 @@ import com.consol.citrus.vertx.message.CitrusVertxMessageHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
-import org.vertx.java.core.Vertx;
+import io.vertx.core.Vertx;
 
 /**
  * @author Christoph Deppisch
@@ -48,6 +48,7 @@ public class VertxSyncConsumer extends VertxConsumer implements ReplyProducer {
     /**
      * Default constructor using endpoint configuration.
      * @param name
+     * @param vertx
      * @param endpointConfiguration
      */
     public VertxSyncConsumer(String name, Vertx vertx, VertxSyncEndpointConfiguration endpointConfiguration) {
@@ -75,13 +76,15 @@ public class VertxSyncConsumer extends VertxConsumer implements ReplyProducer {
         String replyAddress = correlationManager.find(correlationKey, endpointConfiguration.getTimeout());
         Assert.notNull(replyAddress, "Failed to find reply address for message correlation key: '" + correlationKey + "'");
 
-        log.info("Sending Vert.x message to event bus address: '" + replyAddress + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("Sending Vert.x message to event bus address: '" + replyAddress + "'");
+        }
 
         vertx.eventBus().send(replyAddress, message.getPayload());
 
         context.onOutboundMessage(message);
 
-        log.info("Message was successfully sent to event bus address: '" + replyAddress + "'");
+        log.info("Message was sent to Vert.x event bus address: '" + replyAddress + "'");
     }
 
     /**

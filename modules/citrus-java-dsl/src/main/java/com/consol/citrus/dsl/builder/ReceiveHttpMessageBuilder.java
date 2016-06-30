@@ -16,7 +16,9 @@
 
 package com.consol.citrus.dsl.builder;
 
+import com.consol.citrus.TestAction;
 import com.consol.citrus.actions.ReceiveMessageAction;
+import com.consol.citrus.dsl.actions.DelegatingTestAction;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.http.message.HttpMessageHeaders;
 import org.springframework.http.HttpMethod;
@@ -29,6 +31,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Christoph Deppisch
  * @since 2.3
+ * @deprecated since 2.6 in favour of using {@link HttpActionBuilder}
  */
 public class ReceiveHttpMessageBuilder extends ReceiveMessageBuilder<ReceiveMessageAction, ReceiveHttpMessageBuilder> {
 
@@ -45,14 +48,22 @@ public class ReceiveHttpMessageBuilder extends ReceiveMessageBuilder<ReceiveMess
     }
 
     /**
+     * Constructor using delegate test action.
+     * @param action
+     */
+    public ReceiveHttpMessageBuilder(DelegatingTestAction<TestAction> action) {
+        super(action);
+    }
+
+    /**
      * Validates the response status received.
      *
      * @param status received response status.
      * @return self
      */
     public ReceiveHttpMessageBuilder status(HttpStatus status) {
-        header(HttpMessageHeaders.HTTP_STATUS_CODE, String.valueOf(status.value()));
-        header(HttpMessageHeaders.HTTP_REASON_PHRASE, status.getReasonPhrase());
+        header(HttpMessageHeaders.HTTP_STATUS_CODE, status.value());
+        header(HttpMessageHeaders.HTTP_REASON_PHRASE, status.name());
         return this;
     }
 
@@ -123,11 +134,13 @@ public class ReceiveHttpMessageBuilder extends ReceiveMessageBuilder<ReceiveMess
 
 
     @Override
+    @Deprecated
     public ReceiveSoapMessageBuilder soap() {
         throw new CitrusRuntimeException("Invalid use of http and soap action builder");
     }
 
     @Override
+    @Deprecated
     public ReceiveHttpMessageBuilder http() {
         return this;
     }

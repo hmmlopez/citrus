@@ -69,16 +69,14 @@ public class GroovyScriptMessageValidator extends AbstractMessageValidator<Scrip
         this.scriptTemplateResource = scriptTemplateResource;
     }
 
-    /**
-     * Validates the message with test context and script validation context.
-     */
-    public void validateMessage(Message receivedMessage, TestContext context, ScriptValidationContext validationContext)
+    @Override
+    public void validateMessage(Message receivedMessage, Message controlMessage, TestContext context, ScriptValidationContext validationContext)
         throws ValidationException {
         try {
             String validationScript = validationContext.getValidationScript(context);
             
             if (StringUtils.hasText(validationScript)) {
-                log.info("Start groovy message validation");
+                log.debug("Start groovy message validation");
 
                 GroovyClassLoader loader = AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
                     public GroovyClassLoader run() {
@@ -96,7 +94,7 @@ public class GroovyScriptMessageValidator extends AbstractMessageValidator<Scrip
                 GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance();
                 ((GroovyScriptExecutor) groovyObject).validate(receivedMessage, context);
                 
-                log.info("Groovy message validation finished successfully: All values OK");
+                log.info("Groovy message validation successful: All values OK");
             }
         } catch (CompilationFailedException e) {
             throw new CitrusRuntimeException(e);
@@ -110,15 +108,20 @@ public class GroovyScriptMessageValidator extends AbstractMessageValidator<Scrip
     }
 
     @Override
-    public ScriptValidationContext findValidationContext(List<ValidationContext> validationContexts) {
+    protected ScriptValidationContext findValidationContext(List<ValidationContext> validationContexts) {
         for (ValidationContext validationContext : validationContexts) {
-            if (validationContext instanceof ScriptValidationContext && 
+            if (getRequiredValidationContextType().isInstance(validationContext) &&
                     ((ScriptValidationContext)validationContext).getScriptType().equals(ScriptTypes.GROOVY)) {
                 return (ScriptValidationContext) validationContext;
             }
         }
         
         return null;
+    }
+
+    @Override
+    protected Class<ScriptValidationContext> getRequiredValidationContextType() {
+        return ScriptValidationContext.class;
     }
 
     @Override

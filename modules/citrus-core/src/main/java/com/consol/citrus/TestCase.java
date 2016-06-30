@@ -46,10 +46,13 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
 
     /** Meta-Info */
     private TestCaseMetaInfo metaInfo = new TestCaseMetaInfo();
-    
+
+    /** Test class type */
+    private Class<?> testClass = this.getClass();
+
     /** Test package name */
     private String packageName = this.getClass().getPackage().getName();
-    
+
     /** In case test was called with parameters from outside */
     private Map<String, Object> parameters = new LinkedHashMap<String, Object>();
 
@@ -67,7 +70,7 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
 
     /** Marks this test case as test runner instance that grows in size step by step as test actions are executed */
     private boolean testRunner = false;
-    
+
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(TestCase.class);
 
@@ -106,11 +109,13 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
             }
 
             // add default variables for test
-            context.setVariable(CitrusConstants.TEST_NAME_VARIABLE, getName());
-            context.setVariable(CitrusConstants.TEST_PACKAGE_VARIABLE, getPackageName());
+            context.setVariable(Citrus.TEST_NAME_VARIABLE, getName());
+            context.setVariable(Citrus.TEST_PACKAGE_VARIABLE, getPackageName());
 
             for (Entry<String, Object> paramEntry : parameters.entrySet()) {
-                log.info(String.format("Initializing test parameter '%s' as variable", paramEntry.getKey()));
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Initializing test parameter '%s' as variable", paramEntry.getKey()));
+                }
                 context.setVariable(paramEntry.getKey(), paramEntry.getValue());
             }
 
@@ -118,7 +123,7 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
         } catch (Exception e) {
             testResult = TestResult.failed(getName(), e);
             throw new TestCaseFailedException(e);
-        } catch (Error e) {
+        } catch (AssertionError e) {
             testResult = TestResult.failed(getName(), e);
             throw new TestCaseFailedException(e);
         }
@@ -143,7 +148,7 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
             } catch (Exception e) {
                 testResult = TestResult.failed(getName(), e);
                 throw new TestCaseFailedException(e);
-            } catch (Error e) {
+            } catch (AssertionError e) {
                 testResult = TestResult.failed(getName(), e);
                 throw new TestCaseFailedException(e);
             } finally {
@@ -188,7 +193,7 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
                     }
                 } catch (Exception e) {
                     log.warn("After test failed with errors", e);
-                } catch (Error e) {
+                } catch (AssertionError e) {
                     log.warn("After test failed with errors", e);
                 }
             }
@@ -214,7 +219,7 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
         } catch (Exception e) {
             testResult = TestResult.failed(getName(), e);
             throw new TestCaseFailedException(e);
-        } catch (Error e) {
+        } catch (AssertionError e) {
             testResult = TestResult.failed(getName(), e);
             throw new TestCaseFailedException(e);
         }
@@ -229,7 +234,7 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
 
         try {
             if (!finalActions.isEmpty()) {
-                log.info("Finish test case with actions in finally block");
+                log.debug("Entering finally block in test case");
 
                 /* walk through the finally chain and execute the actions in there */
                 for (TestAction action : finalActions) {
@@ -243,7 +248,7 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
         } catch (Exception e) {
             testResult = TestResult.failed(getName(), e);
             throw new TestCaseFailedException(e);
-        } catch (Error e) {
+        } catch (AssertionError e) {
             testResult = TestResult.failed(getName(), e);
             throw new TestCaseFailedException(e);
         } finally {
@@ -362,6 +367,22 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
     }
 
     /**
+     * Set the test class type.
+     * @param type
+     */
+    public void setTestClass(Class<?> type) {
+        this.testClass = type;
+    }
+
+    /**
+     * Gets the value of the testClass property.
+     * @return the testClass
+     */
+    public Class<?> getTestClass() {
+        return testClass;
+    }
+
+    /**
      * Sets the parameters.
      * @param parameterNames the parameter names to set
      * @param parameterValues the parameters to set
@@ -373,7 +394,9 @@ public class TestCase extends AbstractActionContainer implements BeanNameAware {
         }
 
         for (int i = 0; i < parameterNames.length; i++) {
-            this.parameters.put(parameterNames[i], parameterValues[i]);
+            if (parameterValues[i] != null) {
+                this.parameters.put(parameterNames[i], parameterValues[i]);
+            }
         }
     }
 

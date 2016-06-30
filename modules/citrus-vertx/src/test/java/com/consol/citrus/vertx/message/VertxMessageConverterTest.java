@@ -18,20 +18,22 @@ package com.consol.citrus.vertx.message;
 
 import com.consol.citrus.message.DefaultMessage;
 import com.consol.citrus.message.Message;
+import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import com.consol.citrus.vertx.endpoint.VertxEndpointConfiguration;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
+
 
 /**
  * @author Christoph Deppisch
  * @since 2.0
  */
-public class VertxMessageConverterTest {
+public class VertxMessageConverterTest extends AbstractTestNGUnitTest {
 
-    private org.vertx.java.core.eventbus.Message vertxMessage = EasyMock.createMock(org.vertx.java.core.eventbus.Message.class);
+    private io.vertx.core.eventbus.Message vertxMessage = Mockito.mock(io.vertx.core.eventbus.Message.class);
 
     private VertxMessageConverter messageConverter = new VertxMessageConverter();
 
@@ -40,33 +42,30 @@ public class VertxMessageConverterTest {
 
         reset(vertxMessage);
 
-        expect(vertxMessage.body()).andReturn("Hello Citrus!").once();
-        expect(vertxMessage.address()).andReturn("hello").once();
-        expect(vertxMessage.replyAddress()).andReturn("answer").once();
+        when(vertxMessage.body()).thenReturn("Hello Citrus!");
+        when(vertxMessage.address()).thenReturn("hello");
+        when(vertxMessage.replyAddress()).thenReturn("answer");
 
-        replay(vertxMessage);
-
-        Message message = messageConverter.convertInbound(vertxMessage, new VertxEndpointConfiguration());
+        Message message = messageConverter.convertInbound(vertxMessage, new VertxEndpointConfiguration(), context);
 
         Assert.assertEquals(message.getPayload(), "Hello Citrus!");
         Assert.assertEquals(message.getHeader(CitrusVertxMessageHeaders.VERTX_ADDRESS), "hello");
         Assert.assertEquals(message.getHeader(CitrusVertxMessageHeaders.VERTX_REPLY_ADDRESS), "answer");
 
-        verify(vertxMessage);
     }
 
     @Test
     public void testConvertInboundNullMessage() {
-        Assert.assertNull(messageConverter.convertInbound(null, new VertxEndpointConfiguration()));
+        Assert.assertNull(messageConverter.convertInbound(null, new VertxEndpointConfiguration(), context));
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testConvertOutbound() {
-        messageConverter.convertOutbound(new DefaultMessage("This is a test!"), new VertxEndpointConfiguration());
+        messageConverter.convertOutbound(new DefaultMessage("This is a test!"), new VertxEndpointConfiguration(), context);
     }
 
     @Test(expectedExceptions = UnsupportedOperationException.class)
     public void testConvertOutboundOnExternalMessage() {
-        messageConverter.convertOutbound(vertxMessage, new DefaultMessage("This is a test!"), new VertxEndpointConfiguration());
+        messageConverter.convertOutbound(vertxMessage, new DefaultMessage("This is a test!"), new VertxEndpointConfiguration(), context);
     }
 }

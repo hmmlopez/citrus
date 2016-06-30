@@ -31,24 +31,25 @@ import com.consol.citrus.validation.script.GroovyScriptMessageBuilder;
 import com.consol.citrus.validation.xml.*;
 import com.consol.citrus.variable.MessageHeaderVariableExtractor;
 import com.consol.citrus.variable.VariableExtractor;
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Christoph Deppisch
  */
 public class SendMessageActionTest extends AbstractTestNGUnitTest {
 
-    private Endpoint endpoint = EasyMock.createMock(Endpoint.class);
-    private Producer producer = EasyMock.createMock(Producer.class);
-    private EndpointConfiguration endpointConfiguration = EasyMock.createMock(EndpointConfiguration.class);
+    private Endpoint endpoint = Mockito.mock(Endpoint.class);
+    private Producer producer = Mockito.mock(Producer.class);
+    private EndpointConfiguration endpointConfiguration = Mockito.mock(EndpointConfiguration.class);
     
     @Test
     @SuppressWarnings("rawtypes")
@@ -69,28 +70,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
 		final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-		producer.send(anyObject(Message.class), anyObject(TestContext.class));
-		expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
 		
 		sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
 	}
     
     @Test
@@ -107,28 +104,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -149,28 +142,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
 		final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-		expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
 		
 		sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
 	}
     
     @Test
@@ -193,28 +182,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -231,28 +216,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -271,28 +252,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -311,28 +288,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -349,28 +322,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -393,28 +362,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
 
     @Test
@@ -438,28 +403,23 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("{ \"TestRequest\": { \"Message\": \"Hello World!\" }}");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 JsonTextMessageValidator validator = new JsonTextMessageValidator();
                 JsonMessageValidationContext validationContext = new JsonMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
-
-        replay(endpoint, producer, endpointConfiguration);
+        when(endpoint.getActor()).thenReturn(null);
 
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -482,28 +442,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -527,29 +483,26 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<ns0:TestRequest xmlns:ns0=\"http://citrusframework.org/unittest\"><ns0:Message>Hello World!</ns0:Message></ns0:TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
                 validationContext.setSchemaValidation(false);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -573,29 +526,26 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<TestRequest xmlns=\"http://citrusframework.org/unittest\"><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
                 validationContext.setSchemaValidation(false);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -618,28 +568,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         sendAction.setMessageBuilder(messageBuilder);
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -664,28 +610,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         sendAction.setMessageBuilder(messageBuilder);
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -699,11 +641,10 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         sendAction.setMessageBuilder(messageBuilder);
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         try {
             sendAction.execute(context);
@@ -730,11 +671,10 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         sendAction.setMessageBuilder(messageBuilder);
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         try {
             sendAction.execute(context);
@@ -777,31 +717,27 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         sendAction.setVariableExtractors(variableExtractors);
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
         
         Assert.assertNotNull(context.getVariable("myOperation"));
         Assert.assertNotNull(context.getVariable("correlationId"));
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -811,28 +747,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         sendAction.setEndpoint(endpoint);
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(new DefaultMessage(""));
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), new DefaultMessage(""), context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -849,28 +781,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -887,28 +815,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-16\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -925,28 +849,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -961,25 +881,20 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         sendAction.setMessageBuilder(messageBuilder);
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().once();
+        when(endpoint.getActor()).thenReturn(null);
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
-
-        replay(endpoint, producer, endpointConfiguration);
-        
         try {
             sendAction.execute(context);
         } catch (CitrusRuntimeException e) {
             Assert.assertTrue(e.getCause() instanceof UnsupportedEncodingException);
         }
 
-        verify(endpoint, producer, endpointConfiguration);
+        verify(producer).send(any(Message.class), any(TestContext.class));
     }
-    
+
     @Test
     @SuppressWarnings("rawtypes")
     public void testSendMessageWithMessagePayloadResourceISOEncoding() {
@@ -994,28 +909,24 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         final Message controlMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><TestRequest><Message>Hello World!</Message></TestRequest>");
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
 
-        producer.send(anyObject(Message.class), anyObject(TestContext.class));
-        expectLastCall().andAnswer(new IAnswer<Object>() {
-            public Object answer() throws Throwable {
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 DomXmlMessageValidator validator = new DomXmlMessageValidator();
                 XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
-                validationContext.setControlMessage(controlMessage);
-                
-                validator.validateMessage(((Message)EasyMock.getCurrentArguments()[0]), context, validationContext);
+                validator.validateMessage(((Message)invocation.getArguments()[0]), controlMessage, context, validationContext);
                 return null;
             }
-        }).once();
+        }).when(producer).send(any(Message.class), any(TestContext.class));
 
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
+        when(endpoint.getActor()).thenReturn(null);
 
-        replay(endpoint, producer, endpointConfiguration);
         
         sendAction.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -1034,15 +945,12 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         sendAction.setMessageBuilder(messageBuilder);
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
-        expect(endpoint.getActor()).andReturn(null).anyTimes();
-        replay(endpoint, producer, endpointConfiguration);
-
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
+        when(endpoint.getActor()).thenReturn(null);
         testCase.addTestAction(sendAction);
         testCase.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
     @Test
@@ -1060,15 +968,12 @@ public class SendMessageActionTest extends AbstractTestNGUnitTest {
         sendAction.setMessageBuilder(messageBuilder);
 
         reset(endpoint, producer, endpointConfiguration);
-        expect(endpoint.createProducer()).andReturn(producer).anyTimes();
-        expect(endpoint.getEndpointConfiguration()).andReturn(endpointConfiguration).anyTimes();
-        expect(endpoint.getActor()).andReturn(disabledActor).times(2);
-        replay(endpoint, producer, endpointConfiguration);
-
+        when(endpoint.createProducer()).thenReturn(producer);
+        when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
+        when(endpoint.getActor()).thenReturn(disabledActor);
         testCase.addTestAction(sendAction);
         testCase.execute(context);
 
-        verify(endpoint, producer, endpointConfiguration);
     }
     
 }

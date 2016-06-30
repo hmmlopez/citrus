@@ -16,8 +16,7 @@
 
 package com.consol.citrus.validation.json;
 
-import com.consol.citrus.message.MessageType;
-import com.consol.citrus.validation.ControlMessageValidationContext;
+import com.consol.citrus.validation.context.ValidationContext;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -28,24 +27,17 @@ import java.util.Map;
  * @author Christoph Deppisch
  * @since 2.3
  */
-public class JsonPathMessageValidationContext extends ControlMessageValidationContext {
+public class JsonPathMessageValidationContext implements ValidationContext {
 
     /** Map holding xpath expressions as key and expected values as values */
-    private Map<String, String> jsonPathExpressions = new HashMap<String, String>();
-
-    /**
-     * Default constructor using JSON message type.
-     */
-    public JsonPathMessageValidationContext() {
-        super(MessageType.JSON.toString());
-    }
+    private Map<String, Object> jsonPathExpressions = new HashMap<>();
 
     /**
      * Get the control message elements that have to be present in
      * the received message. Message element values are compared as well.
      * @return the jsonPathExpressions
      */
-    public Map<String, String> getJsonPathExpressions() {
+    public Map<String, Object> getJsonPathExpressions() {
         return jsonPathExpressions;
     }
 
@@ -53,7 +45,7 @@ public class JsonPathMessageValidationContext extends ControlMessageValidationCo
      * Set the control message elements explicitly validated XPath expression validation.
      * @param jsonPathExpressions the jsonPathExpressions to set
      */
-    public void setJsonPathExpressions(Map<String, String> jsonPathExpressions) {
+    public void setJsonPathExpressions(Map<String, Object> jsonPathExpressions) {
         this.jsonPathExpressions = jsonPathExpressions;
     }
 

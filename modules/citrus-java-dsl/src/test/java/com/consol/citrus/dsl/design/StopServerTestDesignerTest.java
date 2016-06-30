@@ -17,28 +17,27 @@
 package com.consol.citrus.dsl.design;
 
 import com.consol.citrus.TestCase;
-import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import org.easymock.EasyMock;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.consol.citrus.actions.StopServerAction;
 import com.consol.citrus.server.Server;
+import com.consol.citrus.testng.AbstractTestNGUnitTest;
+import org.mockito.Mockito;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
 /**
  * @author Christoph Deppisch
  * @since 2.0
  */
 public class StopServerTestDesignerTest extends AbstractTestNGUnitTest {
-	private Server testServer = EasyMock.createMock(Server.class);
+	private Server testServer = Mockito.mock(Server.class);
 	
-	private Server server1 = EasyMock.createMock(Server.class);
-	private Server server2 = EasyMock.createMock(Server.class);
-	private Server server3 = EasyMock.createMock(Server.class);
+	private Server server1 = Mockito.mock(Server.class);
+	private Server server2 = Mockito.mock(Server.class);
+	private Server server3 = Mockito.mock(Server.class);
 
 	@Test
 	public void testStopServerBuilder() {
-		MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+		MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
 			@Override
 			public void configure() {
 				stop(testServer);

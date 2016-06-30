@@ -23,11 +23,11 @@ import com.consol.citrus.dsl.builder.BuilderSupport;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.BuildListener;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Christoph Deppisch
@@ -36,7 +36,7 @@ public class AntRunTestRunnerTest extends AbstractTestNGUnitTest {
     
     @Test
     public void testAntRunBuilder() {
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 antrun(new BuilderSupport<AntRunBuilder>() {
@@ -62,7 +62,7 @@ public class AntRunTestRunnerTest extends AbstractTestNGUnitTest {
     
     @Test
     public void testAntRunBuilderWithTargets() {
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 antrun(new BuilderSupport<AntRunBuilder>() {
@@ -89,7 +89,7 @@ public class AntRunTestRunnerTest extends AbstractTestNGUnitTest {
     
     @Test
     public void testAntRunBuilderWithProperty() {
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 antrun(new BuilderSupport<AntRunBuilder>() {
@@ -120,7 +120,7 @@ public class AntRunTestRunnerTest extends AbstractTestNGUnitTest {
     
     @Test
     public void testAntRunBuilderWithPropertyFile() {
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 variable("checked", true);
@@ -151,22 +151,10 @@ public class AntRunTestRunnerTest extends AbstractTestNGUnitTest {
     
     @Test
     public void testAntRunBuilderWithBuildListener() {
-        final BuildListener buildListener = EasyMock.createMock(BuildListener.class);
+        final BuildListener buildListener = Mockito.mock(BuildListener.class);
 
         reset(buildListener);
-        buildListener.taskStarted(anyObject(BuildEvent.class));
-        expectLastCall().once();
-        buildListener.targetStarted(anyObject(BuildEvent.class));
-        expectLastCall().once();
-        buildListener.messageLogged(anyObject(BuildEvent.class));
-        expectLastCall().atLeastOnce();
-        buildListener.targetFinished(anyObject(BuildEvent.class));
-        expectLastCall().once();
-        buildListener.taskFinished(anyObject(BuildEvent.class));
-        expectLastCall().once();
-        replay(buildListener);
-
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 antrun(new BuilderSupport<AntRunBuilder>() {
@@ -184,11 +172,15 @@ public class AntRunTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(test.getActionCount(), 1);
         Assert.assertEquals(test.getActions().get(0).getClass(), AntRunAction.class);
         Assert.assertEquals(test.getLastExecutedAction().getClass(), AntRunAction.class);
-        
+
         AntRunAction action = (AntRunAction)test.getActions().get(0);
         Assert.assertEquals(action.getName(), "antrun");
         Assert.assertEquals(action.getBuildListener(), buildListener);
 
-        verify(buildListener);
+        verify(buildListener).taskStarted(any(BuildEvent.class));
+        verify(buildListener).targetStarted(any(BuildEvent.class));
+        verify(buildListener, times(3)).messageLogged(any(BuildEvent.class));
+        verify(buildListener).targetFinished(any(BuildEvent.class));
+        verify(buildListener).taskFinished(any(BuildEvent.class));
     }
 }

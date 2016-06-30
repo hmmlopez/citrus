@@ -24,10 +24,13 @@ import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThan;
+
 public class ConditionalTestRunnerTest extends AbstractTestNGUnitTest {
     @Test
     public void testConditionalBuilder() {
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 variable("var", 5);
@@ -37,7 +40,7 @@ public class ConditionalTestRunnerTest extends AbstractTestNGUnitTest {
             }
         };
 
-        TestContext context = builder.createTestContext();
+        TestContext context = builder.getTestContext();
         Assert.assertNotNull(context.getVariable("execution"));
         Assert.assertEquals(context.getVariable("execution"), "true");
 
@@ -53,7 +56,7 @@ public class ConditionalTestRunnerTest extends AbstractTestNGUnitTest {
 
     @Test
     public void testConditionalBuilderSkip() {
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 variable("var", 0);
@@ -63,7 +66,7 @@ public class ConditionalTestRunnerTest extends AbstractTestNGUnitTest {
             }
         };
 
-        TestContext context = builder.createTestContext();
+        TestContext context = builder.getTestContext();
         Assert.assertNull(context.getVariables().get("execution"));
 
         TestCase test = builder.getTestCase();
@@ -78,7 +81,7 @@ public class ConditionalTestRunnerTest extends AbstractTestNGUnitTest {
 
     @Test
     public void testConditionalBuilderConditionExpression() {
-        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext) {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
             @Override
             public void execute() {
                 variable("var", 5);
@@ -93,7 +96,7 @@ public class ConditionalTestRunnerTest extends AbstractTestNGUnitTest {
             }
         };
 
-        TestContext context = builder.createTestContext();
+        TestContext context = builder.getTestContext();
         Assert.assertNotNull(context.getVariable("execution"));
         Assert.assertEquals(context.getVariable("execution"), "true");
 
@@ -101,6 +104,40 @@ public class ConditionalTestRunnerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(test.getActionCount(), 1);
         Assert.assertEquals(test.getActions().get(0).getClass(), Conditional.class);
         Assert.assertEquals(test.getActions().get(0).getName(), "conditional");
+
+        Conditional container = (Conditional)test.getActions().get(0);
+        Assert.assertEquals(container.getActionCount(), 2);
+        Assert.assertNotNull(container.getConditionExpression());
+    }
+
+    @Test
+    public void testConditionalBuilderHamcrestConditionExpression() {
+        MockTestRunner builder = new MockTestRunner(getClass().getSimpleName(), applicationContext, context) {
+            @Override
+            public void execute() {
+                variable("var", 5);
+                variable("noExecution", "true");
+
+                conditional().when("${var}", is("5"))
+                        .actions(echo("${var}"), createVariable("execution", "true"));
+
+                conditional().when("${var}", lessThan("5"))
+                        .actions(echo("${var}"), createVariable("noExecution", "false"));
+            }
+        };
+
+        TestContext context = builder.getTestContext();
+        Assert.assertNotNull(context.getVariable("noExecution"));
+        Assert.assertEquals(context.getVariable("noExecution"), "true");
+        Assert.assertNotNull(context.getVariable("execution"));
+        Assert.assertEquals(context.getVariable("execution"), "true");
+
+        TestCase test = builder.getTestCase();
+        Assert.assertEquals(test.getActionCount(), 2);
+        Assert.assertEquals(test.getActions().get(0).getClass(), Conditional.class);
+        Assert.assertEquals(test.getActions().get(0).getName(), "conditional");
+        Assert.assertEquals(test.getActions().get(1).getClass(), Conditional.class);
+        Assert.assertEquals(test.getActions().get(1).getName(), "conditional");
 
         Conditional container = (Conditional)test.getActions().get(0);
         Assert.assertEquals(container.getActionCount(), 2);

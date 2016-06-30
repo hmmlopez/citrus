@@ -17,9 +17,11 @@
 package com.consol.citrus.validation.text;
 
 import com.consol.citrus.exceptions.ValidationException;
-import com.consol.citrus.message.*;
+import com.consol.citrus.message.DefaultMessage;
+import com.consol.citrus.message.Message;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import com.consol.citrus.validation.ControlMessageValidationContext;
+import com.consol.citrus.validation.context.DefaultValidationContext;
+import com.consol.citrus.validation.context.ValidationContext;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -28,44 +30,52 @@ import org.testng.annotations.Test;
  */
 public class PlainTextMessageValidatorTest extends AbstractTestNGUnitTest {
 
+    private PlainTextMessageValidator validator = new PlainTextMessageValidator();
+
     @Test
     public void testPlainTextValidation() {
-        PlainTextMessageValidator validator = new PlainTextMessageValidator();
-        
         Message receivedMessage = new DefaultMessage("Hello World!");
         Message controlMessage = new DefaultMessage("Hello World!");
 
-        ControlMessageValidationContext validationContext = new ControlMessageValidationContext(MessageType.PLAINTEXT.toString());
-        validationContext.setControlMessage(controlMessage);
-        
+        ValidationContext validationContext = new DefaultValidationContext();
+        validator.validateMessagePayload(receivedMessage, controlMessage, validationContext, context);
+    }
+
+    @Test
+    public void testPlainTextValidationContains() {
+        Message receivedMessage = new DefaultMessage("Hello World!");
+        Message controlMessage = new DefaultMessage("@contains('World!')@");
+
+        ValidationContext validationContext = new DefaultValidationContext();
+        validator.validateMessagePayload(receivedMessage, controlMessage, validationContext, context);
+    }
+
+    @Test(expectedExceptions = ValidationException.class)
+    public void testPlainTextValidationContainsError() {
+        Message receivedMessage = new DefaultMessage("Hello World!");
+        Message controlMessage = new DefaultMessage("@contains('Space!')@");
+
+        ValidationContext validationContext = new DefaultValidationContext();
         validator.validateMessagePayload(receivedMessage, controlMessage, validationContext, context);
     }
     
     @Test
     public void testPlainTextValidationVariableSupport() {
-        PlainTextMessageValidator validator = new PlainTextMessageValidator();
-        
         Message receivedMessage = new DefaultMessage("Hello World!");
         Message controlMessage = new DefaultMessage("Hello ${world}!");
         
         context.setVariable("world", "World");
 
-        ControlMessageValidationContext validationContext = new ControlMessageValidationContext(MessageType.PLAINTEXT.toString());
-        validationContext.setControlMessage(controlMessage);
-        
+        ValidationContext validationContext = new DefaultValidationContext();
         validator.validateMessagePayload(receivedMessage, controlMessage, validationContext, context);
     }
     
     @Test
     public void testPlainTextValidationWrongValue() {
-        PlainTextMessageValidator validator = new PlainTextMessageValidator();
-        
         Message receivedMessage = new DefaultMessage("Hello World!");
         Message controlMessage = new DefaultMessage("Hello Citrus!");
 
-        ControlMessageValidationContext validationContext = new ControlMessageValidationContext(MessageType.PLAINTEXT.toString());
-        validationContext.setControlMessage(controlMessage);
-        
+        ValidationContext validationContext = new DefaultValidationContext();
         try {
             validator.validateMessagePayload(receivedMessage, controlMessage, validationContext, context);
         } catch (ValidationException e) {

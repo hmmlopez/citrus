@@ -31,6 +31,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.*;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
@@ -125,10 +126,10 @@ public class WebServiceServer extends AbstractServer implements ApplicationConte
     protected void startup() {
         synchronized (serverLock) {
             if (connectors != null && connectors.length > 0) {
-                jettyServer = new Server();
+                jettyServer = connectors[0].getServer();
                 jettyServer.setConnectors(connectors);
             } else if (connector != null) {
-                jettyServer = new Server();
+                jettyServer = connector.getServer();
                 jettyServer.addConnector(connector);
             } else {
                 jettyServer = new Server(port);
@@ -221,6 +222,7 @@ public class WebServiceServer extends AbstractServer implements ApplicationConte
         public void publishEvent(ApplicationEvent event) {
             applicationContext.publishEvent(event);
         }
+        public void publishEvent(Object event) { applicationContext.publishEvent(event); }
         public String getMessage(String code, Object[] args, String defaultMessage,
                 Locale locale) {
             return applicationContext.getMessage(code, args, defaultMessage, locale);
@@ -258,6 +260,9 @@ public class WebServiceServer extends AbstractServer implements ApplicationConte
         }
         public String[] getBeanDefinitionNames() {
             return applicationContext.getBeanDefinitionNames();
+        }
+        public String[] getBeanNamesForType(ResolvableType type) {
+            return applicationContext.getBeanNamesForType(type);
         }
         public int getBeanDefinitionCount() {
             return applicationContext.getBeanDefinitionCount();
@@ -330,7 +335,11 @@ public class WebServiceServer extends AbstractServer implements ApplicationConte
         }
         public boolean isTypeMatch(String name, Class<?> targetType)
                 throws NoSuchBeanDefinitionException {
-            return false;
+            return applicationContext.isTypeMatch(name, targetType);
+        }
+        public boolean isTypeMatch(String name, ResolvableType targetType)
+                throws NoSuchBeanDefinitionException {
+            return applicationContext.isTypeMatch(name, targetType);
         }
         public Class<?> getType(String name)
                 throws NoSuchBeanDefinitionException {

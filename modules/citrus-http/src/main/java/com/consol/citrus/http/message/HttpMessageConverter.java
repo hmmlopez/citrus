@@ -16,6 +16,7 @@
 
 package com.consol.citrus.http.message;
 
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.http.client.HttpEndpointConfiguration;
 import com.consol.citrus.message.*;
 import org.springframework.http.*;
@@ -33,7 +34,7 @@ import java.util.*;
 public class HttpMessageConverter implements MessageConverter<HttpEntity, HttpEndpointConfiguration> {
 
     @Override
-    public HttpEntity convertOutbound(Message message, HttpEndpointConfiguration endpointConfiguration) {
+    public HttpEntity convertOutbound(Message message, HttpEndpointConfiguration endpointConfiguration, TestContext context) {
         HttpMessage httpMessage;
         if (message instanceof HttpMessage) {
             httpMessage = (HttpMessage) message;
@@ -42,9 +43,9 @@ public class HttpMessageConverter implements MessageConverter<HttpEntity, HttpEn
         }
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        endpointConfiguration.getHeaderMapper().fromHeaders(new org.springframework.messaging.MessageHeaders(httpMessage.copyHeaders()), httpHeaders);
+        endpointConfiguration.getHeaderMapper().fromHeaders(new org.springframework.messaging.MessageHeaders(httpMessage.getHeaders()), httpHeaders);
 
-        Map<String, Object> messageHeaders = httpMessage.copyHeaders();
+        Map<String, Object> messageHeaders = httpMessage.getHeaders();
         for (Map.Entry<String, Object> header : messageHeaders.entrySet()) {
             if (!header.getKey().startsWith(MessageHeaders.PREFIX) &&
                     !MessageHeaderUtils.isSpringInternalHeader(header.getKey()) &&
@@ -68,26 +69,30 @@ public class HttpMessageConverter implements MessageConverter<HttpEntity, HttpEn
             method = httpMessage.getRequestMethod();
         }
 
-        if (HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method)) {
+        if (httpMethodSupportsBody(method)) {
             return new HttpEntity(payload, httpHeaders);
         }
 
-        return new HttpEntity<Object>(httpHeaders);
+        return new HttpEntity<>(httpHeaders);
+    }
+
+    private boolean httpMethodSupportsBody(HttpMethod method) {
+        return HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method)
+                || HttpMethod.DELETE.equals(method) || HttpMethod.PATCH.equals(method);
     }
 
     @Override
-    public HttpMessage convertInbound(HttpEntity message, HttpEndpointConfiguration endpointConfiguration) {
+    public HttpMessage convertInbound(HttpEntity message, HttpEndpointConfiguration endpointConfiguration, TestContext context) {
         Map<String, Object> mappedHeaders = endpointConfiguration.getHeaderMapper().toHeaders(message.getHeaders());
-        HttpMessage httpMessage = new HttpMessage(message.getBody() != null ? message.getBody() : "", convertHeaderTypes(mappedHeaders))
-                .version("HTTP/1.1"); //TODO check if we have access to version information
+        HttpMessage httpMessage = new HttpMessage(message.getBody() != null ? message.getBody() : "", convertHeaderTypes(mappedHeaders));
 
         for (Map.Entry<String, String> customHeader : getCustomHeaders(message.getHeaders(), mappedHeaders).entrySet()) {
             httpMessage.setHeader(customHeader.getKey(), customHeader.getValue());
         }
 
         if (message instanceof ResponseEntity) {
-            httpMessage.statusCode(((ResponseEntity) message).getStatusCode());
-            httpMessage.reasonPhrase(((ResponseEntity) message).getStatusCode().name());
+            httpMessage.status(((ResponseEntity) message).getStatusCode());
+            httpMessage.version("HTTP/1.1"); //TODO check if we have access to version information
         }
 
         return httpMessage;
@@ -138,7 +143,7 @@ public class HttpMessageConverter implements MessageConverter<HttpEntity, HttpEn
     }
 
     @Override
-    public void convertOutbound(HttpEntity externalMessage, Message internalMessage, HttpEndpointConfiguration endpointConfiguration) {
+    public void convertOutbound(HttpEntity externalMessage, Message internalMessage, HttpEndpointConfiguration endpointConfiguration, TestContext context) {
         throw new UnsupportedOperationException("HttpMessageConverter doe not support predefined HttpEntity objects");
     }
 }

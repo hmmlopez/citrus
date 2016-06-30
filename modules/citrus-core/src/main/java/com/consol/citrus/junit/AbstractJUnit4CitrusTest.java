@@ -18,15 +18,20 @@ package com.consol.citrus.junit;
 
 import com.consol.citrus.Citrus;
 import com.consol.citrus.TestCase;
+import com.consol.citrus.annotations.CitrusResource;
 import com.consol.citrus.common.TestLoader;
 import com.consol.citrus.common.XmlTestLoader;
 import com.consol.citrus.config.CitrusSpringConfig;
 import com.consol.citrus.context.TestContext;
+import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
+import org.springframework.util.ReflectionUtils;
+
+import java.lang.annotation.Annotation;
 
 /**
  * Abstract base test implementation for test cases that rather use JUnit testing framework. Class also provides 
@@ -61,17 +66,51 @@ public abstract class AbstractJUnit4CitrusTest extends AbstractJUnit4SpringConte
     }
 
     /**
+     * Resolves method arguments supporting TestNG data provider parameters as well as
+     * {@link CitrusResource} annotated methods.
+     *
+     * @param frameworkMethod
+     * @param testCase
+     * @param context
+     * @return
+     */
+    protected Object[] resolveParameter(CitrusJUnit4Runner.CitrusFrameworkMethod frameworkMethod, TestCase testCase, TestContext context) {
+        Object[] values = new Object[frameworkMethod.getMethod().getParameterTypes().length];
+        Class<?>[] parameterTypes = frameworkMethod.getMethod().getParameterTypes();
+        for (int i = 0; i < parameterTypes.length; i++) {
+            final Annotation[] parameterAnnotations = frameworkMethod.getMethod().getParameterAnnotations()[i];
+            Class<?> parameterType = parameterTypes[i];
+            for (Annotation annotation : parameterAnnotations) {
+                if (annotation instanceof CitrusResource) {
+                    values[i] = resolveAnnotatedResource(frameworkMethod, parameterType, context);
+                }
+            }
+        }
+
+        return values;
+    }
+
+    /**
+     * Resolves value for annotated method parameter.
+     *
+     * @param frameworkMethod
+     * @param parameterType
+     * @return
+     */
+    protected Object resolveAnnotatedResource(CitrusJUnit4Runner.CitrusFrameworkMethod frameworkMethod, Class<?> parameterType, TestContext context) {
+        if (TestContext.class.isAssignableFrom(parameterType)) {
+            return context;
+        } else {
+            throw new CitrusRuntimeException("Not able to provide a Citrus resource injection for type " + parameterType);
+        }
+    }
+
+    /**
      * Execute the test case.
      */
     protected void executeTest() {
-        if (citrus == null) {
-            citrus = Citrus.newInstance(applicationContext);
-        }
-
-        TestContext ctx = prepareTestContext(citrus.createTestContext());
-        TestCase testCase = getTestCase();
-
-        citrus.run(testCase, ctx);
+        run(new CitrusJUnit4Runner.CitrusFrameworkMethod(ReflectionUtils.findMethod(this.getClass(), "executeTest"),
+                this.getClass().getSimpleName(), this.getClass().getPackage().getName()));
     }
 
     /**
@@ -95,7 +134,7 @@ public abstract class AbstractJUnit4CitrusTest extends AbstractJUnit4SpringConte
      * @return
      */
     protected TestLoader createTestLoader(String testName, String packageName) {
-        return new XmlTestLoader(testName, packageName, applicationContext);
+        return new XmlTestLoader(getClass(), testName, packageName, applicationContext);
     }
 
     /**

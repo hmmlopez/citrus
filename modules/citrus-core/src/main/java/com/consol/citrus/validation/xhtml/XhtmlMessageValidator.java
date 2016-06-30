@@ -53,7 +53,7 @@ public class XhtmlMessageValidator extends DomXmlMessageValidator implements Ini
     private static final String XHTML_DOCTYPE_DEFINITION = "DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0";
     
     @Override
-    public void validateMessage(Message receivedMessage,
+    public void validateMessage(Message receivedMessage, Message controlMessage,
             TestContext context, XmlMessageValidationContext validationContext)
             throws ValidationException {
         
@@ -71,8 +71,8 @@ public class XhtmlMessageValidator extends DomXmlMessageValidator implements Ini
             xhtmlPayload = xhtmlPayload.replaceFirst(W3_XHTML1_URL, "org/w3/xhtml/");
         }
         
-        super.validateMessage(new DefaultMessage(xhtmlPayload, receivedMessage.copyHeaders()),
-                context, validationContext);
+        super.validateMessage(new DefaultMessage(xhtmlPayload, receivedMessage.getHeaders()),
+                controlMessage, context, validationContext);
     }
     
     @Override

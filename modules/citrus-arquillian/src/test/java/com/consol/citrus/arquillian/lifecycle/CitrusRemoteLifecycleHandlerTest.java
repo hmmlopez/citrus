@@ -19,16 +19,18 @@ package com.consol.citrus.arquillian.lifecycle;
 import com.consol.citrus.Citrus;
 import com.consol.citrus.arquillian.configuration.CitrusConfiguration;
 import com.consol.citrus.arquillian.helper.InjectionHelper;
-import com.consol.citrus.config.CitrusBaseConfig;
-import org.easymock.EasyMock;
+import com.consol.citrus.config.CitrusSpringConfig;
 import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.test.spi.event.suite.AfterSuite;
 import org.jboss.arquillian.test.spi.event.suite.BeforeSuite;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
+
 
 public class CitrusRemoteLifecycleHandlerTest {
 
@@ -36,18 +38,16 @@ public class CitrusRemoteLifecycleHandlerTest {
 
     private CitrusConfiguration configuration = CitrusConfiguration.from(new Properties());
 
-    private Citrus citrusFramework = Citrus.newInstance(CitrusBaseConfig.class);
-    private Instance<Citrus> citrusInstance = EasyMock.createMock(Instance.class);
-    private Instance<CitrusConfiguration> configurationInstance = EasyMock.createMock(Instance.class);
+    private Citrus citrusFramework = Citrus.newInstance(CitrusSpringConfig.class);
+    private Instance<Citrus> citrusInstance = Mockito.mock(Instance.class);
+    private Instance<CitrusConfiguration> configurationInstance = Mockito.mock(Instance.class);
 
     @Test
     public void testLifecycle() throws Exception {
         reset(citrusInstance, configurationInstance);
 
-        expect(citrusInstance.get()).andReturn(citrusFramework).atLeastOnce();
-        expect(configurationInstance.get()).andReturn(configuration).atLeastOnce();
-
-        replay(citrusInstance, configurationInstance);
+        when(citrusInstance.get()).thenReturn(citrusFramework);
+        when(configurationInstance.get()).thenReturn(configuration);
 
         InjectionHelper.inject(lifecycleHandler, "citrusInstance", citrusInstance);
         InjectionHelper.inject(lifecycleHandler, "configurationInstance", configurationInstance);
@@ -55,6 +55,5 @@ public class CitrusRemoteLifecycleHandlerTest {
         lifecycleHandler.beforeSuite(new BeforeSuite());
         lifecycleHandler.afterSuite(new AfterSuite());
 
-        verify(citrusInstance, configurationInstance);
     }
 }

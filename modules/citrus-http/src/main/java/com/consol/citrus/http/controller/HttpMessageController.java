@@ -23,12 +23,14 @@ import com.consol.citrus.http.message.HttpMessage;
 import com.consol.citrus.message.Message;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.UrlPathHelper;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Enumeration;
 
 /**
  * Message controller implementation handling all incoming requests by forwarding to a message 
@@ -90,6 +92,12 @@ public class HttpMessageController {
     public ResponseEntity<String> handleTraceRequest(HttpEntity<String> requestEntity) {
         return handleRequestInternal(HttpMethod.TRACE, requestEntity);
     }
+
+    @RequestMapping(value= "**", method = { RequestMethod.PATCH })
+    @ResponseBody
+    public ResponseEntity<String> handlePatchRequest(HttpEntity<String> requestEntity) {
+        return handleRequestInternal(HttpMethod.PATCH, requestEntity);
+    }
     
     /**
      * Handles requests with endpoint adapter implementation. Previously sets Http request method as header parameter.
@@ -98,10 +106,18 @@ public class HttpMessageController {
      * @return
      */
     private ResponseEntity<String> handleRequestInternal(HttpMethod method, HttpEntity<String> requestEntity) {
-        HttpMessage request = endpointConfiguration.getMessageConverter().convertInbound(requestEntity, endpointConfiguration);
+        HttpMessage request = endpointConfiguration.getMessageConverter().convertInbound(requestEntity, endpointConfiguration, null);
 
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         UrlPathHelper pathHelper = new UrlPathHelper();
+
+        Enumeration allHeaders = servletRequest.getHeaderNames();
+        for (String headerName : CollectionUtils.toArray(allHeaders, new String[] {})) {
+            if (request.getHeader(headerName) == null) {
+                String headerValue = servletRequest.getHeader(headerName);
+                request.header(headerName, headerValue != null ? headerValue : "");
+            }
+        }
 
         String queryParams = pathHelper.getOriginatingQueryString(servletRequest);
 
@@ -111,9 +127,11 @@ public class HttpMessageController {
             queryParams = queryParams.replaceAll("&", ",");
         }
 
-        request.uri(pathHelper.getRequestUri(servletRequest))
+        request.path(pathHelper.getRequestUri(servletRequest))
+                .uri(pathHelper.getRequestUri(servletRequest))
                 .contextPath(pathHelper.getContextPath(servletRequest))
                 .queryParams(queryParams)
+                .version(servletRequest.getProtocol())
                 .method(method);
 
         Message response = endpointAdapter.handleMessage(request);
@@ -128,10 +146,10 @@ public class HttpMessageController {
             }
 
             if (httpResponse.getStatusCode() == null) {
-                httpResponse.statusCode(HttpStatus.OK);
+                httpResponse.status(HttpStatus.OK);
             }
 
-            responseCache = (ResponseEntity) endpointConfiguration.getMessageConverter().convertOutbound(httpResponse, endpointConfiguration);
+            responseCache = (ResponseEntity) endpointConfiguration.getMessageConverter().convertOutbound(httpResponse, endpointConfiguration, null);
         }
 
         return responseCache;

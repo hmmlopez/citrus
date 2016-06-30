@@ -26,6 +26,7 @@ import com.consol.citrus.variable.MessageHeaderVariableExtractor;
 import com.consol.citrus.variable.VariableExtractor;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
@@ -86,7 +87,7 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
             if (StringUtils.hasText(scriptResourcePath)) {
                 scriptMessageBuilder.setScriptResourcePath(scriptResourcePath);
             } else {
-                scriptMessageBuilder.setScriptData(DomUtils.getTextValue(builderElement));
+                scriptMessageBuilder.setScriptData(DomUtils.getTextValue(builderElement).trim());
             }
         }
         
@@ -105,7 +106,7 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
         Element xmlDataElement = DomUtils.getChildElementByTagName(messageElement, "data");
         if (xmlDataElement != null) {
             messageBuilder = new PayloadTemplateMessageBuilder();
-            messageBuilder.setPayloadData(DomUtils.getTextValue(xmlDataElement));
+            messageBuilder.setPayloadData(DomUtils.getTextValue(xmlDataElement).trim());
         }
 
         Element xmlResourceElement = DomUtils.getChildElementByTagName(messageElement, "resource");
@@ -154,7 +155,13 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
         Element payloadElement = DomUtils.getChildElementByTagName(messageElement, "payload");
         if (payloadElement != null) {
             messageBuilder = new PayloadTemplateMessageBuilder();
-            messageBuilder.setPayloadData(PayloadElementParser.parseMessagePayload(payloadElement));
+
+            List<Element> payload = DomUtils.getChildElements(payloadElement);
+            if (CollectionUtils.isEmpty(payload)) {
+                messageBuilder.setPayloadData("");
+            } else {
+                messageBuilder.setPayloadData(PayloadElementParser.parseMessagePayload(payload.get(0)));
+            }
         }
         
         return messageBuilder;
@@ -189,7 +196,7 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
             
             List<Element> headerDataElements = DomUtils.getChildElementsByTagName(headerElement, "data");
             for (Element headerDataElement : headerDataElements) {
-                messageBuilder.getHeaderData().add(DomUtils.getTextValue(headerDataElement));
+                messageBuilder.getHeaderData().add(DomUtils.getTextValue(headerDataElement).trim());
             }
 
             List<Element> headerResourceElements = DomUtils.getChildElementsByTagName(headerElement, "resource");
@@ -218,8 +225,10 @@ public abstract class AbstractMessageActionParser implements BeanDefinitionParse
             
             MessageHeaderVariableExtractor headerVariableExtractor = new MessageHeaderVariableExtractor();
             headerVariableExtractor.setHeaderMappings(extractHeaderValues);
-            
-            variableExtractors.add(headerVariableExtractor);
+
+            if (!CollectionUtils.isEmpty(extractHeaderValues)) {
+                variableExtractors.add(headerVariableExtractor);
+            }
         }
     }
 }

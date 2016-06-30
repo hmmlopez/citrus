@@ -101,10 +101,9 @@ public class HttpClient extends AbstractEndpoint implements Producer, ReplyConsu
             endpointUri = getEndpointConfiguration().getRequestUrl();
         }
 
-        log.info("Sending HTTP message to: '" + endpointUri + "'");
-
         if (log.isDebugEnabled()) {
-            log.debug("Message to be sent:\n" + httpMessage.getPayload(String.class));
+            log.debug("Sending HTTP message to: '" + endpointUri + "'");
+            log.debug("Message to send:\n" + httpMessage.getPayload(String.class));
         }
 
         HttpMethod method = getEndpointConfiguration().getRequestMethod();
@@ -112,14 +111,14 @@ public class HttpClient extends AbstractEndpoint implements Producer, ReplyConsu
             method = httpMessage.getRequestMethod();
         }
 
-        HttpEntity<?> requestEntity = getEndpointConfiguration().getMessageConverter().convertOutbound(httpMessage, getEndpointConfiguration());
+        HttpEntity<?> requestEntity = getEndpointConfiguration().getMessageConverter().convertOutbound(httpMessage, getEndpointConfiguration(), context);
 
-        getEndpointConfiguration().getRestTemplate().setErrorHandler(new InternalResponseErrorHandler(correlationKey));
+        getEndpointConfiguration().getRestTemplate().setErrorHandler(new InternalResponseErrorHandler(correlationKey, context));
         ResponseEntity<?> response = getEndpointConfiguration().getRestTemplate().exchange(endpointUri, method, requestEntity, String.class);
 
-        log.info("HTTP message was successfully sent to endpoint: '" + endpointUri + "'");
+        log.info("HTTP message was sent to endpoint: '" + endpointUri + "'");
 
-        correlationManager.store(correlationKey, getEndpointConfiguration().getMessageConverter().convertInbound(response, getEndpointConfiguration()));
+        correlationManager.store(correlationKey, getEndpointConfiguration().getMessageConverter().convertInbound(response, getEndpointConfiguration(), context));
     }
 
     @Override
@@ -160,11 +159,14 @@ public class HttpClient extends AbstractEndpoint implements Producer, ReplyConsu
         /** Request message associated with this response error handler */
         private String correlationKey;
 
+        /** Test context */
+        private TestContext context;
+
         /**
          * Default constructor provided with request message
          * associated with this error handler.
          */
-        public InternalResponseErrorHandler(String correlationKey) {
+        public InternalResponseErrorHandler(String correlationKey, TestContext context) {
             this.correlationKey = correlationKey;
         }
 
@@ -182,7 +184,7 @@ public class HttpClient extends AbstractEndpoint implements Producer, ReplyConsu
         public void handleError(ClientHttpResponse response) throws IOException {
             if (getEndpointConfiguration().getErrorHandlingStrategy().equals(ErrorHandlingStrategy.PROPAGATE)) {
                 Message responseMessage = getEndpointConfiguration().getMessageConverter().convertInbound(
-                        new ResponseEntity(response.getBody(), response.getHeaders(), response.getStatusCode()), getEndpointConfiguration());
+                        new ResponseEntity(response.getBody(), response.getHeaders(), response.getStatusCode()), getEndpointConfiguration(), context);
                 correlationManager.store(correlationKey, responseMessage);
             } else if (getEndpointConfiguration().getErrorHandlingStrategy().equals(ErrorHandlingStrategy.THROWS_EXCEPTION)) {
                 new DefaultResponseErrorHandler().handleError(response);

@@ -13,7 +13,7 @@
         <programlisting>&lt;dependency&gt;
   &lt;groupId&gt;com.consol.citrus&lt;/groupId&gt;
   &lt;artifactId&gt;citrus-jms&lt;/artifactId&gt;
-  &lt;version&gt;2.4-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;2.7-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</programlisting>
 
         <para>Citrus provides a "citrus-jms" configuration namespace and schema definition for JMS related components and features. Include this namespace into your Spring
@@ -54,7 +54,7 @@
         For now the timeout setting completes our first JMS endpoint component definition.</para>
 
         <para>The endpoint needs a JMS connection factory for connecting to a JMS message broker. The connection factory is also added as Spring bean to the Citrus
-        application context (citrus-context.xml).</para>
+          Spring application context.</para>
 
         <programlisting>&lt;bean id=&quot;connectionFactory&quot; 
          class=&quot;org.apache.activemq.ActiveMQConnectionFactory&quot;&gt;

@@ -21,12 +21,15 @@
   <xi:include href='actions-fail.xml'/>
   <xi:include href='actions-input.xml'/>
   <xi:include href='actions-load.xml'/>
+  <xi:include href='actions-wait.xml'/>
   <xi:include href='actions-purge-jms.xml'/>
   <xi:include href='actions-purge-channels.xml'/>
+  <xi:include href='actions-purge-endpoints.xml'/>
   <xi:include href='actions-assert.xml'/>
   <xi:include href='actions-catch.xml'/>
   <xi:include href='actions-antrun.xml'/>
   <xi:include href='actions-manage-server.xml'/>
   <xi:include href='actions-generic-action.xml'/>
-  
+  <xi:include href='actions-stop-timer.xml'/>
+
 </chapter>

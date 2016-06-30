@@ -19,18 +19,19 @@ package com.consol.citrus.arquillian.lifecycle;
 import com.consol.citrus.Citrus;
 import com.consol.citrus.arquillian.configuration.CitrusConfiguration;
 import com.consol.citrus.arquillian.helper.InjectionHelper;
-import com.consol.citrus.config.CitrusBaseConfig;
-import org.easymock.EasyMock;
+import com.consol.citrus.config.CitrusSpringConfig;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.deployment.DeploymentDescription;
 import org.jboss.arquillian.container.spi.event.container.AfterUnDeploy;
 import org.jboss.arquillian.container.spi.event.container.BeforeDeploy;
 import org.jboss.arquillian.core.api.Instance;
+import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
 public class CitrusLifecycleHandlerTest {
 
@@ -38,23 +39,21 @@ public class CitrusLifecycleHandlerTest {
 
     private CitrusConfiguration configuration = CitrusConfiguration.from(new Properties());
 
-    private Citrus citrusFramework = Citrus.newInstance(CitrusBaseConfig.class);
-    private Instance<Citrus> citrusInstance = EasyMock.createMock(Instance.class);
-    private Instance<CitrusConfiguration> configurationInstance = EasyMock.createMock(Instance.class);
+    private Citrus citrusFramework = Citrus.newInstance(CitrusSpringConfig.class);
+    private Instance<Citrus> citrusInstance = Mockito.mock(Instance.class);
+    private Instance<CitrusConfiguration> configurationInstance = Mockito.mock(Instance.class);
 
-    private DeployableContainer container = EasyMock.createMock(DeployableContainer.class);
-    private DeploymentDescription deployment = EasyMock.createMock(DeploymentDescription.class);
+    private DeployableContainer container = Mockito.mock(DeployableContainer.class);
+    private DeploymentDescription deployment = Mockito.mock(DeploymentDescription.class);
 
     @Test
     public void testLifecycle() throws Exception {
         reset(citrusInstance, configurationInstance, container, deployment);
 
-        expect(citrusInstance.get()).andReturn(citrusFramework).atLeastOnce();
-        expect(configurationInstance.get()).andReturn(configuration).atLeastOnce();
+        when(citrusInstance.get()).thenReturn(citrusFramework);
+        when(configurationInstance.get()).thenReturn(configuration);
 
-        expect(deployment.testable()).andReturn(false).times(2);
-
-        replay(citrusInstance, configurationInstance, container, deployment);
+        when(deployment.testable()).thenReturn(false);
 
         InjectionHelper.inject(lifecycleHandler, "citrusInstance", citrusInstance);
         InjectionHelper.inject(lifecycleHandler, "configurationInstance", configurationInstance);
@@ -62,6 +61,5 @@ public class CitrusLifecycleHandlerTest {
         lifecycleHandler.beforeDeploy(new BeforeDeploy(container, deployment));
         lifecycleHandler.afterDeploy(new AfterUnDeploy(container, deployment));
 
-        verify(citrusInstance, configurationInstance, container, deployment);
     }
 }

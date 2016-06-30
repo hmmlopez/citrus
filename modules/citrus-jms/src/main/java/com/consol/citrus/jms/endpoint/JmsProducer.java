@@ -53,25 +53,27 @@ public class JmsProducer implements Producer {
     }
 
     @Override
-    public void send(final Message message, TestContext context) {
+    public void send(final Message message, final TestContext context) {
         Assert.notNull(message, "Message is empty - unable to send empty message");
 
         String defaultDestinationName = endpointConfiguration.getDefaultDestinationName();
 
-        log.info("Sending JMS message to destination: '" + defaultDestinationName + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("Sending JMS message to destination: '" + defaultDestinationName + "'");
+        }
 
         endpointConfiguration.getJmsTemplate().send(new MessageCreator() {
             @Override
             public javax.jms.Message createMessage(Session session) throws JMSException {
-                javax.jms.Message jmsMessage = endpointConfiguration.getMessageConverter().createJmsMessage(message, session, endpointConfiguration);
-                endpointConfiguration.getMessageConverter().convertOutbound(jmsMessage, message, endpointConfiguration);
+                javax.jms.Message jmsMessage = endpointConfiguration.getMessageConverter().createJmsMessage(message, session, endpointConfiguration, context);
+                endpointConfiguration.getMessageConverter().convertOutbound(jmsMessage, message, endpointConfiguration, context);
                 return jmsMessage;
             }
         });
 
         context.onOutboundMessage(message);
 
-        log.info("Message was successfully sent to destination: '" + defaultDestinationName + "'");
+        log.info("Message was sent to JMS destination: '" + defaultDestinationName + "'");
     }
 
     @Override

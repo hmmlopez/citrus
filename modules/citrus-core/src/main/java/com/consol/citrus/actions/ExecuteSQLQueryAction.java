@@ -16,7 +16,7 @@
 
 package com.consol.citrus.actions;
 
-import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.Citrus;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.*;
 import com.consol.citrus.validation.matcher.ValidationMatcherUtils;
@@ -82,10 +82,18 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
 
             for (String stmt : statements) {
                 validateSqlStatement(stmt);
-                stmt = context.replaceDynamicContentInString(stmt);
+                stmt = context.replaceDynamicContentInString(stmt.trim());
 
-                log.info("Executing SQL query: " + stmt);
+                if (stmt.endsWith(";")) {
+                    stmt = stmt.substring(0, stmt.length()-1);
+                }
+
+                if (log.isDebugEnabled()) {
+                    log.debug("Executing SQL query: " + stmt);
+                }
                 List<Map<String, Object>> results = getJdbcTemplate().queryForList(stmt);
+
+                log.info("SQL query execution successful");
 
                 allResultRows.addAll(results);
                 fillColumnValuesMap(results, columnValuesMap);
@@ -100,7 +108,7 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
             // legacy: save all columns as variables TODO: remove in major version upgrade
             for (Entry<String, List<String>> column : columnValuesMap.entrySet()) {
                 List<String> columnValues = column.getValue();
-                context.setVariable(column.getKey(), columnValues.get(0) == null ? NULL_VALUE : columnValues.get(0));
+                context.setVariable(column.getKey().toUpperCase(), columnValues.get(0) == null ? NULL_VALUE : columnValues.get(0));
             }
         } catch (DataAccessException e) {
             log.error("Failed to execute SQL statement", e);
@@ -117,9 +125,11 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
     private void fillContextVariables(Map<String, List<String>> columnValuesMap, TestContext context)
             throws CitrusRuntimeException {
         for (Entry<String, String> variableEntry : extractVariables.entrySet()) {
-            String columnName = variableEntry.getKey().toUpperCase();
-            if (columnValuesMap.containsKey(columnName)) {
-                context.setVariable(variableEntry.getValue(), constructVariableValue(columnValuesMap.get(columnName)));
+            String columnName = variableEntry.getKey();
+            if (columnValuesMap.containsKey(columnName.toLowerCase())) {
+                context.setVariable(variableEntry.getValue(), constructVariableValue(columnValuesMap.get(columnName.toLowerCase())));
+            } else if (columnValuesMap.containsKey(columnName.toUpperCase())) {
+                context.setVariable(variableEntry.getValue(), constructVariableValue(columnValuesMap.get(columnName.toUpperCase())));
             } else {
                 throw new CitrusRuntimeException("Failed to create variables from database values! " +
                         "Unable to find column '" + columnName + "' in database result set");
@@ -211,7 +221,7 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
             return;
         }
         performControlResultSetValidation(columnValuesMap, context);
-        log.info("Database query validation finished successfully: All values OK");
+        log.info("SQL query validation successful: All values OK");
     }
 
     private void performControlResultSetValidation(final Map<String, List<String>> columnValuesMap, TestContext context)
@@ -219,7 +229,11 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
         for (Entry<String, List<String>> controlEntry : controlResultSet.entrySet()) {
             String columnName = controlEntry.getKey();
 
-            if (!columnValuesMap.containsKey(columnName)) {
+            if (columnValuesMap.containsKey(columnName.toLowerCase())) {
+                columnName = columnName.toLowerCase();
+            } else if (columnValuesMap.containsKey(columnName.toUpperCase())) {
+                columnName = columnName.toUpperCase();
+            } else {
                 throw new CitrusRuntimeException("Could not find column '" + columnName + "' in SQL result set");
             }
 
@@ -261,7 +275,7 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
 
     private void validateSingleValue(String columnName, String controlValue, String resultValue, TestContext context) {
         // check if value is ignored
-        if (controlValue.equals(CitrusConstants.IGNORE_PLACEHOLDER)) {
+        if (controlValue.equals(Citrus.IGNORE_PLACEHOLDER)) {
             if (log.isDebugEnabled()) {
                 log.debug("Ignoring column value '" + columnName + "(resultValue)'");
             }

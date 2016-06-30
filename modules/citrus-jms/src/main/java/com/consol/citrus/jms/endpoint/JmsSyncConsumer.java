@@ -73,7 +73,7 @@ public class JmsSyncConsumer extends JmsConsumer implements ReplyProducer {
     }
 
     @Override
-    public void send(final Message message, TestContext context) {
+    public void send(final Message message, final TestContext context) {
         Assert.notNull(message, "Message is empty - unable to send empty message");
 
         String correlationKeyName = endpointConfiguration.getCorrelator().getCorrelationKeyName(getName());
@@ -81,20 +81,22 @@ public class JmsSyncConsumer extends JmsConsumer implements ReplyProducer {
         Destination replyDestination = correlationManager.find(correlationKey, endpointConfiguration.getTimeout());
         Assert.notNull(replyDestination, "Failed to find JMS reply destination for message correlation key: '" + correlationKey + "'");
 
-        log.info("Sending JMS message to destination: '" + getDestinationName(replyDestination) + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("Sending JMS message to destination: '" + getDestinationName(replyDestination) + "'");
+        }
 
         endpointConfiguration.getJmsTemplate().send(replyDestination, new MessageCreator() {
             @Override
             public javax.jms.Message createMessage(Session session) throws JMSException {
-                javax.jms.Message jmsMessage = endpointConfiguration.getMessageConverter().createJmsMessage(message, session, endpointConfiguration);
-                endpointConfiguration.getMessageConverter().convertOutbound(jmsMessage, message, endpointConfiguration);
+                javax.jms.Message jmsMessage = endpointConfiguration.getMessageConverter().createJmsMessage(message, session, endpointConfiguration, context);
+                endpointConfiguration.getMessageConverter().convertOutbound(jmsMessage, message, endpointConfiguration, context);
                 return jmsMessage;
             }
         });
 
         context.onOutboundMessage(message);
 
-        log.info("Message was successfully sent to destination: '" + getDestinationName(replyDestination) + "'");
+        log.info("Message was sent to JMS destination: '" + getDestinationName(replyDestination) + "'");
     }
 
     /**

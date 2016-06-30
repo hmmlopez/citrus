@@ -35,19 +35,19 @@ import java.util.*;
 public abstract class AbstractMessageContentBuilder implements MessageContentBuilder {
 
     /** The control headers expected for this message */
-    private Map<String, Object> messageHeaders = new HashMap<String, Object>();
+    private Map<String, Object> messageHeaders = new HashMap<>();
 
     /** The message header as a file resource path */
-    private List<String> headerResources = new ArrayList<String>();
+    private List<String> headerResources = new ArrayList<>();
 
     /** The message header as inline data */
-    private List<String> headerData = new ArrayList<String>();
+    private List<String> headerData = new ArrayList<>();
 
     /** Optional data dictionary that explicitly modifies control message content before construction */
     private DataDictionary dataDictionary;
 
     /** List of manipulators for static message payload */
-    private List<MessageConstructionInterceptor> messageInterceptors = new ArrayList<MessageConstructionInterceptor>();
+    private List<MessageConstructionInterceptor> messageInterceptors = new ArrayList<>();
 
     /**
      * Constructs the control message with headers and payload coming from 
@@ -55,7 +55,7 @@ public abstract class AbstractMessageContentBuilder implements MessageContentBui
      */
     @Override
     public Message buildMessageContent(TestContext context, String messageType) {
-        Object payload = buildMessagePayload(context);
+        Object payload = buildMessagePayload(context, messageType);
 
         try {
             Message message = new DefaultMessage(payload, buildMessageHeaders(context));
@@ -89,7 +89,7 @@ public abstract class AbstractMessageContentBuilder implements MessageContentBui
 
     }
     
-    protected abstract Object buildMessagePayload(TestContext context);
+    protected abstract Object buildMessagePayload(TestContext context, String messageType);
 
     protected Map<String, Object> buildMessageHeaders(TestContext context) {
         try {

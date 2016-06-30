@@ -31,6 +31,7 @@ import java.io.IOException;
  * 
  * @author Christoph Deppisch
  * @since 2.3
+ * @deprecated since 2.6 in favour of using {@link SoapServerActionBuilder#sendFault()}
  */
 public class SendSoapFaultBuilder extends SendSoapMessageBuilder {
 
@@ -131,8 +132,4 @@ public class SendSoapFaultBuilder extends SendSoapMessageBuilder {
         return (SendSoapFaultBuilder) super.withApplicationContext(applicationContext);
     }
 
-    @Override
-    public SendSoapFaultAction build() {
-        return (SendSoapFaultAction) super.build();
-    }
 }

@@ -18,8 +18,14 @@ package com.consol.citrus.validation;
 
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.ValidationException;
+import com.consol.citrus.util.TypeConversionUtils;
 import com.consol.citrus.validation.matcher.ValidationMatcherUtils;
+import org.apache.commons.codec.binary.Base64;
+import org.hamcrest.Matcher;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * Utility class provides helper methods for validation work in Citrus.
@@ -44,7 +50,7 @@ public abstract class ValidationUtils {
      * @param context
      * @throws com.consol.citrus.exceptions.ValidationException if validation fails
      */
-    public static void validateValues(String actualValue, String expectedValue, String pathExpression, TestContext context)
+    public static void validateValues(Object actualValue, Object expectedValue, String pathExpression, TestContext context)
             throws ValidationException {
         try {
             if (actualValue != null) {
@@ -52,20 +58,62 @@ public abstract class ValidationUtils {
                         ValidationUtils.buildValueMismatchErrorMessage(
                                 "Values not equal for element '" + pathExpression + "'", null, actualValue));
 
-                //check if validation matcher on element is specified
-                if (ValidationMatcherUtils.isValidationMatcherExpression(expectedValue)) {
-                    ValidationMatcherUtils.resolveValidationMatcher(pathExpression,
-                            actualValue,
-                            expectedValue,
-                            context);
-                }
-                else {
-                    Assert.isTrue(actualValue.equals(expectedValue),
+                if (expectedValue instanceof Matcher) {
+                    Assert.isTrue(((Matcher) expectedValue).matches(actualValue),
                             ValidationUtils.buildValueMismatchErrorMessage(
-                                    "Values not equal for element '" + pathExpression + "'", expectedValue, actualValue));
+                                    "Values not matching for element '" + pathExpression + "'", expectedValue, actualValue));
+                    return;
+                }
+
+                if (!(expectedValue instanceof String)) {
+                    Object converted = TypeConversionUtils.convertIfNecessary(actualValue, expectedValue.getClass());
+
+                    if (converted instanceof List) {
+                        Assert.isTrue(converted.toString().equals(expectedValue.toString()),
+                                ValidationUtils.buildValueMismatchErrorMessage(
+                                        "Values not equal for element '" + pathExpression + "'", expectedValue.toString(), converted.toString()));
+                    } else if (converted instanceof String[]) {
+                        String convertedDelimitedString = StringUtils.arrayToCommaDelimitedString((String[]) converted);
+                        String expectedDelimitedString = StringUtils.arrayToCommaDelimitedString((String[]) expectedValue);
+
+                        Assert.isTrue(convertedDelimitedString.equals(expectedDelimitedString),
+                                ValidationUtils.buildValueMismatchErrorMessage(
+                                        "Values not equal for element '" + pathExpression + "'", expectedDelimitedString, convertedDelimitedString));
+                    } else if (converted instanceof byte[]) {
+                        String convertedBase64 = Base64.encodeBase64String((byte[]) converted);
+                        String expectedBase64 = Base64.encodeBase64String((byte[]) expectedValue);
+
+                        Assert.isTrue(convertedBase64.equals(expectedBase64),
+                                ValidationUtils.buildValueMismatchErrorMessage(
+                                        "Values not equal for element '" + pathExpression + "'", expectedBase64, convertedBase64));
+                    } else {
+                        Assert.isTrue(converted.equals(expectedValue),
+                                ValidationUtils.buildValueMismatchErrorMessage(
+                                        "Values not equal for element '" + pathExpression + "'", expectedValue, converted));
+                    }
+                } else {
+                    String expectedValueString = expectedValue.toString();
+                    String actualValueString;
+                    if (List.class.isAssignableFrom(actualValue.getClass())) {
+                        actualValueString = StringUtils.arrayToCommaDelimitedString(((List)actualValue).toArray(new Object[((List)actualValue).size()]));
+                        expectedValueString = expectedValueString.replaceAll("^\\[", "").replaceAll("\\]$", "").replaceAll(",\\s", ",");
+                    } else {
+                        actualValueString = actualValue.toString();
+                    }
+
+                    if (ValidationMatcherUtils.isValidationMatcherExpression(String.valueOf(expectedValueString))) {
+                        ValidationMatcherUtils.resolveValidationMatcher(pathExpression,
+                                actualValueString,
+                                String.valueOf(expectedValueString),
+                                context);
+                    } else {
+                        Assert.isTrue(actualValueString.equals(expectedValueString),
+                                ValidationUtils.buildValueMismatchErrorMessage(
+                                        "Values not equal for element '" + pathExpression + "'", expectedValueString, actualValueString));
+                    }
                 }
             } else {
-                Assert.isTrue(expectedValue == null || expectedValue.length() == 0,
+                Assert.isTrue(expectedValue == null || String.valueOf(expectedValue).length() == 0,
                         ValidationUtils.buildValueMismatchErrorMessage(
                                 "Values not equal for element '" + pathExpression + "'", expectedValue, null));
             }

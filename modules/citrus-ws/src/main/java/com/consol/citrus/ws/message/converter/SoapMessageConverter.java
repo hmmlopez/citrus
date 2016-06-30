@@ -16,6 +16,7 @@
 
 package com.consol.citrus.ws.message.converter;
 
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.message.*;
 import com.consol.citrus.ws.client.WebServiceEndpointConfiguration;
@@ -64,14 +65,14 @@ public class SoapMessageConverter implements WebServiceMessageConverter {
     private static Logger log = LoggerFactory.getLogger(SoapMessageConverter.class);
     
     @Override
-    public WebServiceMessage convertOutbound(Message internalMessage, WebServiceEndpointConfiguration endpointConfiguration) {
+    public WebServiceMessage convertOutbound(Message internalMessage, WebServiceEndpointConfiguration endpointConfiguration, TestContext context) {
         WebServiceMessage message = endpointConfiguration.getMessageFactory().createWebServiceMessage();
-        convertOutbound(message, internalMessage, endpointConfiguration);
+        convertOutbound(message, internalMessage, endpointConfiguration, context);
         return message;
     }
 
     @Override
-    public void convertOutbound(WebServiceMessage webServiceMessage, Message message, WebServiceEndpointConfiguration endpointConfiguration) {
+    public void convertOutbound(WebServiceMessage webServiceMessage, Message message, WebServiceEndpointConfiguration endpointConfiguration, TestContext context) {
         org.springframework.ws.soap.SoapMessage soapRequest = ((org.springframework.ws.soap.SoapMessage)webServiceMessage);
 
         SoapMessage soapMessage;
@@ -92,7 +93,7 @@ public class SoapMessageConverter implements WebServiceMessageConverter {
         }
 
         // Copy headers into soap-header:
-        for (Entry<String, Object> headerEntry : soapMessage.copyHeaders().entrySet()) {
+        for (Entry<String, Object> headerEntry : soapMessage.getHeaders().entrySet()) {
             if (MessageHeaderUtils.isSpringInternalHeader(headerEntry.getKey())) {
                 continue;
             }
@@ -146,7 +147,7 @@ public class SoapMessageConverter implements WebServiceMessageConverter {
     }
 
     @Override
-    public SoapMessage convertInbound(WebServiceMessage message, WebServiceEndpointConfiguration endpointConfiguration) {
+    public SoapMessage convertInbound(WebServiceMessage message, WebServiceEndpointConfiguration endpointConfiguration, TestContext context) {
         return convertInbound(message, null, endpointConfiguration);
     }
 
@@ -410,10 +411,10 @@ public class SoapMessageConverter implements WebServiceMessageConverter {
      * @throws IOException 
      */
     protected void handleInboundAttachments(org.springframework.ws.soap.SoapMessage soapMessage, SoapMessage message) {
-        Iterator<?> attachments = soapMessage.getAttachments();
+        Iterator<Attachment> attachments = soapMessage.getAttachments();
 
         while (attachments.hasNext()) {
-            Attachment attachment = (Attachment)attachments.next();
+            Attachment attachment = attachments.next();
             SoapAttachment soapAttachment = SoapAttachment.from(attachment);
 
             if (log.isDebugEnabled()) {

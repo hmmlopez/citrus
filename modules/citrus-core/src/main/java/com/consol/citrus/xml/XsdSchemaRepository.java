@@ -77,12 +77,18 @@ public class XsdSchemaRepository implements BeanNameAware, InitializingBean {
             
             for (Resource resource : findings) {
                 if (resource.getFilename().endsWith(".xsd")) {
-                    log.info("Loading XSD schema resource " + resource.getFilename());
+                    if (log.isDebugEnabled()) {
+                        log.debug("Loading XSD schema resource " + resource.getFilename());
+                    }
+
                     SimpleXsdSchema schema = new SimpleXsdSchema(resource);
                     schema.afterPropertiesSet();
                     schemas.add(schema);
                 } else if (resource.getFilename().endsWith(".wsdl")) {
-                    log.info("Loading WSDL schema resource " + resource.getFilename());
+                    if (log.isDebugEnabled()) {
+                        log.debug("Loading WSDL schema resource " + resource.getFilename());
+                    }
+
                     WsdlXsdSchema wsdl = new WsdlXsdSchema(resource);
                     wsdl.afterPropertiesSet();
                     schemas.add(wsdl);
@@ -93,9 +99,12 @@ public class XsdSchemaRepository implements BeanNameAware, InitializingBean {
         }
 
         // Add default Citrus message schemas if available on classpath
+        addCitrusSchema("citrus-http-message");
         addCitrusSchema("citrus-mail-message");
         addCitrusSchema("citrus-ftp-message");
         addCitrusSchema("citrus-ssh-message");
+        addCitrusSchema("citrus-rmi-message");
+        addCitrusSchema("citrus-jmx-message");
     }
 
     /**
@@ -105,7 +114,9 @@ public class XsdSchemaRepository implements BeanNameAware, InitializingBean {
     protected void addCitrusSchema(String schemaName) throws IOException, SAXException, ParserConfigurationException {
         Resource resource = new PathMatchingResourcePatternResolver().getResource("classpath:com/consol/citrus/schema/" + schemaName + ".xsd");
         if (resource.exists()) {
-            log.info("Loading XSD schema resource " + resource.getFilename());
+            if (log.isDebugEnabled()) {
+                log.debug("Loading XSD schema resource " + resource.getFilename());
+            }
             SimpleXsdSchema schema = new SimpleXsdSchema(resource);
             schema.afterPropertiesSet();
             schemas.add(schema);

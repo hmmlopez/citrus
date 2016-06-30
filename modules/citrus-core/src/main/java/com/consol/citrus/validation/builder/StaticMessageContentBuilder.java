@@ -17,7 +17,7 @@
 package com.consol.citrus.validation.builder;
 
 import com.consol.citrus.context.TestContext;
-import com.consol.citrus.message.Message;
+import com.consol.citrus.message.*;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Map;
@@ -48,21 +48,35 @@ public class StaticMessageContentBuilder extends AbstractMessageContentBuilder {
                 && CollectionUtils.isEmpty(getHeaderResources())
                 && getMessageInterceptors().isEmpty()
                 && getDataDictionary() == null) {
-            return message;
+            Message constructed = new DefaultMessage(message);
+            constructed.setPayload(buildMessagePayload(context, messageType));
+
+            Map<String, Object> headers = buildMessageHeaders(context);
+            for (Map.Entry<String, Object> header : headers.entrySet()) {
+                if (!header.getKey().equals(MessageHeaders.ID)) {
+                    constructed.setHeader(header.getKey(), header.getValue());
+                }
+            }
+
+            return constructed;
         } else {
             return super.buildMessageContent(context, messageType);
         }
     }
 
     @Override
-    protected Object buildMessagePayload(TestContext context) {
-        return message.getPayload();
+    protected Object buildMessagePayload(TestContext context, String messageType) {
+        if (message.getPayload() instanceof String) {
+            return context.replaceDynamicContentInString(message.getPayload(String.class));
+        } else {
+            return message.getPayload();
+        }
     }
 
     @Override
     protected Map<String, Object> buildMessageHeaders(TestContext context) {
         Map<String, Object> headers = super.buildMessageHeaders(context);
-        headers.putAll(message.copyHeaders());
+        headers.putAll(context.resolveDynamicValuesInMap(message.getHeaders()));
 
         return headers;
     }

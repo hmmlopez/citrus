@@ -5,101 +5,47 @@
   <parent>
     <artifactId>citrus</artifactId>
     <groupId>com.consol.citrus</groupId>
-    <version>2.4-SNAPSHOT</version>
+    <version>2.7-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   
   <groupId>com.consol.citrus</groupId>
   <artifactId>citrus-integration</artifactId>
   <name>citrus-integration</name>
-  <packaging>war</packaging>
 
   <properties>
     <citrus.serverPort>19080</citrus.serverPort>
     <citrus.stopPort>19080</citrus.stopPort>
+    <zookeeper.port.listen>21181</zookeeper.port.listen>
+    <zookeeper.port.shutdown>21182</zookeeper.port.shutdown>
   </properties>
 
   <build>
     <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-war-plugin</artifactId>
-          <configuration>
-            <overlays>
-              <overlay>
-                <groupId>com.consol.citrus</groupId>
-                <artifactId>citrus-admin</artifactId>
-                <type>war</type>
-              </overlay>
-              <overlay>
-                <!-- empty groupId/artifactId represents the current build -->
-              </overlay>
-            </overlays>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-maven-plugin</artifactId>
-          <configuration>
-            <webAppConfig>
-              <contextPath>/citrus-admin</contextPath>
-            </webAppConfig>
-            <httpConnector>
-              <port>${citrus.serverPort}</port>
-              <idleTimeout>60000</idleTimeout>
-            </httpConnector>
-            <stopPort>${citrus.stopPort}</stopPort>
-            <stopKey>stop</stopKey>
-            <scanIntervalSeconds>5</scanIntervalSeconds>
-            <systemProperties>
-              <systemProperty>
-                <name>file.encoding</name>
-                <value>${project.build.sourceEncoding}</value>
-              </systemProperty>
-              <systemProperty>
-                <name>log4j.configuration</name>
-                <value>log4j.xml</value>
-              </systemProperty>
-              <systemProperty>
-                <name>project.home</name>
-                <value>${basedir}</value>
-              </systemProperty>
-              <systemProperty>
-                <name>test.base.package</name>
-                <value>com.consol.citrus</value>
-              </systemProperty>
-            </systemProperties>
-          </configuration>
-        </plugin>
-
-        <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration> 
-                <junitArtifactName>none:none</junitArtifactName>
-                <excludes>
-                  <exclude>**/junit/*.java</exclude>
-                </excludes>
+          <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <properties>
+                <property>
+                  <name>junit</name>
+                  <value>false</value>
+                </property>
+              </properties>
+              <threadCount>1</threadCount>
             </configuration>
-            <executions>
-              <execution>
-                  <id>junit-tests</id>
-                  <phase>test</phase>
-                  <goals>
-                      <goal>test</goal>
-                  </goals>
-                  <configuration>
-                      <junitArtifactName>junit:junit</junitArtifactName> 
-                      <testNGArtifactName>none:none</testNGArtifactName>
-                      <excludes>
-                        <exclude>none</exclude>
-                      </excludes>
-                      <includes>
-                        <include>**/junit/*.java</include>
-                      </includes>
-                  </configuration>
-              </execution>
-            </executions>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.maven.surefire</groupId>
+                <artifactId>surefire-junit47</artifactId>
+                <version>2.19.1</version>
+              </dependency>
+              <dependency>
+                <groupId>org.apache.maven.surefire</groupId>
+                <artifactId>surefire-testng</artifactId>
+                <version>2.19.1</version>
+              </dependency>
+            </dependencies>
         </plugin>
 
         <plugin>
@@ -114,38 +60,47 @@
           </executions>
           <configuration>
             <extension>true</extension>
-            <wsdl>false</wsdl>
-            <xmlschema>true</xmlschema>
-            <schemaDirectory>src/main/resources/com/consol/citrus/demo</schemaDirectory>
-            <bindingDirectory>src/main/resources/com/consol/citrus/demo</bindingDirectory>
-            <schemaFiles>**/*.xsd</schemaFiles>
+            <sourceType>xmlschema</sourceType>
+            <sources>
+              <source>src/main/resources/com/consol/citrus/demo/sayHello.xsd</source>
+              <source>src/main/resources/com/consol/citrus/demo/sayHelloExtended.xsd</source>
+            </sources>
+            <xjbSources>
+              <xjbSource>src/main/resources/com/consol/citrus/demo/binding.xjb</xjbSource>
+            </xjbSources>
           </configuration>
         </plugin>
-
+        <plugin>
+          <groupId>net.revelc.code</groupId>
+          <artifactId>zookeeper-maven-plugin</artifactId>
+          <configuration>
+            <clientPort>${zookeeper.port.listen}</clientPort>
+            <shutdownString>UniqueShutDownString</shutdownString>
+            <shutdownPort>${zookeeper.port.shutdown}</shutdownPort>
+          </configuration>
+          <executions>
+            <execution>
+              <id>run-zookeeper</id>
+              <goals>
+                <goal>start</goal>
+                <goal>stop</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
     </plugins>
-    
-  	<testSourceDirectory>src/citrus/java</testSourceDirectory>
+
+  	<testSourceDirectory>src/it/java</testSourceDirectory>
     <testResources>
         <testResource>
-            <directory>src/citrus/resources</directory>
+            <directory>src/it/resources</directory>
             <includes>
                 <include>**</include>
             </includes>
-            <excludes>
-                <exclude>*.java</exclude>
-            </excludes>
-        </testResource>
-        <testResource>
-            <directory>src/citrus/tests</directory>
-            <includes>
-                <include>**/*</include>
-            </includes>
-            <excludes>
-            </excludes>
         </testResource>
     </testResources>
   </build>
-  
+
   <dependencies>
     <dependency>
         <groupId>com.consol.citrus</groupId>
@@ -189,9 +144,28 @@
     </dependency>
     <dependency>
       <groupId>com.consol.citrus</groupId>
-      <artifactId>citrus-admin</artifactId>
+      <artifactId>citrus-zookeeper</artifactId>
       <version>${project.version}</version>
-      <type>war</type>
+    </dependency>
+    <dependency>
+      <groupId>com.consol.citrus</groupId>
+      <artifactId>citrus-rmi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.consol.citrus</groupId>
+      <artifactId>citrus-jmx</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.consol.citrus</groupId>
+      <artifactId>citrus-docker</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.consol.citrus</groupId>
+      <artifactId>citrus-restdocs</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
@@ -210,14 +184,17 @@
         <groupId>org.springframework.ws</groupId>
         <artifactId>spring-ws-core</artifactId>
     </dependency>
-    <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-oxm</artifactId>
-    </dependency>
-    
+
     <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-rmi</artifactId>
+      <version>${apache.camel.version}</version>
+      <scope>test</scope>
     </dependency>
     
     <dependency>

@@ -19,30 +19,29 @@ package com.consol.citrus.dsl.design;
 import com.consol.citrus.TestCase;
 import com.consol.citrus.actions.ExecuteSQLAction;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.springframework.core.io.Resource;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.sql.DataSource;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
-import static org.easymock.EasyMock.*;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Christoph Deppisch
  * @since 1.3
  */
 public class ExecuteSQLTestDesignerTest extends AbstractTestNGUnitTest {
-    private DataSource dataSource = EasyMock.createMock(DataSource.class);
+    private DataSource dataSource = Mockito.mock(DataSource.class);
     
-    private Resource resource = EasyMock.createMock(Resource.class);
-    private File file = EasyMock.createMock(File.class);
+    private Resource resource = Mockito.mock(Resource.class);
+    private File file = Mockito.mock(File.class);
     
     @Test
-    public void TestExecuteSQLBuilderWithStatement() {
-        MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+    public void testExecuteSQLBuilderWithStatement() {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
             @Override
             public void configure() {
                 sql(dataSource)
@@ -65,10 +64,10 @@ public class ExecuteSQLTestDesignerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.isIgnoreErrors(), false);
         Assert.assertEquals(action.getDataSource(), dataSource);
     }
-    
+
     @Test
-    public void TestExecuteSQLBuilderWithResource() throws IOException {
-        MockTestDesigner builder = new MockTestDesigner(applicationContext) {
+    public void testExecuteSQLBuilderWithResource() throws IOException {
+        MockTestDesigner builder = new MockTestDesigner(applicationContext, context) {
             @Override
             public void configure() {
                 sql(dataSource)
@@ -76,12 +75,11 @@ public class ExecuteSQLTestDesignerTest extends AbstractTestNGUnitTest {
                     .ignoreErrors(true);
             }
         };
-    
-        reset(resource, file);
-        expect(resource.getFile()).andReturn(file).once();
-        expect(file.getAbsolutePath()).andReturn("classpath:some.file").once();
-        replay(resource, file);
 
+        reset(resource, file);
+        when(resource.getFile()).thenReturn(file);
+        when(resource.getInputStream()).thenReturn(new ByteArrayInputStream("SELECT * FROM DUAL;".getBytes()));
+        when(file.getAbsolutePath()).thenReturn("classpath:some.file");
         builder.configure();
 
         TestCase test = builder.getTestCase();
@@ -92,8 +90,8 @@ public class ExecuteSQLTestDesignerTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(action.getName(), "sql");
         Assert.assertEquals(action.isIgnoreErrors(), true);
         Assert.assertEquals(action.getDataSource(), dataSource);
-        Assert.assertEquals(action.getSqlResourcePath(), "classpath:some.file");
-        
-        verify(resource, file);
+        Assert.assertEquals(action.getStatements().toString(), "[SELECT * FROM DUAL;]");
+        Assert.assertNull(action.getSqlResourcePath());
+
     }
 }

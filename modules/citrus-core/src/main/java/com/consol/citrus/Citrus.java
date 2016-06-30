@@ -16,25 +16,24 @@
 
 package com.consol.citrus;
 
-import com.consol.citrus.config.CitrusBaseConfig;
 import com.consol.citrus.config.CitrusSpringConfig;
 import com.consol.citrus.container.SequenceAfterSuite;
 import com.consol.citrus.container.SequenceBeforeSuite;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.context.TestContextFactory;
-import com.consol.citrus.endpoint.Endpoint;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
+import com.consol.citrus.message.MessageType;
 import com.consol.citrus.report.TestSuiteListeners;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.Properties;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.*;
 
 /**
  * Citrus main class initializes a new Citrus runtime environment with a Spring application context. Provides before/after suite action execution
@@ -58,18 +57,85 @@ public final class Citrus {
     /** Basic Spring application context */
     private ApplicationContext applicationContext;
 
+    /** Logger */
+    private static Logger log = LoggerFactory.getLogger(Citrus.class);
+
     /** Load Citrus version */
     static {
-        Properties versionProperties = new Properties();
-
         try (final InputStream in = new ClassPathResource("META-INF/citrus.version").getInputStream()) {
+            Properties versionProperties = new Properties();
             versionProperties.load(in);
+            version = versionProperties.get("citrus.version").toString();
         } catch (IOException e) {
+            log.warn("Unable to read Citrus version information", e);
             version = "";
         }
-
-        version = versionProperties.get("citrus.version").toString();
     }
+
+    /** Optional application property file */
+    private static final String APPLICATION_PROPERTY_FILE = System.getProperty("citrus.application.config", "citrus-application.properties");
+
+    /** Load application properties */
+    static {
+        try (final InputStream in = new ClassPathResource(APPLICATION_PROPERTY_FILE).getInputStream()) {
+            Properties applicationProperties = new Properties();
+            applicationProperties.load(in);
+
+            log.debug("Loading Citrus application properties");
+
+            for (Map.Entry<Object, Object> property : applicationProperties.entrySet()) {
+                if (StringUtils.isEmpty(System.getProperty(property.getKey().toString()))) {
+                    log.debug(String.format("Setting application property %s=%s", property.getKey(), property.getValue()));
+                    System.setProperty(property.getKey().toString(), property.getValue().toString());
+                }
+            }
+        } catch (Exception e) {
+            if (log.isTraceEnabled()) {
+                log.trace("Unable to locate Citrus application properties", e);
+            } else {
+                log.info("Unable to locate Citrus application properties");
+            }
+        }
+    }
+
+    /** Default variable names */
+    public static final String TEST_NAME_VARIABLE = "citrus.test.name";
+    public static final String TEST_PACKAGE_VARIABLE = "citrus.test.package";
+
+    /** File encoding system property */
+    public static final String CITRUS_FILE_ENCODING_PROPERTY = "citrus.file.encoding";
+    public static final String CITRUS_FILE_ENCODING = System.getProperty(CITRUS_FILE_ENCODING_PROPERTY, Charset.defaultCharset().displayName());
+
+    /** Prefix/sufix used to identify variable expressions */
+    public static final String VARIABLE_PREFIX = "${";
+    public static final String VARIABLE_SUFFIX = "}";
+
+    /** Default application context name */
+    public static final String DEFAULT_APPLICATION_CONTEXT_PROPERTY = "citrus.spring.application.context";
+    public static final String DEFAULT_APPLICATION_CONTEXT = System.getProperty(DEFAULT_APPLICATION_CONTEXT_PROPERTY, "classpath*:citrus-context.xml");
+
+    /** Default application context class */
+    public static final String DEFAULT_APPLICATION_CONTEXT_CLASS_PROPERTY = "citrus.spring.java.config";
+    public static final String DEFAULT_APPLICATION_CONTEXT_CLASS = System.getProperty(DEFAULT_APPLICATION_CONTEXT_CLASS_PROPERTY);
+
+    /** Default test directories */
+    public static final String DEFAULT_TEST_SRC_DIRECTORY = "src" + File.separator + "test" + File.separator;
+
+    /** Placeholder used in messages to ignore elements */
+    public static final String IGNORE_PLACEHOLDER = "@ignore@";
+
+    /** Prefix/suffix used to identify validation matchers */
+    public static final String VALIDATION_MATCHER_PREFIX = "@";
+    public static final String VALIDATION_MATCHER_SUFFIX = "@";
+
+    public static final String XML_TEST_FILE_NAME_PATTERN_PROPERTY = "citrus.xml.file.name.pattern";
+    public static final String XML_TEST_FILE_NAME_PATTERN = System.getProperty(XML_TEST_FILE_NAME_PATTERN_PROPERTY, "/**/*Test.xml,/**/*IT.xml");
+
+    public static final String JAVA_TEST_FILE_NAME_PATTERN_PROPERTY = "citrus.java.file.name.pattern";
+    public static final String JAVA_TEST_FILE_NAME_PATTERN = System.getProperty(JAVA_TEST_FILE_NAME_PATTERN_PROPERTY, "/**/*Test.java,/**/*IT.java");
+
+    /** Default message type used in message validation mechanism */
+    public static final String DEFAULT_MESSAGE_TYPE = MessageType.XML.toString();
 
     /**
      * Private constructor with Spring bean application context that holds all basic Citrus
@@ -99,7 +165,7 @@ public final class Citrus {
      * that gets loaded as application context.
      * @return
      */
-    public static Citrus newInstance(Class<? extends CitrusBaseConfig> configClass) {
+    public static Citrus newInstance(Class<? extends CitrusSpringConfig> configClass) {
         return newInstance(new AnnotationConfigApplicationContext(configClass));
     }
 
@@ -157,39 +223,19 @@ public final class Citrus {
     }
 
     /**
-     * Gets the endpoint from Spring application context.
-     * @param name
+     * Gets set of file name patterns for XML test files.
      * @return
      */
-    public Endpoint getEndpoint(String name) {
-        return getEndpoint(name, Endpoint.class);
+    public static Set<String> getXmlTestFileNamePattern() {
+        return StringUtils.commaDelimitedListToSet(XML_TEST_FILE_NAME_PATTERN);
     }
 
     /**
-     * Gets the endpoint from Spring application context with given type.
-     * @param requiredType
+     * Gets set of file name patterns for Java test files.
      * @return
      */
-    public <T extends Endpoint> T getEndpoint(Class<T> requiredType) {
-        try {
-            return getApplicationContext().getBean(requiredType);
-        } catch (NoSuchBeanDefinitionException e) {
-            throw new CitrusRuntimeException(String.format("Unable to find endpoint for type '%s'", requiredType));
-        }
-    }
-
-    /**
-     * Gets the endpoint from Spring application context with given type.
-     * @param name
-     * @param requiredType
-     * @return
-     */
-    public <T extends Endpoint> T getEndpoint(String name, Class<T> requiredType) {
-        try {
-            return getApplicationContext().getBean(name, requiredType);
-        } catch (NoSuchBeanDefinitionException e) {
-            throw new CitrusRuntimeException(String.format("Unable to find endpoint for name '%s'", name));
-        }
+    public static Set<String> getJavaTestFileNamePattern() {
+        return StringUtils.commaDelimitedListToSet(JAVA_TEST_FILE_NAME_PATTERN);
     }
 
     /**

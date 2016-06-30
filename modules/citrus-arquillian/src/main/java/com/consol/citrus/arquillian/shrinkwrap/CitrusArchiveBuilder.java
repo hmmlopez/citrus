@@ -103,6 +103,12 @@ public final class CitrusArchiveBuilder {
         mail();
         camel();
         vertx();
+        docker();
+        cucumber();
+        zookeeper();
+        rmi();
+        jmx();
+        restdocs();
         javaDsl();
 
         return this;
@@ -177,6 +183,60 @@ public final class CitrusArchiveBuilder {
      */
     public CitrusArchiveBuilder camel() {
         artifactCoordinates.add(getCoordinates("citrus-camel"));
+        return this;
+    }
+
+    /**
+     * Gets the docker Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder docker() {
+        artifactCoordinates.add(getCoordinates("citrus-docker"));
+        return this;
+    }
+
+    /**
+     * Gets the zookeeper Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder zookeeper() {
+        artifactCoordinates.add(getCoordinates("citrus-zookeeper"));
+        return this;
+    }
+
+    /**
+     * Gets the cucumber Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder cucumber() {
+        artifactCoordinates.add(getCoordinates("citrus-cucumber"));
+        return this;
+    }
+
+    /**
+     * Gets the rmi Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder rmi() {
+        artifactCoordinates.add(getCoordinates("citrus-rmi"));
+        return this;
+    }
+
+    /**
+     * Gets the jmx Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder jmx() {
+        artifactCoordinates.add(getCoordinates("citrus-jmx"));
+        return this;
+    }
+
+    /**
+     * Gets the restdocs Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder restdocs() {
+        artifactCoordinates.add(getCoordinates("citrus-restdocs"));
         return this;
     }
 

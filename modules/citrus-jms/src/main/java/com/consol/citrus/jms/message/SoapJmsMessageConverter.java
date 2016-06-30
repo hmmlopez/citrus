@@ -16,7 +16,8 @@
 
 package com.consol.citrus.jms.message;
 
-import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.Citrus;
+import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.jms.endpoint.JmsEndpointConfiguration;
 import com.consol.citrus.message.MessageHeaders;
@@ -33,7 +34,6 @@ import javax.jms.Session;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import java.io.*;
-import java.nio.charset.Charset;
 
 /**
  * Special message converter automatically adds SOAP envelope with proper SOAP header and body elements.
@@ -60,10 +60,10 @@ public class SoapJmsMessageConverter extends JmsMessageConverter {
     private static final String SOAP_ACTION_HEADER = "SOAPAction";
 
     @Override
-    public com.consol.citrus.message.Message convertInbound(Message jmsMessage, JmsEndpointConfiguration endpointConfiguration) {
+    public com.consol.citrus.message.Message convertInbound(Message jmsMessage, JmsEndpointConfiguration endpointConfiguration, TestContext context) {
         try {
-            com.consol.citrus.message.Message message = super.convertInbound(jmsMessage, endpointConfiguration);
-            ByteArrayInputStream in = new ByteArrayInputStream(message.getPayload(String.class).getBytes(getDefaultCharset()));
+            com.consol.citrus.message.Message message = super.convertInbound(jmsMessage, endpointConfiguration, context);
+            ByteArrayInputStream in = new ByteArrayInputStream(message.getPayload(String.class).getBytes(Citrus.CITRUS_FILE_ENCODING));
             SoapMessage soapMessage = soapMessageFactory.createWebServiceMessage(in);
 
             StringResult payload = new StringResult();
@@ -81,7 +81,7 @@ public class SoapJmsMessageConverter extends JmsMessageConverter {
     }
 
     @Override
-    public Message createJmsMessage(com.consol.citrus.message.Message message, Session session, JmsEndpointConfiguration endpointConfiguration) {
+    public Message createJmsMessage(com.consol.citrus.message.Message message, Session session, JmsEndpointConfiguration endpointConfiguration, TestContext context) {
         String payload = message.getPayload(String.class);
 
         log.debug("Creating SOAP message from payload: " + payload);
@@ -101,19 +101,11 @@ public class SoapJmsMessageConverter extends JmsMessageConverter {
                 message.removeHeader(INTERNAL_SOAP_ACTION_HEADER);
             }
 
-            return super.createJmsMessage(message, session, endpointConfiguration);
+            return super.createJmsMessage(message, session, endpointConfiguration, context);
         } catch (TransformerException e) {
             throw new CitrusRuntimeException("Failed to transform payload to SOAP body", e);
         } catch (IOException e) {
             throw new CitrusRuntimeException("Failed to write SOAP message content", e);
         }
-    }
-
-    /**
-     * Either gets Citrus default encoding or system default encoding.
-     * @return
-     */
-    private String getDefaultCharset() {
-        return System.getProperty(CitrusConstants.CITRUS_FILE_ENCODING, Charset.defaultCharset().displayName());
     }
 }

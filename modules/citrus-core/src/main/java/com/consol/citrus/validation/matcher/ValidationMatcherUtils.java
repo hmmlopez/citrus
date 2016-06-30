@@ -16,10 +16,14 @@
 
 package com.consol.citrus.validation.matcher;
 
-import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.Citrus;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.functions.FunctionUtils;
 import com.consol.citrus.variable.VariableUtils;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Utility class for validation matchers.
@@ -35,9 +39,10 @@ public final class ValidationMatcherUtils {
     
     /**
      * This method resolves a custom validationMatcher to its respective result.
-     * @param validationMatcherExpression to evaluate.
      * @param fieldName the name of the field
-     * @return evaluated control value
+     * @param fieldValue the value of the field
+     * @param validationMatcherExpression to evaluate.
+     * @param context the test context
      */
     public static void resolveValidationMatcher(String fieldName, String fieldValue, 
             String validationMatcherExpression, TestContext context) {
@@ -54,24 +59,32 @@ public final class ValidationMatcherUtils {
         String matcherName = expression.substring(prefix.length(), bodyStart);
 
         ValidationMatcherLibrary library = context.getValidationMatcherRegistry().getLibraryForPrefix(prefix);
+        ValidationMatcher validationMatcher = library.getValidationMatcher(matcherName);
 
-        matcherValue = VariableUtils.replaceVariablesInString(matcherValue, context, false);
-        matcherValue = FunctionUtils.replaceFunctionsInString(matcherValue, context);
-        if (matcherValue.startsWith("\'") && matcherValue.endsWith("\'")) {
-            matcherValue = matcherValue.substring(1, matcherValue.length() - 1);
-        }
-
-        library.getValidationMatcher(matcherName).validate(fieldName, fieldValue, matcherValue, context);
+        ControlExpressionParser controlExpressionParser = lookupControlExpressionParser(validationMatcher);
+        List<String> params = controlExpressionParser.extractControlValues(matcherValue, null);
+        List<String> replacedParams = replaceVariablesAndFunctionsInParameters(params, context);
+        validationMatcher.validate(fieldName, fieldValue, replacedParams, context);
     }
-    
+
+    private static List<String> replaceVariablesAndFunctionsInParameters(List<String> params, TestContext context) {
+        List<String> replacedParams = new ArrayList<>(params.size());
+        for (String param : params) {
+            String parsedVariablesParam = VariableUtils.replaceVariablesInString(param, context, false);
+            String parsedFunctionsParam = FunctionUtils.replaceFunctionsInString(parsedVariablesParam, context);
+            replacedParams.add(parsedFunctionsParam);
+        }
+        return replacedParams;
+    }
+
     /**
      * Checks if expression is a validation matcher expression.
-     * @param expression
+     * @param expression the expression to check
      * @return
      */
     public static boolean isValidationMatcherExpression(String expression) {
-        return expression.startsWith(CitrusConstants.VALIDATION_MATCHER_PREFIX) &&
-                expression.endsWith(CitrusConstants.VALIDATION_MATCHER_SUFFIX);
+        return expression.startsWith(Citrus.VALIDATION_MATCHER_PREFIX) &&
+                expression.endsWith(Citrus.VALIDATION_MATCHER_SUFFIX);
     }
     
     /**
@@ -80,10 +93,21 @@ public final class ValidationMatcherUtils {
      * @return
      */
     private static String cutOffValidationMatchersPrefix(String expression) {
-        if (expression.startsWith(CitrusConstants.VALIDATION_MATCHER_PREFIX) && expression.endsWith(CitrusConstants.VALIDATION_MATCHER_SUFFIX)) {
-            return expression.substring(CitrusConstants.VALIDATION_MATCHER_PREFIX.length(), expression.length() - CitrusConstants.VALIDATION_MATCHER_SUFFIX.length());
+        if (expression.startsWith(Citrus.VALIDATION_MATCHER_PREFIX) && expression.endsWith(Citrus.VALIDATION_MATCHER_SUFFIX)) {
+            return expression.substring(Citrus.VALIDATION_MATCHER_PREFIX.length(), expression.length() - Citrus.VALIDATION_MATCHER_SUFFIX.length());
         }
 
         return expression;
+    }
+
+    private static ControlExpressionParser lookupControlExpressionParser(ValidationMatcher validationMatcher) {
+        if (validationMatcher instanceof ControlExpressionParser) {
+            return (ControlExpressionParser) validationMatcher;
+        }
+        return new DefaultControlExpressionParser();
+    }
+
+    public static String getParameterListAsString(List<String> parameters) {
+        return StringUtils.collectionToDelimitedString(parameters, ",", "'", "'");
     }
 }

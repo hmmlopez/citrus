@@ -59,7 +59,9 @@ public class CamelConsumer implements Consumer {
 
     @Override
     public Message receive(TestContext context, long timeout) {
-        log.info("Receiving message from camel endpoint: '" + endpointConfiguration.getEndpointUri() + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("Receiving message from camel endpoint: '" + endpointConfiguration.getEndpointUri() + "'");
+        }
 
         Exchange exchange = getConsumerTemplate().receive(endpointConfiguration.getEndpointUri(), timeout);
 
@@ -69,7 +71,7 @@ public class CamelConsumer implements Consumer {
 
         log.info("Received message from camel endpoint: '" + endpointConfiguration.getEndpointUri() + "'");
 
-        Message message = endpointConfiguration.getMessageConverter().convertInbound(exchange, endpointConfiguration);
+        Message message = endpointConfiguration.getMessageConverter().convertInbound(exchange, endpointConfiguration, context);
         context.onInboundMessage(message);
 
         return message;

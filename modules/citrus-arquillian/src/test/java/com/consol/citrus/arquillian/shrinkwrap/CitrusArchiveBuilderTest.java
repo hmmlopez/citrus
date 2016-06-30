@@ -32,7 +32,7 @@ public class CitrusArchiveBuilderTest {
     public void setCitrusVersion() {
         Field version = ReflectionUtils.findField(Citrus.class, "version");
         ReflectionUtils.makeAccessible(version);
-        ReflectionUtils.setField(version, Citrus.class, "2.4-SNAPSHOT");
+        ReflectionUtils.setField(version, Citrus.class, "2.7-SNAPSHOT");
     }
 
     @Test
@@ -44,7 +44,7 @@ public class CitrusArchiveBuilderTest {
                 .build();
 
         Assert.assertNotNull(artifactResources);
-        Assert.assertEquals(artifactResources.length, 11);
+        Assert.assertEquals(artifactResources.length, 17);
 
         verifyArtifact(artifactResources, "citrus-core-.*jar");
         verifyArtifact(artifactResources, "citrus-jms-.*jar");
@@ -56,6 +56,12 @@ public class CitrusArchiveBuilderTest {
         verifyArtifact(artifactResources, "citrus-ssh-.*jar");
         verifyArtifact(artifactResources, "citrus-mail-.*jar");
         verifyArtifact(artifactResources, "citrus-vertx-.*jar");
+        verifyArtifact(artifactResources, "citrus-docker-.*jar");
+        verifyArtifact(artifactResources, "citrus-cucumber-.*jar");
+        verifyArtifact(artifactResources, "citrus-zookeeper-.*jar");
+        verifyArtifact(artifactResources, "citrus-rmi-.*jar");
+        verifyArtifact(artifactResources, "citrus-jmx-.*jar");
+        verifyArtifact(artifactResources, "citrus-restdocs-.*jar");
         verifyArtifact(artifactResources, "citrus-java-dsl-.*jar");
     }
 
@@ -68,7 +74,7 @@ public class CitrusArchiveBuilderTest {
                 .build();
 
         Assert.assertNotNull(artifactResources);
-        Assert.assertEquals(artifactResources.length, 11);
+        Assert.assertEquals(artifactResources.length, 17);
 
         List<String> artifactFileNames = new ArrayList<>();
         for (File artifactResource : artifactResources) {
@@ -85,6 +91,12 @@ public class CitrusArchiveBuilderTest {
         verifyArtifact(artifactResources, "citrus-ssh-.*jar");
         verifyArtifact(artifactResources, "citrus-mail-.*jar");
         verifyArtifact(artifactResources, "citrus-vertx-.*jar");
+        verifyArtifact(artifactResources, "citrus-docker-.*jar");
+        verifyArtifact(artifactResources, "citrus-cucumber-.*jar");
+        verifyArtifact(artifactResources, "citrus-zookeeper-.*jar");
+        verifyArtifact(artifactResources, "citrus-rmi-.*jar");
+        verifyArtifact(artifactResources, "citrus-jmx-.*jar");
+        verifyArtifact(artifactResources, "citrus-restdocs-.*jar");
         verifyArtifact(artifactResources, "citrus-java-dsl-.*jar");
     }
 

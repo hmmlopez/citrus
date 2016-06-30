@@ -21,77 +21,75 @@ import com.consol.citrus.actions.FailAction;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
-import org.easymock.EasyMock;
+import org.mockito.Mockito;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.*;
 
-import static org.easymock.EasyMock.*;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Christoph Deppisch
  */
 public class RepeatOnErrorUntilTrueTest extends AbstractTestNGUnitTest {
 
-    private TestAction action = EasyMock.createMock(TestAction.class);
+    private TestAction action = Mockito.mock(TestAction.class);
 
-    @Test
-    public void testSuccessOnFirstIteration() {
+    @Test(dataProvider = "expressionProvider")
+    public void testSuccessOnFirstIteration(String expression) {
         RepeatOnErrorUntilTrue repeat = new RepeatOnErrorUntilTrue();
 
 
         reset(action);
-        
-        action.execute(context);
-        expectLastCall().once();
-        
-        replay(action);
-        
+
         repeat.setActions(Collections.singletonList(action));
-        
+
         repeat.setIndexName("i");
-        repeat.setCondition("i = 5");
-        
+        repeat.setCondition(expression);
+
         repeat.execute(context);
+        verify(action).execute(context);
+    }
+
+    @DataProvider
+    public Object[][] expressionProvider() {
+        return new Object[][] {
+                new Object[] {"i = 5"},
+                new Object[] {"@assertThat(is(5))@"},
+                new Object[] {"@assertThat('${i}', 'is(5)')@"}
+        };
     }
     
     @Test(expectedExceptions=CitrusRuntimeException.class)
     public void testRepeatOnErrorNoSuccess() {
         RepeatOnErrorUntilTrue repeat = new RepeatOnErrorUntilTrue();
         
-        List<TestAction> actions = new ArrayList<TestAction>();
+        List<TestAction> actions = new ArrayList<>();
 
         reset(action);
-        
-        action.execute(context);
-        expectLastCall().times(4);
-        
-        replay(action);
-        
+
         actions.add(action);
         actions.add(new FailAction());
-        
+
         repeat.setActions(actions);
-        
+
         repeat.setIndexName("i");
         repeat.setCondition("i = 5");
         repeat.setAutoSleep(0L);
-        
+
         repeat.execute(context);
+        verify(action, times(4)).execute(context);
     }
 
     @Test(expectedExceptions=CitrusRuntimeException.class)
     public void testRepeatOnErrorNoSuccessConditionExpression() {
         RepeatOnErrorUntilTrue repeat = new RepeatOnErrorUntilTrue();
 
-        List<TestAction> actions = new ArrayList<TestAction>();
+        List<TestAction> actions = new ArrayList<>();
 
         reset(action);
-
-        action.execute(context);
-        expectLastCall().times(4);
-
-        replay(action);
 
         actions.add(action);
         actions.add(new FailAction());
@@ -107,5 +105,26 @@ public class RepeatOnErrorUntilTrueTest extends AbstractTestNGUnitTest {
         repeat.setAutoSleep(0L);
 
         repeat.execute(context);
+        verify(action, times(4)).execute(context);
+    }
+
+    @Test(expectedExceptions=CitrusRuntimeException.class)
+    public void testRepeatOnErrorNoSuccessHamcrestConditionExpression() {
+        RepeatOnErrorUntilTrue repeat = new RepeatOnErrorUntilTrue();
+
+        List<TestAction> actions = new ArrayList<>();
+
+        reset(action);
+
+        actions.add(action);
+        actions.add(new FailAction());
+
+        repeat.setActions(actions);
+
+        repeat.setConditionExpression(new HamcrestConditionExpression(is(5)));
+        repeat.setAutoSleep(0L);
+
+        repeat.execute(context);
+        verify(action, times(4)).execute(context);
     }
 }

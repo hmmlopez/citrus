@@ -16,12 +16,12 @@
 
 package com.consol.citrus.util;
 
-import com.consol.citrus.CitrusConstants;
+import com.consol.citrus.Citrus;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.*;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.util.FileCopyUtils;
 
@@ -41,10 +41,21 @@ public abstract class FileUtils {
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(FileUtils.class);
 
+    /** Simulation mode required for Citrus administration UI when loading test cases from Java DSL */
+    private static boolean simulationMode = false;
+
     /**
      * Prevent instantiation.
      */
     private FileUtils() {
+        super();
+    }
+
+    /**
+     * Sets the simulation mode.
+     */
+    public static void setSimulationMode(boolean mode) {
+        simulationMode = mode;
     }
 
     /**
@@ -54,7 +65,7 @@ public abstract class FileUtils {
      * @throws IOException
      */
     public static String readToString(Resource resource) throws IOException {
-        return readToString(resource.getInputStream(), getDefaultCharset());
+        return readToString(resource, getDefaultCharset());
     }
 
     /**
@@ -75,6 +86,19 @@ public abstract class FileUtils {
      * @throws IOException
      */
     public static String readToString(Resource resource, Charset charset) throws IOException {
+        if (simulationMode) {
+            if (resource instanceof ClassPathResource) {
+                return ((ClassPathResource) resource).getPath();
+            } else if (resource instanceof FileSystemResource) {
+                return ((FileSystemResource) resource).getPath();
+            } else {
+                return resource.getFilename();
+            }
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("Reading file resource: '%s' (encoding is '%s')", resource.getFilename(), charset.displayName()));
+        }
         return readToString(resource.getInputStream(), charset);
     }
     
@@ -86,10 +110,6 @@ public abstract class FileUtils {
      * @throws IOException
      */
     public static String readToString(InputStream inputStream, Charset charset) throws IOException {
-        if (log.isDebugEnabled()) {
-            log.debug("Reading file resource (encoding is '" + charset.displayName() + "')");
-        }
-
         return new String(FileCopyUtils.copyToByteArray(inputStream), charset);
     }
 
@@ -109,7 +129,7 @@ public abstract class FileUtils {
      */
     public static void writeToFile(String content, File file, Charset charset) {
         if (log.isDebugEnabled()) {
-            log.debug("Writing file resource (encoding is '" + charset.displayName() + "')");
+            log.debug(String.format("Writing file resource: '%s' (encoding is '%s')", file.getName(), charset.displayName()));
         }
 
         FileOutputStream fos = null;
@@ -133,13 +153,14 @@ public abstract class FileUtils {
     }
 
     /**
-     * Method to retrieve all test defining XML files in given directory.
+     * Method to retrieve all files with given file name pattern in given directory.
      * Hierarchy of folders is supported.
      *
      * @param startDir the directory to hold the files
+     * @param fileNamePatterns the file names to include
      * @return list of test files as filename paths
      */
-    public static List<File> getTestFiles(final String startDir) {
+    public static List<File> findFiles(final String startDir, final Set<String> fileNamePatterns) {
         /* file names to be returned */
         final List<File> files = new ArrayList<File>();
 
@@ -158,13 +179,27 @@ public abstract class FileUtils {
 
         /* walk through the directories */
         while (dirs.size() > 0) {
-            File file = dirs.pop();
+            final File file = dirs.pop();
             File[] found = file.listFiles(new FilenameFilter() {
                 public boolean accept(File dir, String name) {
                     File tmp = new File(dir.getPath() + File.separator + name);
 
+                    boolean accepted = tmp.isDirectory();
+
+                    for (String fileNamePattern : fileNamePatterns) {
+                        if (fileNamePattern.contains("/")) {
+                            fileNamePattern = fileNamePattern.substring(fileNamePattern.lastIndexOf('/') + 1);
+                        }
+
+                        fileNamePattern = fileNamePattern.replace(".", "\\.").replace("*", ".*");
+
+                        if (name.matches(fileNamePattern)) {
+                            accepted = true;
+                        }
+                    }
+
                     /* Only allowing XML files as spring configuration files */
-                    return (name.endsWith(".xml") || tmp.isDirectory()) && !name.startsWith("CVS") && !name.startsWith(".svn");
+                    return accepted && !name.startsWith("CVS") && !name.startsWith(".svn") && !name.startsWith(".git");
                 }
             });
 
@@ -198,7 +233,6 @@ public abstract class FileUtils {
      * @return
      */
     private static Charset getDefaultCharset() {
-        return Charset.forName(System.getProperty(CitrusConstants.CITRUS_FILE_ENCODING,
-                    Charset.defaultCharset().displayName()));
+        return Charset.forName(Citrus.CITRUS_FILE_ENCODING);
     }
 }

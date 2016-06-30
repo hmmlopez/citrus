@@ -20,7 +20,9 @@ import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.testng.annotations.Test;
 
-import static org.easymock.EasyMock.*;
+import java.util.Arrays;
+
+import static org.mockito.Mockito.*;
 
 /**
  * @author Christoph Deppisch
@@ -36,6 +38,7 @@ public class ValidationMatcherUtilsTest extends AbstractTestNGUnitTest {
         ValidationMatcherUtils.resolveValidationMatcher("field", "value", "@${equalsIgnoreCase('value')}@", context);
         ValidationMatcherUtils.resolveValidationMatcher("field", "value", "@${equalsIgnoreCase(value)}@", context);
         ValidationMatcherUtils.resolveValidationMatcher("field", "John's", "@equalsIgnoreCase('John's')@", context);
+        ValidationMatcherUtils.resolveValidationMatcher("field", "John's&Barabara's", "@equalsIgnoreCase('John's&Barabara's')@", context);
         ValidationMatcherUtils.resolveValidationMatcher("field", "", "@equalsIgnoreCase('')@", context);
         ValidationMatcherUtils.resolveValidationMatcher("field", "prefix:value", "@equalsIgnoreCase('prefix:value')@", context);
     }
@@ -43,20 +46,13 @@ public class ValidationMatcherUtilsTest extends AbstractTestNGUnitTest {
     @Test
     public void testResolveCustomValidationMatcher() {
         reset(validationMatcher);
-        
-        validationMatcher.validate("field", "value", "value", context);
-        expectLastCall().times(3);
-        
-        validationMatcher.validate("field", "prefix:value", "prefix:value", context);
-        expectLastCall().once();
-        
-        replay(validationMatcher);
-        
+
         ValidationMatcherUtils.resolveValidationMatcher("field", "value", "@foo:customMatcher('value')@", context);
         ValidationMatcherUtils.resolveValidationMatcher("field", "value", "@foo:customMatcher(value)@", context);
         ValidationMatcherUtils.resolveValidationMatcher("field", "value", "@${foo:customMatcher('value')}@", context);
         ValidationMatcherUtils.resolveValidationMatcher("field", "prefix:value", "@foo:customMatcher('prefix:value')@", context);
-        
-        verify(validationMatcher);
+
+        verify(validationMatcher, times(3)).validate("field", "value", Arrays.asList("value"), context);
+        verify(validationMatcher).validate("field", "prefix:value", Arrays.asList("prefix:value"), context);
     }
 }
