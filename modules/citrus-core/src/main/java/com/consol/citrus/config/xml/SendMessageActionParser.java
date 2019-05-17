@@ -16,6 +16,7 @@
 
 package com.consol.citrus.config.xml;
 
+import com.consol.citrus.Citrus;
 import com.consol.citrus.actions.SendMessageAction;
 import com.consol.citrus.config.util.BeanDefinitionParserUtils;
 import com.consol.citrus.validation.builder.AbstractMessageContentBuilder;
@@ -28,8 +29,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Bean definition parser for send action in test case.
@@ -51,7 +51,7 @@ public class SendMessageActionParser extends AbstractMessageActionParser {
         BeanDefinitionBuilder builder = parseComponent(element, parserContext);
         builder.addPropertyValue("name", element.getLocalName());
 
-        if (endpointUri.contains(":")) {
+        if (endpointUri.contains(":") || (endpointUri.contains(Citrus.VARIABLE_PREFIX) && endpointUri.contains(Citrus.VARIABLE_SUFFIX))) {
             builder.addPropertyValue("endpointUri", endpointUri);
         } else {
             builder.addPropertyReference("endpoint", endpointUri);
@@ -75,7 +75,7 @@ public class SendMessageActionParser extends AbstractMessageActionParser {
         }
 
         AbstractMessageContentBuilder messageBuilder = constructMessageBuilder(messageElement);
-        parseHeaderElements(element, messageBuilder);
+        parseHeaderElements(element, messageBuilder, Collections.emptyList());
 
         if (messageBuilder != null) {
             builder.addPropertyValue("messageBuilder", messageBuilder);

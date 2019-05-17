@@ -16,12 +16,13 @@
 
 package com.consol.citrus.context;
 
+import com.consol.citrus.endpoint.DefaultEndpointFactory;
 import com.consol.citrus.endpoint.EndpointFactory;
 import com.consol.citrus.functions.FunctionRegistry;
 import com.consol.citrus.report.MessageListeners;
 import com.consol.citrus.report.TestListeners;
 import com.consol.citrus.validation.MessageValidatorRegistry;
-import com.consol.citrus.validation.interceptor.MessageConstructionInterceptors;
+import com.consol.citrus.validation.interceptor.GlobalMessageConstructionInterceptors;
 import com.consol.citrus.validation.matcher.ValidationMatcherRegistry;
 import com.consol.citrus.variable.GlobalVariables;
 import com.consol.citrus.xml.namespace.NamespaceContextBuilder;
@@ -49,7 +50,7 @@ public class TestContextFactory implements FactoryBean<TestContext>, Application
     
     @Autowired(required = false)
     private GlobalVariables globalVariables = new GlobalVariables();
-    
+
     @Autowired
     private MessageValidatorRegistry messageValidatorRegistry;
 
@@ -66,7 +67,7 @@ public class TestContextFactory implements FactoryBean<TestContext>, Application
     private ReferenceResolver referenceResolver;
 
     @Autowired
-    private MessageConstructionInterceptors messageConstructionInterceptors;
+    private GlobalMessageConstructionInterceptors globalMessageConstructionInterceptors;
 
     @Autowired(required=false)
     private NamespaceContextBuilder namespaceContextBuilder;
@@ -78,11 +79,32 @@ public class TestContextFactory implements FactoryBean<TestContext>, Application
     private static Logger log = LoggerFactory.getLogger(TestContextFactory.class);
 
     /**
+     * Create new empty instance that has
+     * @return
+     */
+    public static TestContextFactory newInstance() {
+        TestContextFactory factory = new TestContextFactory();
+
+        factory.setFunctionRegistry(new FunctionRegistry());
+        factory.setValidationMatcherRegistry(new ValidationMatcherRegistry());
+        factory.setGlobalVariables(new GlobalVariables());
+        factory.setMessageValidatorRegistry(new MessageValidatorRegistry());
+        factory.setTestListeners(new TestListeners());
+        factory.setMessageListeners(new MessageListeners());
+        factory.setGlobalMessageConstructionInterceptors(new GlobalMessageConstructionInterceptors());
+        factory.setEndpointFactory(new DefaultEndpointFactory());
+        factory.setReferenceResolver(new SpringBeanReferenceResolver());
+        factory.setNamespaceContextBuilder(new NamespaceContextBuilder());
+
+        return factory;
+    }
+
+    /**
      * Construct new factory instance from application context.
      * @param applicationContext
      * @return
      */
-    public static final TestContextFactory newInstance(ApplicationContext applicationContext) {
+    public static TestContextFactory newInstance(ApplicationContext applicationContext) {
         TestContextFactory factory = new TestContextFactory();
 
         if (!CollectionUtils.isEmpty(applicationContext.getBeansOfType(FunctionRegistry.class))) {
@@ -109,12 +131,20 @@ public class TestContextFactory implements FactoryBean<TestContext>, Application
             factory.setMessageListeners(applicationContext.getBean(MessageListeners.class));
         }
 
-        if (!CollectionUtils.isEmpty(applicationContext.getBeansOfType(MessageConstructionInterceptors.class))) {
-            factory.setMessageConstructionInterceptors(applicationContext.getBean(MessageConstructionInterceptors.class));
+        if (!CollectionUtils.isEmpty(applicationContext.getBeansOfType(GlobalMessageConstructionInterceptors.class))) {
+            factory.setGlobalMessageConstructionInterceptors(applicationContext.getBean(GlobalMessageConstructionInterceptors.class));
         }
 
         if (!CollectionUtils.isEmpty(applicationContext.getBeansOfType(EndpointFactory.class))) {
             factory.setEndpointFactory(applicationContext.getBean(EndpointFactory.class));
+        }
+
+        if (!CollectionUtils.isEmpty(applicationContext.getBeansOfType(ReferenceResolver.class))) {
+            factory.setReferenceResolver(applicationContext.getBean(ReferenceResolver.class));
+        }
+
+        if (!CollectionUtils.isEmpty(applicationContext.getBeansOfType(NamespaceContextBuilder.class))) {
+            factory.setNamespaceContextBuilder(applicationContext.getBean(NamespaceContextBuilder.class));
         }
 
         factory.setApplicationContext(applicationContext);
@@ -133,7 +163,7 @@ public class TestContextFactory implements FactoryBean<TestContext>, Application
         context.setMessageValidatorRegistry(messageValidatorRegistry);
         context.setTestListeners(testListeners);
         context.setMessageListeners(messageListeners);
-        context.setMessageConstructionInterceptors(messageConstructionInterceptors);
+        context.setGlobalMessageConstructionInterceptors(globalMessageConstructionInterceptors);
         context.setEndpointFactory(endpointFactory);
         context.setReferenceResolver(referenceResolver);
         context.setApplicationContext(applicationContext);
@@ -310,16 +340,16 @@ public class TestContextFactory implements FactoryBean<TestContext>, Application
      * Sets the message construction interceptors.
      * @param messageConstructionInterceptors
      */
-    public void setMessageConstructionInterceptors(MessageConstructionInterceptors messageConstructionInterceptors) {
-        this.messageConstructionInterceptors = messageConstructionInterceptors;
+    public void setGlobalMessageConstructionInterceptors(GlobalMessageConstructionInterceptors messageConstructionInterceptors) {
+        this.globalMessageConstructionInterceptors = messageConstructionInterceptors;
     }
 
     /**
      * Gets the message construction interceptors.
      * @return
      */
-    public MessageConstructionInterceptors getMessageConstructionInterceptors() {
-        return messageConstructionInterceptors;
+    public GlobalMessageConstructionInterceptors getGlobalMessageConstructionInterceptors() {
+        return globalMessageConstructionInterceptors;
     }
 
     @Override

@@ -30,10 +30,14 @@ import org.eclipse.jetty.servlet.ServletHandler;
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import javax.servlet.Filter;
 
 import static org.mockito.Mockito.when;
 
@@ -52,9 +56,14 @@ public class HttpServerConfigParserTest extends AbstractTestNGUnitTest {
             port=8082,
             contextConfigLocation="classpath:com/consol/citrus/http/servlet-context.xml",
             messageConverter="messageConverter",
+            handleAttributeHeaders=true,
+            handleCookies=true,
             connector="connector",
             resourceBase="src/it/resources",
             rootParentContext=true,
+            debugLogging=true,
+            binaryMediaTypes = {MediaType.APPLICATION_OCTET_STREAM_VALUE, "application/custom"},
+            defaultStatus = HttpStatus.NOT_FOUND,
             contextPath="/citrus",
             servletName="citrus-http",
             servletMappingPath="/foo")
@@ -63,7 +72,9 @@ public class HttpServerConfigParserTest extends AbstractTestNGUnitTest {
     @CitrusEndpoint
     @HttpServerConfig(autoStart=false,
             port=8083,
-            connectors={"connector1", "connector2"})
+            connectors={"connector1", "connector2"},
+            filters={"filter1", "filter2"},
+            filterMappings={"filter2=/filter2/*"})
     private HttpServer httpServer3;
 
     @CitrusEndpoint
@@ -94,6 +105,10 @@ public class HttpServerConfigParserTest extends AbstractTestNGUnitTest {
     @Mock
     private Connector connector2 = Mockito.mock(Connector.class);
     @Mock
+    private Filter filter1 = Mockito.mock(Filter.class);
+    @Mock
+    private Filter filter2 = Mockito.mock(Filter.class);
+    @Mock
     private SecurityHandler securityHandler = Mockito.mock(SecurityHandler.class);
     @Mock
     private HttpMessageConverter messageConverter = Mockito.mock(HttpMessageConverter.class);
@@ -122,6 +137,8 @@ public class HttpServerConfigParserTest extends AbstractTestNGUnitTest {
         when(applicationContext.getBean("connector", Connector.class)).thenReturn(connector1);
         when(applicationContext.getBean("connector1", Connector.class)).thenReturn(connector1);
         when(applicationContext.getBean("connector2", Connector.class)).thenReturn(connector2);
+        when(applicationContext.getBean("filter1", Filter.class)).thenReturn(filter1);
+        when(applicationContext.getBean("filter2", Filter.class)).thenReturn(filter2);
         when(applicationContext.getBean("testActor", TestActor.class)).thenReturn(testActor);
         when(applicationContext.getBean("clientInterceptor1", HandlerInterceptor.class)).thenReturn(clientInterceptor1);
         when(applicationContext.getBean("clientInterceptor2", HandlerInterceptor.class)).thenReturn(clientInterceptor2);
@@ -137,35 +154,54 @@ public class HttpServerConfigParserTest extends AbstractTestNGUnitTest {
         Assert.assertNull(httpServer1.getServletHandler());
         Assert.assertNull(httpServer1.getSecurityHandler());
         Assert.assertEquals(httpServer1.getConnectors().length, 0);
+        Assert.assertEquals(httpServer1.getFilters().size(), 0);
+        Assert.assertEquals(httpServer1.getFilterMappings().size(), 0);
         Assert.assertEquals(httpServer1.getName(), "httpServer1");
         Assert.assertEquals(httpServer1.getPort(), 8081);
         Assert.assertEquals(httpServer1.getContextConfigLocation(), "classpath:com/consol/citrus/http/citrus-servlet-context.xml");
         Assert.assertEquals(httpServer1.getResourceBase(), "src/main/resources");
+        Assert.assertFalse(httpServer1.isHandleAttributeHeaders());
+        Assert.assertFalse(httpServer1.isHandleCookies());
         Assert.assertFalse(httpServer1.isAutoStart());
+        Assert.assertFalse(httpServer1.isDebugLogging());
         Assert.assertFalse(httpServer1.isUseRootContextAsParent());
+        Assert.assertEquals(httpServer1.getDefaultStatusCode(), HttpStatus.OK.value());
         Assert.assertEquals(httpServer1.getContextPath(), "/");
         Assert.assertEquals(httpServer1.getServletName(), "httpServer1-servlet");
         Assert.assertEquals(httpServer1.getServletMappingPath(), "/*");
+        Assert.assertEquals(httpServer1.getBinaryMediaTypes().size(), 6L);
 
         // 2nd message sender
         Assert.assertNotNull(httpServer2.getConnector());
         Assert.assertEquals(httpServer2.getMessageConverter(), messageConverter);
         Assert.assertEquals(httpServer2.getConnector(), connector1);
         Assert.assertEquals(httpServer2.getConnectors().length, 0);
+        Assert.assertEquals(httpServer2.getFilters().size(), 0);
+        Assert.assertEquals(httpServer2.getFilterMappings().size(), 0);
         Assert.assertEquals(httpServer2.getName(), "httpServer2");
         Assert.assertEquals(httpServer2.getPort(), 8082);
         Assert.assertEquals(httpServer2.getContextConfigLocation(), "classpath:com/consol/citrus/http/servlet-context.xml");
         Assert.assertEquals(httpServer2.getResourceBase(), "src/it/resources");
+        Assert.assertTrue(httpServer2.isHandleAttributeHeaders());
+        Assert.assertTrue(httpServer2.isHandleCookies());
+        Assert.assertEquals(httpServer2.getDefaultStatusCode(), HttpStatus.NOT_FOUND.value());
         Assert.assertFalse(httpServer2.isAutoStart());
+        Assert.assertTrue(httpServer2.isDebugLogging());
         Assert.assertTrue(httpServer2.isUseRootContextAsParent());
         Assert.assertEquals(httpServer2.getContextPath(), "/citrus");
         Assert.assertEquals(httpServer2.getServletName(), "citrus-http");
         Assert.assertEquals(httpServer2.getServletMappingPath(), "/foo");
+        Assert.assertEquals(httpServer2.getBinaryMediaTypes().size(), 2L);
+        Assert.assertTrue(httpServer2.getBinaryMediaTypes().contains(MediaType.valueOf("application/custom")));
         
         // 3rd message sender
         Assert.assertNull(httpServer3.getConnector());
         Assert.assertNotNull(httpServer3.getConnectors());
         Assert.assertEquals(httpServer3.getConnectors().length, 2L);
+        Assert.assertNotNull(httpServer3.getFilters());
+        Assert.assertEquals(httpServer3.getFilters().size(), 2L);
+        Assert.assertNotNull(httpServer3.getFilterMappings());
+        Assert.assertEquals(httpServer3.getFilterMappings().size(), 1L);
         Assert.assertEquals(httpServer3.getName(), "httpServer3");
         Assert.assertEquals(httpServer3.getPort(), 8083);
         Assert.assertEquals(httpServer3.getContextConfigLocation(), "classpath:com/consol/citrus/http/citrus-servlet-context.xml");

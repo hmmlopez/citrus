@@ -17,6 +17,7 @@
 package com.consol.citrus.config.xml;
 
 import com.consol.citrus.config.TestActionRegistry;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
@@ -46,8 +47,12 @@ public abstract class ActionContainerParser implements BeanDefinitionParser {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
+        doParse(element, parserContext, builder, "actions");
+    }
+
+    public static void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder, String propertyName) {
         Map<String, BeanDefinitionParser> actionRegistry = TestActionRegistry.getRegisteredActionParser();
-        ManagedList actions = new ManagedList();
+        ManagedList<BeanDefinition> actions = new ManagedList<>();
 
         List<Element> childElements = DomUtils.getChildElements(element);
 
@@ -69,7 +74,7 @@ public abstract class ActionContainerParser implements BeanDefinitionParser {
         }
         
         if (actions.size() > 0) {
-            builder.addPropertyValue("actions", actions);
+            builder.addPropertyValue(propertyName, actions);
         }
     }
 }

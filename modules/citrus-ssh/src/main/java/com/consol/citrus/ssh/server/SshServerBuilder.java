@@ -41,7 +41,6 @@ public class SshServerBuilder extends AbstractEndpointBuilder<SshServer> {
      */
     public SshServerBuilder port(int port) {
         endpoint.setPort(port);
-        endpoint.getEndpointConfiguration().setPort(port);
         return this;
     }
 
@@ -52,7 +51,6 @@ public class SshServerBuilder extends AbstractEndpointBuilder<SshServer> {
      */
     public SshServerBuilder user(String user) {
         endpoint.setUser(user);
-        endpoint.getEndpointConfiguration().setUser(user);
         return this;
     }
 
@@ -63,7 +61,6 @@ public class SshServerBuilder extends AbstractEndpointBuilder<SshServer> {
      */
     public SshServerBuilder password(String password) {
         endpoint.setPassword(password);
-        endpoint.getEndpointConfiguration().setPassword(password);
         return this;
     }
 
@@ -74,6 +71,16 @@ public class SshServerBuilder extends AbstractEndpointBuilder<SshServer> {
      */
     public SshServerBuilder hostKeyPath(String hostKeyPath) {
         endpoint.setHostKeyPath(hostKeyPath);
+        return this;
+    }
+
+    /**
+     * Sets the userHomePath property.
+     * @param userHomePath
+     * @return
+     */
+    public SshServerBuilder userHomePath(String userHomePath) {
+        endpoint.setUserHomePath(userHomePath);
         return this;
     }
 
@@ -94,7 +101,6 @@ public class SshServerBuilder extends AbstractEndpointBuilder<SshServer> {
      */
     public SshServerBuilder messageConverter(SshMessageConverter messageConverter) {
         endpoint.setMessageConverter(messageConverter);
-        endpoint.getEndpointConfiguration().setMessageConverter(messageConverter);
         return this;
     }
 
@@ -115,6 +121,16 @@ public class SshServerBuilder extends AbstractEndpointBuilder<SshServer> {
      */
     public SshServerBuilder endpointAdapter(EndpointAdapter endpointAdapter) {
         endpoint.setEndpointAdapter(endpointAdapter);
+        return this;
+    }
+
+    /**
+     * Sets the debug logging enabled flag.
+     * @param enabled
+     * @return
+     */
+    public SshServerBuilder debugLogging(boolean enabled) {
+        endpoint.setDebugLogging(enabled);
         return this;
     }
 

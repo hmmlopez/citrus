@@ -23,10 +23,12 @@ import com.consol.citrus.validation.matcher.ValidationMatcherUtils;
 import com.consol.citrus.validation.script.ScriptValidationContext;
 import com.consol.citrus.validation.script.sql.GroovySqlResultSetValidator;
 import com.consol.citrus.validation.script.sql.SqlResultSetScriptValidator;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
@@ -76,27 +78,24 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
 
         try {
             //for control result set validation
-            Map<String, List<String>> columnValuesMap = new HashMap<String, List<String>>();
+            final Map<String, List<String>> columnValuesMap = new HashMap<String, List<String>>();
             //for groovy script validation
-            List<Map<String, Object>> allResultRows = new ArrayList<Map<String, Object>>();
+            final List<Map<String, Object>> allResultRows = new ArrayList<Map<String, Object>>();
 
-            for (String stmt : statements) {
-                validateSqlStatement(stmt);
-                stmt = context.replaceDynamicContentInString(stmt.trim());
-
-                if (stmt.endsWith(";")) {
-                    stmt = stmt.substring(0, stmt.length()-1);
-                }
-
+            if (getTransactionManager() != null) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Executing SQL query: " + stmt);
+                    log.debug("Using transaction manager: " + getTransactionManager().getClass().getName());
                 }
-                List<Map<String, Object>> results = getJdbcTemplate().queryForList(stmt);
 
-                log.info("SQL query execution successful");
-
-                allResultRows.addAll(results);
-                fillColumnValuesMap(results, columnValuesMap);
+                TransactionTemplate transactionTemplate = new TransactionTemplate(getTransactionManager());
+                transactionTemplate.setTimeout(Integer.valueOf(context.replaceDynamicContentInString(getTransactionTimeout())));
+                transactionTemplate.setIsolationLevelName(context.replaceDynamicContentInString(getTransactionIsolationLevel()));
+                transactionTemplate.execute(status -> {
+                    executeStatements(allResultRows, columnValuesMap, context);
+                    return null;
+                });
+            } else {
+                executeStatements(allResultRows, columnValuesMap, context);
             }
 
             // perform validation
@@ -113,6 +112,30 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
         } catch (DataAccessException e) {
             log.error("Failed to execute SQL statement", e);
             throw new CitrusRuntimeException(e);
+        }
+    }
+
+    protected void executeStatements(List<Map<String, Object>> allResultRows, Map<String, List<String>> columnValuesMap, TestContext context) {
+        for (String stmt : statements) {
+            validateSqlStatement(stmt);
+            final String toExecute;
+
+            if (stmt.trim().endsWith(";")) {
+                toExecute = context.replaceDynamicContentInString(stmt.trim().substring(0, stmt.trim().length()-1));
+            } else {
+                toExecute = context.replaceDynamicContentInString(stmt.trim());
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug("Executing SQL query: " + toExecute);
+            }
+
+            List<Map<String, Object>> results = getJdbcTemplate().queryForList(toExecute);
+
+            log.info("SQL query execution successful");
+
+            allResultRows.addAll(results);
+            fillColumnValuesMap(results, columnValuesMap);
         }
     }
 
@@ -146,15 +169,19 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
     private void fillColumnValuesMap(List<Map<String, Object>> results, Map<String, List<String>> columnValuesMap) {
         for (Map<String, Object> row : results) {
             for (Entry<String, Object> column : row.entrySet()) {
+                String columnValue;
                 String columnName = column.getKey();
-                if (columnValuesMap.containsKey(columnName)) {
-                    columnValuesMap.get(columnName).add((column.getValue() == null ?
-                            null : column.getValue().toString()));
-                } else {
-                    List<String> columnValues = new ArrayList<String>();
-                    columnValues.add((column.getValue() == null ? null : column.getValue().toString()));
-                    columnValuesMap.put(columnName, columnValues);
+                if (!columnValuesMap.containsKey(columnName)) {
+                    columnValuesMap.put(columnName, new ArrayList<String>());
                 }
+
+                if (column.getValue() instanceof byte[]) {
+                    columnValue = Base64.encodeBase64String((byte[]) column.getValue());
+                } else {
+                    columnValue = column.getValue() == null ? null : column.getValue().toString();
+                }
+
+                columnValuesMap.get(columnName).add((columnValue));
             }
         }
     }
@@ -233,7 +260,7 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
                 columnName = columnName.toLowerCase();
             } else if (columnValuesMap.containsKey(columnName.toUpperCase())) {
                 columnName = columnName.toUpperCase();
-            } else {
+            } else if (!columnValuesMap.containsKey(columnName)) {
                 throw new CitrusRuntimeException("Could not find column '" + columnName + "' in SQL result set");
             }
 
@@ -261,19 +288,13 @@ public class ExecuteSQLQueryAction extends AbstractDatabaseConnectingTestAction 
      * Does some simple validation on the SQL statement.
      * @param stmt The statement which is to be validated.
      */
-    private void validateSqlStatement(String stmt) {
+    protected void validateSqlStatement(String stmt) {
         if (!stmt.toLowerCase().startsWith("select")) {
             throw new CitrusRuntimeException("Missing keyword SELECT in statement: " + stmt);
         }
-
-        int fromIndex = stmt.toLowerCase().indexOf("from");
-
-        if (fromIndex <= "select".length()+1) {
-            throw new CitrusRuntimeException("Missing keyword FROM in statement: " + stmt);
-        }
     }
 
-    private void validateSingleValue(String columnName, String controlValue, String resultValue, TestContext context) {
+    protected void validateSingleValue(String columnName, String controlValue, String resultValue, TestContext context) {
         // check if value is ignored
         if (controlValue.equals(Citrus.IGNORE_PLACEHOLDER)) {
             if (log.isDebugEnabled()) {

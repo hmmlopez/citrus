@@ -24,8 +24,7 @@ import com.consol.citrus.docker.message.DockerMessageHeaders;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.*;
-import com.github.dockerjava.core.command.BuildImageResultCallback;
-import com.github.dockerjava.core.command.PullImageResultCallback;
+import com.github.dockerjava.core.command.*;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -77,7 +76,6 @@ public class DockerExecuteActionTest extends AbstractTestNGUnitTest {
         reset(dockerClient, command);
 
         when(dockerClient.pingCmd()).thenReturn(command);
-        when(command.exec()).thenReturn(null);
 
         DockerExecuteAction action = new DockerExecuteAction();
         action.setCommand(new Ping());
@@ -213,7 +211,6 @@ public class DockerExecuteActionTest extends AbstractTestNGUnitTest {
         reset(dockerClient, command);
 
         when(dockerClient.removeContainerCmd("container_inspect")).thenReturn(command);
-        when(command.exec()).thenReturn(null);
 
         DockerExecuteAction action = new DockerExecuteAction();
         action.setCommand(new ContainerRemove()
@@ -233,7 +230,6 @@ public class DockerExecuteActionTest extends AbstractTestNGUnitTest {
         reset(dockerClient, command);
 
         when(dockerClient.removeImageCmd("image_remove")).thenReturn(command);
-        when(command.exec()).thenReturn(null);
 
         DockerExecuteAction action = new DockerExecuteAction();
         action.setCommand(new ImageRemove()
@@ -253,7 +249,6 @@ public class DockerExecuteActionTest extends AbstractTestNGUnitTest {
         reset(dockerClient, command);
 
         when(dockerClient.startContainerCmd("container_start")).thenReturn(command);
-        when(command.exec()).thenReturn(null);
 
         DockerExecuteAction action = new DockerExecuteAction();
         action.setCommand(new ContainerStart()
@@ -273,7 +268,6 @@ public class DockerExecuteActionTest extends AbstractTestNGUnitTest {
         reset(dockerClient, command);
 
         when(dockerClient.stopContainerCmd("container_stop")).thenReturn(command);
-        when(command.exec()).thenReturn(null);
 
         DockerExecuteAction action = new DockerExecuteAction();
         action.setCommand(new ContainerStop()
@@ -289,11 +283,22 @@ public class DockerExecuteActionTest extends AbstractTestNGUnitTest {
     @Test
     public void testWaitContainer() throws Exception {
         WaitContainerCmd command = Mockito.mock(WaitContainerCmd.class);
+        final WaitResponse responseItem = Mockito.mock(WaitResponse.class);
 
         reset(dockerClient, command);
 
         when(dockerClient.waitContainerCmd("container_wait")).thenReturn(command);
-        when(command.exec()).thenReturn(0);
+        doAnswer(new Answer<WaitContainerResultCallback>() {
+            @Override
+            public WaitContainerResultCallback answer(InvocationOnMock invocation) throws Throwable {
+                WaitContainerResultCallback resultCallback = (WaitContainerResultCallback) invocation.getArguments()[0];
+
+                resultCallback.onNext(responseItem);
+                resultCallback.onComplete();
+
+                return resultCallback;
+            }
+        }).when(command).exec(any(WaitContainerResultCallback.class));
 
         DockerExecuteAction action = new DockerExecuteAction();
         action.setCommand(new ContainerWait()
@@ -302,7 +307,7 @@ public class DockerExecuteActionTest extends AbstractTestNGUnitTest {
 
         action.execute(context);
 
-        Assert.assertEquals(((ContainerWait.ExitCode)action.getCommand().getCommandResult()).getExitCode(), new Integer(0));
+        Assert.assertEquals(((WaitResponse)action.getCommand().getCommandResult()).getStatusCode(), new Integer(0));
 
     }
 
@@ -367,7 +372,7 @@ public class DockerExecuteActionTest extends AbstractTestNGUnitTest {
         DockerExecuteAction action = new DockerExecuteAction();
         action.setCommand(new ImageBuild()
                 .dockerFile(new ClassPathResource("com/consol/citrus/docker/Dockerfile"))
-                .tag("latest"));
+                .tag("new_image:latest"));
         action.setDockerClient(client);
 
         action.execute(context);

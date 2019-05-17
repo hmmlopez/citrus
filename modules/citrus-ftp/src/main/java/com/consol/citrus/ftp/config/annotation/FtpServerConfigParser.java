@@ -45,9 +45,14 @@ public class FtpServerConfigParser extends AbstractAnnotationConfigParser<FtpSer
         FtpServerBuilder builder = new FtpServerBuilder();
 
         builder.autoStart(annotation.autoStart());
+        builder.autoConnect(annotation.autoConnect());
+        builder.autoLogin(annotation.autoLogin());
         builder.timeout(annotation.timeout());
 
+        builder.autoHandleCommands(annotation.autoHandleCommands());
+
         builder.port(annotation.port());
+        builder.debugLogging(annotation.debugLogging());
 
         if (StringUtils.hasText(annotation.endpointAdapter())) {
             builder.endpointAdapter(getReferenceResolver().resolve(annotation.endpointAdapter(), EndpointAdapter.class));
@@ -69,6 +74,6 @@ public class FtpServerConfigParser extends AbstractAnnotationConfigParser<FtpSer
             builder.actor(getReferenceResolver().resolve(annotation.actor(), TestActor.class));
         }
 
-        return builder.build();
+        return builder.initialize().build();
     }
 }

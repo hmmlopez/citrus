@@ -21,7 +21,10 @@ import com.consol.citrus.annotations.CitrusEndpoint;
 import com.consol.citrus.annotations.CitrusEndpointProperty;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.util.TypeConversionUtils;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
@@ -52,6 +55,39 @@ public abstract class AbstractEndpointBuilder<T extends Endpoint> implements End
         return this;
     }
 
+    /**
+     * Initializes the endpoint.
+     * @return
+     */
+    public AbstractEndpointBuilder<T> initialize() {
+        if (getEndpoint() instanceof InitializingBean) {
+            try {
+                ((InitializingBean) getEndpoint()).afterPropertiesSet();
+            } catch (Exception e) {
+                throw new CitrusRuntimeException("Failed to initialize endpoint", e);
+            }
+        }
+
+        return this;
+    }
+
+    /**
+     * Sets the Spring application context.
+     * @param applicationContext
+     * @return
+     */
+    public AbstractEndpointBuilder<T> applicationContext(ApplicationContext applicationContext) {
+        if (getEndpoint() instanceof ApplicationContextAware) {
+            ((ApplicationContextAware) getEndpoint()).setApplicationContext(applicationContext);
+        }
+
+        if (getEndpoint() instanceof BeanFactoryAware) {
+            ((BeanFactoryAware) getEndpoint()).setBeanFactory(applicationContext);
+        }
+
+        return this;
+    }
+
     @Override
     public T build(CitrusEndpoint endpointAnnotation) {
         ReflectionUtils.invokeMethod(ReflectionUtils.findMethod(this.getClass(), "name"), this, endpointAnnotation.name());
@@ -68,17 +104,7 @@ public abstract class AbstractEndpointBuilder<T extends Endpoint> implements End
 
     @Override
     public T build() {
-        T endpoint = getEndpoint();
-
-        if (endpoint instanceof InitializingBean) {
-            try {
-                ((InitializingBean) endpoint).afterPropertiesSet();
-            } catch (Exception e) {
-                throw new CitrusRuntimeException("Failed to build endpoint", e);
-            }
-        }
-
-        return endpoint;
+        return getEndpoint();
     }
 
     /**

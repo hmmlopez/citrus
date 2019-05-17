@@ -18,6 +18,7 @@ package com.consol.citrus.validation.builder;
 
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.message.Message;
+import com.consol.citrus.message.MessageDirection;
 import com.consol.citrus.validation.interceptor.MessageConstructionInterceptor;
 import com.consol.citrus.variable.dictionary.DataDictionary;
 
@@ -32,9 +33,22 @@ public interface MessageContentBuilder {
      * Builds the control message. 
      * @param context the current test context.
      * @param messageType the message type to build.
+     * @param direction
      * @return the constructed message object.
      */
-    Message buildMessageContent(TestContext context, String messageType);
+    Message buildMessageContent(TestContext context, String messageType, MessageDirection direction);
+
+    /**
+     * Builds the control message.
+     * @param context the current test context.
+     * @param messageType the message type to build.
+     * @return the constructed message object.
+     * @deprecated in favor of using {@link #buildMessageContent(TestContext, String, MessageDirection)}.
+     */
+    @Deprecated
+    default Message buildMessageContent(TestContext context, String messageType){
+        return buildMessageContent(context, messageType, MessageDirection.UNBOUND);
+    }
 
     /**
      * Adds a message construction interceptor.

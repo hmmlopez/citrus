@@ -20,8 +20,12 @@ import com.consol.citrus.TestAction;
 import com.consol.citrus.actions.SendMessageAction;
 import com.consol.citrus.dsl.actions.DelegatingTestAction;
 import com.consol.citrus.endpoint.Endpoint;
-import com.consol.citrus.http.message.HttpMessage;
+import com.consol.citrus.http.message.*;
+import com.consol.citrus.message.Message;
+import com.consol.citrus.validation.builder.StaticMessageContentBuilder;
 import org.springframework.http.HttpStatus;
+
+import javax.servlet.http.Cookie;
 
 /**
  * @author Christoph Deppisch
@@ -41,7 +45,17 @@ public class HttpServerResponseActionBuilder extends SendMessageBuilder<SendMess
         super(delegate);
         delegate.setDelegate(new SendMessageAction());
         getAction().setEndpoint(httpServer);
-        message(httpMessage);
+        initMessage(httpMessage);
+    }
+
+    /**
+     * Initialize message builder.
+     * @param message
+     */
+    private void initMessage(HttpMessage message) {
+        StaticMessageContentBuilder staticMessageContentBuilder = StaticMessageContentBuilder.withMessage(message);
+        staticMessageContentBuilder.setMessageHeaders(message.getHeaders());
+        getAction().setMessageBuilder(new HttpMessageContentBuilder(message, staticMessageContentBuilder));
     }
 
     @Override
@@ -49,6 +63,12 @@ public class HttpServerResponseActionBuilder extends SendMessageBuilder<SendMess
         httpMessage.setPayload(payload);
     }
 
+    @Override
+    public HttpServerResponseActionBuilder name(String name) {
+        httpMessage.setName(name);
+        return super.name(name);
+    }
+    
     /**
      * Sets the response status.
      * @param status
@@ -90,12 +110,28 @@ public class HttpServerResponseActionBuilder extends SendMessageBuilder<SendMess
     }
 
     /**
-     * Sets the request content type header.
+     * Sets the response content type header.
      * @param contentType
      * @return
      */
     public HttpServerResponseActionBuilder contentType(String contentType) {
         httpMessage.contentType(contentType);
+        return this;
+    }
+
+    /**
+     * Adds cookie to response by "Set-Cookie" header.
+     * @param cookie
+     * @return
+     */
+    public HttpServerResponseActionBuilder cookie(Cookie cookie) {
+        httpMessage.cookie(cookie);
+        return this;
+    }
+
+    @Override
+    public HttpServerResponseActionBuilder message(Message message) {
+        HttpMessageUtils.copy(message, httpMessage);
         return this;
     }
 }

@@ -18,16 +18,10 @@ package com.consol.citrus.validation.xhtml;
 
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.ValidationException;
-import com.consol.citrus.message.DefaultMessage;
-import com.consol.citrus.message.Message;
+import com.consol.citrus.message.*;
 import com.consol.citrus.validation.xml.DomXmlMessageValidator;
 import com.consol.citrus.validation.xml.XmlMessageValidationContext;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.core.io.Resource;
-import org.w3c.tidy.Tidy;
-
-import java.io.StringReader;
-import java.io.StringWriter;
 
 /**
  * XHTML message validator using W3C jtidy to automatically convert HTML content to XHTML fixing most common
@@ -37,97 +31,45 @@ import java.io.StringWriter;
  */
 public class XhtmlMessageValidator extends DomXmlMessageValidator implements InitializingBean {
 
-    /** W3C Tidy implementation for parsing HTML as XHTML */
-    private Tidy tidyInstance;
-    
-    /** Resource pointing to a custom tidy configuration file */
-    private Resource tidyConfiguration;
-    
-    /** Message type identifier */
-    private static final String XHTML_MESSAGE_TYPE = "xhtml";
+    /** Message converter for XHTML content */
+    private XhtmlMessageConverter messageConverter = new XhtmlMessageConverter();
 
-    /** Search pattern for base w3 xhtml url */
-    private static final String W3_XHTML1_URL = "http://www\\.w3\\.org/TR/xhtml1/DTD/";
-    
-    /** Typical xhtml doytype definition */
-    private static final String XHTML_DOCTYPE_DEFINITION = "DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0";
-    
     @Override
     public void validateMessage(Message receivedMessage, Message controlMessage,
             TestContext context, XmlMessageValidationContext validationContext)
             throws ValidationException {
         
         String messagePayload = receivedMessage.getPayload(String.class);
-        String xhtmlPayload;
-        
-        // check if we already have XHTML message content
-        if (messagePayload.contains(XHTML_DOCTYPE_DEFINITION)) {
-            xhtmlPayload = messagePayload;
-        } else {
-            StringWriter xhtmlWriter = new StringWriter();
-            tidyInstance.parse(new StringReader(messagePayload), xhtmlWriter);
-            
-            xhtmlPayload = xhtmlWriter.toString();
-            xhtmlPayload = xhtmlPayload.replaceFirst(W3_XHTML1_URL, "org/w3/xhtml/");
-        }
-        
-        super.validateMessage(new DefaultMessage(xhtmlPayload, receivedMessage.getHeaders()),
+        super.validateMessage(new DefaultMessage(messageConverter.convert(messagePayload), receivedMessage.getHeaders()),
                 controlMessage, context, validationContext);
     }
     
     @Override
     public boolean supportsMessageType(String messageType, Message message) {
-        return messageType.equalsIgnoreCase(XHTML_MESSAGE_TYPE);
+        return super.supportsMessageType(MessageType.XML.name(), message)
+                && messageType.equalsIgnoreCase(MessageType.XHTML.name());
     }
 
-    /**
-     * Set default Tidy instance.
-     */
+    @Override
     public void afterPropertiesSet() throws Exception {
-        if (tidyInstance == null) {
-            tidyInstance = new Tidy();
-            tidyInstance.setXHTML(true);
-            tidyInstance.setShowWarnings(false);
-            tidyInstance.setQuiet(true);
-            tidyInstance.setEscapeCdata(true);
-            tidyInstance.setTidyMark(false);
-            
-            if (tidyConfiguration != null) {
-                tidyInstance.setConfigurationFromFile(tidyConfiguration.getFile().getAbsolutePath());
-            }
-        }
+        messageConverter.initialize();
     }
 
     /**
-     * Gets the tidyInstance.
-     * @return the tidyInstance
+     * Sets the messageConverter property.
+     *
+     * @param messageConverter
      */
-    public Tidy getTidyInstance() {
-        return tidyInstance;
+    public void setMessageConverter(XhtmlMessageConverter messageConverter) {
+        this.messageConverter = messageConverter;
     }
 
     /**
-     * Sets the tidyInstance.
-     * @param tidyInstance the tidyInstance to set
+     * Gets the value of the messageConverter property.
+     *
+     * @return the messageConverter
      */
-    public void setTidyInstance(Tidy tidyInstance) {
-        this.tidyInstance = tidyInstance;
+    public XhtmlMessageConverter getMessageConverter() {
+        return messageConverter;
     }
-
-    /**
-     * Gets the tidyConfiguration.
-     * @return the tidyConfiguration
-     */
-    public Resource getTidyConfiguration() {
-        return tidyConfiguration;
-    }
-
-    /**
-     * Sets the tidyConfiguration.
-     * @param tidyConfiguration the tidyConfiguration to set
-     */
-    public void setTidyConfiguration(Resource tidyConfiguration) {
-        this.tidyConfiguration = tidyConfiguration;
-    }
-    
 }

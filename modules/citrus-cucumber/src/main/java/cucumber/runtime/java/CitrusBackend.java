@@ -29,12 +29,17 @@ import cucumber.runtime.io.ResourceLoader;
 import cucumber.runtime.io.ResourceLoaderClassFinder;
 import cucumber.runtime.java.spring.CitrusSpringObjectFactory;
 import cucumber.runtime.snippets.FunctionNameGenerator;
-import gherkin.formatter.model.Step;
+import gherkin.pickles.PickleStep;
+import io.cucumber.stepexpression.TypeRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Christoph Deppisch
@@ -45,27 +50,31 @@ public class CitrusBackend implements Backend {
     /** Citrus instance used by all scenarios */
     private static Citrus citrus;
 
+    /** Logger */
+    private static Logger log = LoggerFactory.getLogger(CitrusBackend.class);
+
     /** Basic resource loader */
     private ResourceLoader resourceLoader;
-
-    /** Glue holding all step definitions */
-    private Glue glue;
-
-    /** Glue paths */
-    private List<String> gluePaths;
+    private TypeRegistry typeRegistry;
 
     /**
      * Constructor using resource loader.
      * @param resourceLoader
      */
-    public CitrusBackend(ResourceLoader resourceLoader) {
+    public CitrusBackend(ResourceLoader resourceLoader, TypeRegistry typeRegistry) {
         this.resourceLoader = resourceLoader;
+        this.typeRegistry = typeRegistry;
+
+        Citrus.CitrusInstanceManager.addInstanceProcessor(instance -> instance.beforeSuite(CitrusReporter.SUITE_NAME));
     }
 
     @Override
     public void loadGlue(Glue glue, List<String> gluePaths) {
-        this.glue = glue;
-        this.gluePaths = gluePaths;
+        try {
+            Citrus.CitrusInstanceManager.addInstanceProcessor(new XmlStepInstanceProcessor(glue, gluePaths, getObjectFactory(), typeRegistry));
+        } catch (IllegalAccessException e) {
+            throw new CitrusRuntimeException("Failed to add XML step definition", e);
+        }
 
         try {
             if (!gluePaths.contains(CitrusLifecycleHooks.class.getPackage().getName()) && getObjectFactory().addClass(CitrusLifecycleHooks.class)) {
@@ -83,28 +92,7 @@ public class CitrusBackend implements Backend {
     }
 
     @Override
-    public void setUnreportedStepExecutor(UnreportedStepExecutor executor) {
-    }
-
-    @Override
     public void buildWorld() {
-        if (glue != null) {
-            getCitrus().beforeSuite(CitrusReporter.SUITE_NAME);
-
-            for (String gluePath : gluePaths) {
-                ApplicationContext ctx = new ClassPathXmlApplicationContext(new String[]{"classpath*:" + gluePath.replaceAll("\\.", "/").replaceAll("^classpath:", "") + "/**/*Steps.xml"}, true, getCitrus().getApplicationContext());
-
-                try {
-                    for (StepTemplate stepTemplate : ctx.getBeansOfType(StepTemplate.class).values()) {
-                        glue.addStepDefinition(new XmlStepDefinition(stepTemplate, getObjectFactory()));
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new CitrusRuntimeException("Failed to add XML step definition", e);
-                }
-            }
-
-            glue = null;
-        }
     }
 
     @Override
@@ -112,7 +100,7 @@ public class CitrusBackend implements Backend {
     }
 
     @Override
-    public String getSnippet(Step step, FunctionNameGenerator functionNameGenerator) {
+    public String getSnippet(PickleStep step, String keyword, FunctionNameGenerator functionNameGenerator) {
         return "";
     }
 
@@ -150,7 +138,15 @@ public class CitrusBackend implements Backend {
      */
     public static void initializeCitrus(ApplicationContext applicationContext) {
         if (citrus != null) {
-            throw new IllegalStateException("Unable to initialize Citrus instance - instance has already been initialized");
+            if (!citrus.getApplicationContext().equals(applicationContext)) {
+                log.warn("Citrus instance has already been initialized - creating new instance and shutting down current instance");
+
+                if (citrus.getApplicationContext() instanceof ConfigurableApplicationContext) {
+                    ((ConfigurableApplicationContext) citrus.getApplicationContext()).stop();
+                }
+            } else {
+                return;
+            }
         }
 
         citrus = Citrus.newInstance(applicationContext);
@@ -162,5 +158,44 @@ public class CitrusBackend implements Backend {
      */
     public static void resetCitrus() {
         citrus = null;
+    }
+
+    /**
+     * Initialization hook performs before suite actions and XML step initialization. Called as soon as citrus instance is requested
+     * from outside for the first time. Performs only once.
+     */
+    private static class XmlStepInstanceProcessor implements Citrus.InstanceProcessor {
+
+        private final Glue glue;
+        private final List<String> gluePaths;
+        private final ObjectFactory objectFactory;
+        private TypeRegistry typeRegistry;
+
+        XmlStepInstanceProcessor(Glue glue, List<String> gluePaths, ObjectFactory objectFactory, TypeRegistry typeRegistry) {
+            this.glue = glue;
+            this.gluePaths = gluePaths;
+            this.objectFactory = objectFactory;
+            this.typeRegistry = typeRegistry;
+        }
+
+        @Override
+        public void process(Citrus instance) {
+            for (String gluePath : gluePaths) {
+                String xmlStepConfigLocation = "classpath*:" + gluePath.replaceAll("\\.", "/").replaceAll("^classpath:", "") + "/**/*Steps.xml";
+
+                log.info(String.format("Loading XML step definitions %s", xmlStepConfigLocation));
+
+                ApplicationContext ctx = new ClassPathXmlApplicationContext(new String[]{ xmlStepConfigLocation }, true, instance.getApplicationContext());
+
+                Map<String, StepTemplate> xmlSteps = ctx.getBeansOfType(StepTemplate.class);
+
+                for (StepTemplate stepTemplate : xmlSteps.values()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug(String.format("Found XML step definition: %s %s", stepTemplate.getName(), stepTemplate.getPattern().pattern()));
+                    }
+                    glue.addStepDefinition(new XmlStepDefinition(stepTemplate, objectFactory, typeRegistry));
+                }
+            }
+        }
     }
 }

@@ -33,8 +33,9 @@ public class JsonGroovyValidationJavaIT extends TestNGCitrusTestDesigner {
     
     @CitrusTest
     public void jsonGroovyValidation() {
-        parallel(
+        parallel().actions(
             http().client("httpClient")
+                .send()
                 .post()
                 .payload("{" +
                     "\"type\" : \"read\"," +
@@ -42,9 +43,10 @@ public class JsonGroovyValidationJavaIT extends TestNGCitrusTestDesigner {
                     "\"attribute\" : \"HeapMemoryUsage\"," +
                     "\"path\" : \"used\"" +
                   "}"),
-            sequential(
+            sequential().actions(
                 http().server("httpServerRequestEndpoint")
-                   .post("/")
+                   .receive()
+                   .post("/test")
                    .messageType(MessageType.JSON)
                    .validator("defaultGroovyJsonMessageValidator")
                    .validateScript("assert json.type == 'read'" + NEWLINE +
@@ -52,7 +54,8 @@ public class JsonGroovyValidationJavaIT extends TestNGCitrusTestDesigner {
                               "assert json.attribute == 'HeapMemoryUsage'")
                    .extractFromHeader("citrus_jms_messageId", "correlation_id"),
                 http().server("httpServerResponseEndpoint")
-                   .respond(HttpStatus.OK)
+                   .send()
+                   .response(HttpStatus.OK)
                    .payload("{" + NEWLINE +
                         "\"timestamp\" : \"2011-01-01\"," + NEWLINE +
                         "\"status\" : 200," + NEWLINE +
@@ -71,6 +74,7 @@ public class JsonGroovyValidationJavaIT extends TestNGCitrusTestDesigner {
         );
         
         http().client("httpClient")
+            .receive()
             .response(HttpStatus.OK)
             .messageType(MessageType.JSON)
             .validator("defaultGroovyJsonMessageValidator")

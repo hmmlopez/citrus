@@ -20,7 +20,6 @@ import com.consol.citrus.context.TestContext;
 import com.consol.citrus.exceptions.UnknownElementException;
 import com.consol.citrus.exceptions.ValidationException;
 import com.consol.citrus.message.Message;
-import com.consol.citrus.message.MessageType;
 import com.consol.citrus.util.XMLUtils;
 import com.consol.citrus.validation.AbstractMessageValidator;
 import com.consol.citrus.validation.ValidationUtils;
@@ -52,14 +51,14 @@ public class XpathMessageValidator extends AbstractMessageValidator<XpathMessage
     private NamespaceContextBuilder namespaceContextBuilder = new NamespaceContextBuilder();
 
     @Override
-    public void validateMessage(Message receivedMessage,Message controlMessage, TestContext context, XpathMessageValidationContext validationContext) throws ValidationException {
+    public void validateMessage(Message receivedMessage, Message controlMessage, TestContext context, XpathMessageValidationContext validationContext) throws ValidationException {
         if (CollectionUtils.isEmpty(validationContext.getXpathExpressions())) { return; }
 
         if (receivedMessage.getPayload() == null || !StringUtils.hasText(receivedMessage.getPayload(String.class))) {
             throw new ValidationException("Unable to validate message elements - receive message payload was empty");
         }
 
-        log.debug("Start XPath element validation");
+        log.debug("Start XPath element validation ...");
 
         Document received = XMLUtils.parseMessagePayload(receivedMessage.getPayload(String.class));
         NamespaceContext namespaceContext = namespaceContextBuilder.buildContext(
@@ -127,7 +126,7 @@ public class XpathMessageValidator extends AbstractMessageValidator<XpathMessage
 
     @Override
     public boolean supportsMessageType(String messageType, Message message) {
-        return messageType.equalsIgnoreCase(MessageType.XML.toString());
+        return new DomXmlMessageValidator().supportsMessageType(messageType, message);
     }
 
     /**

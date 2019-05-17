@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.ConversionNotSupportedException;
 import org.springframework.beans.SimpleTypeConverter;
 import org.springframework.core.io.InputStreamSource;
-import org.springframework.util.StringUtils;
+import org.springframework.util.*;
 import org.springframework.xml.transform.StringSource;
 import org.w3c.dom.Node;
 
@@ -32,6 +32,7 @@ import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
@@ -77,12 +78,30 @@ public abstract class TypeConversionUtils {
             }
         }
 
+        if (MultiValueMap.class.isAssignableFrom(type)) {
+            String mapString = String.valueOf(target);
+
+            Properties props = new Properties();
+            try {
+                props.load(new StringReader(mapString.substring(1, mapString.length() - 1).replaceAll("\\]\\s*", "]\n")));
+            } catch (IOException e) {
+                throw new CitrusRuntimeException("Failed to reconstruct object of type map", e);
+            }
+            MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+            for (Map.Entry<Object, Object> entry : props.entrySet()) {
+                String arrayString = String.valueOf(entry.getValue()).replaceAll("^\\[", "").replaceAll("\\]$", "").replaceAll(",\\s", ",");
+                map.add(entry.getKey().toString(), StringUtils.commaDelimitedListToStringArray(String.valueOf(arrayString)));
+            }
+
+            return (T) map;
+        }
+
         if (Map.class.isAssignableFrom(type)) {
             String mapString = String.valueOf(target);
 
             Properties props = new Properties();
             try {
-                props.load(new StringReader(mapString.substring(1, mapString.length() - 1).replace(", ", "\n")));
+                props.load(new StringReader(mapString.substring(1, mapString.length() - 1).replaceAll(",\\s*", "\n")));
             } catch (IOException e) {
                 throw new CitrusRuntimeException("Failed to reconstruct object of type map", e);
             }
@@ -104,11 +123,49 @@ public abstract class TypeConversionUtils {
             return (T) Arrays.asList(StringUtils.commaDelimitedListToStringArray(String.valueOf(listString)));
         }
 
-        if (byte[].class.isAssignableFrom(type) && target instanceof String) {
-            try {
-                return (T) String.valueOf(target).getBytes(Citrus.CITRUS_FILE_ENCODING);
-            } catch (UnsupportedEncodingException e) {
-                return (T) String.valueOf(target).getBytes();
+        if (byte[].class.isAssignableFrom(type)) {
+            if (target instanceof String) {
+                try {
+                    return (T) String.valueOf(target).getBytes(Citrus.CITRUS_FILE_ENCODING);
+                } catch (UnsupportedEncodingException e) {
+                    return (T) String.valueOf(target).getBytes();
+                }
+            } else if (target instanceof ByteBuffer) {
+                return (T) ((ByteBuffer) target).array();
+            } else if (target instanceof ByteArrayInputStream) {
+                try {
+                    return (T) StreamUtils.copyToByteArray((ByteArrayInputStream) target);
+                } catch (IOException e) {
+                    throw new CitrusRuntimeException("Failed to convert input stream to byte[]");
+                }
+            }
+        }
+
+        if (InputStream.class.isAssignableFrom(type)) {
+            if (target instanceof InputStream) {
+                return (T) target;
+            } else if (target instanceof byte[]) {
+                return (T) new ByteArrayInputStream((byte[]) target);
+            } else if (target instanceof String) {
+                try {
+                    return (T) new ByteArrayInputStream(String.valueOf(target).getBytes(Citrus.CITRUS_FILE_ENCODING));
+                } catch (UnsupportedEncodingException e) {
+                    return (T) new ByteArrayInputStream(String.valueOf(target).getBytes());
+                }
+            } else {
+                try {
+                    return (T) new ByteArrayInputStream(target.toString().getBytes(Citrus.CITRUS_FILE_ENCODING));
+                } catch (UnsupportedEncodingException e) {
+                    return (T) new ByteArrayInputStream(target.toString().getBytes());
+                }
+            }
+        }
+
+        if (type.equals(String.class)) {
+            if (ByteBuffer.class.isAssignableFrom(target.getClass())) {
+                return (T) new String(((ByteBuffer) target).array());
+            } else if (byte[].class.isAssignableFrom(target.getClass())) {
+                return (T) Arrays.toString((byte[]) target);
             }
         }
 

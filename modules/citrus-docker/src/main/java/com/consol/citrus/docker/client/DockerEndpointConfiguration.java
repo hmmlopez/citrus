@@ -19,9 +19,8 @@ package com.consol.citrus.docker.client;
 import com.consol.citrus.endpoint.AbstractPollableEndpointConfiguration;
 import com.consol.citrus.message.DefaultMessageCorrelator;
 import com.consol.citrus.message.MessageCorrelator;
-import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.DockerClientImpl;
-import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
+import com.github.dockerjava.core.*;
+import com.github.dockerjava.jaxrs.JerseyDockerCmdExecFactory;
 
 /**
  * @author Christoph Deppisch
@@ -44,7 +43,7 @@ public class DockerEndpointConfiguration extends AbstractPollableEndpointConfigu
      */
     private com.github.dockerjava.api.DockerClient createDockerClient() {
         return DockerClientImpl.getInstance(getDockerClientConfig())
-                .withDockerCmdExecFactory(new DockerCmdExecFactoryImpl());
+                .withDockerCmdExecFactory(new JerseyDockerCmdExecFactory());
     }
 
     /**
@@ -52,7 +51,7 @@ public class DockerEndpointConfiguration extends AbstractPollableEndpointConfigu
      * @return
      */
     public com.github.dockerjava.api.DockerClient getDockerClient() {
-        if(dockerClient == null) {
+        if (dockerClient == null) {
             dockerClient = createDockerClient();
         }
 
@@ -74,7 +73,7 @@ public class DockerEndpointConfiguration extends AbstractPollableEndpointConfigu
      */
     public DockerClientConfig getDockerClientConfig() {
         if (dockerClientConfig == null) {
-            dockerClientConfig = DockerClientConfig.createDefaultConfigBuilder().build();
+            dockerClientConfig = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
         }
 
         return dockerClientConfig;

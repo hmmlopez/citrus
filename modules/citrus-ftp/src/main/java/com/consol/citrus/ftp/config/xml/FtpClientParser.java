@@ -22,6 +22,7 @@ import com.consol.citrus.endpoint.Endpoint;
 import com.consol.citrus.endpoint.EndpointConfiguration;
 import com.consol.citrus.ftp.client.FtpClient;
 import com.consol.citrus.ftp.client.FtpEndpointConfiguration;
+import com.consol.citrus.message.ErrorHandlingStrategy;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
@@ -38,12 +39,20 @@ public class FtpClientParser extends AbstractEndpointParser {
 
         BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("host"), "host");
         BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("port"), "port");
+        BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("auto-read-files"), "autoReadFiles");
+        BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("local-passive-mode"), "localPassiveMode");
         BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("username"), "user");
         BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("password"), "password");
 
         BeanDefinitionParserUtils.setPropertyReference(endpointConfiguration, element.getAttribute("message-correlator"), "correlator");
 
         BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("polling-interval"), "pollingInterval");
+
+        if (element.hasAttribute("error-strategy")) {
+            endpointConfiguration.addPropertyValue("errorHandlingStrategy",
+                    ErrorHandlingStrategy.fromName(element.getAttribute("error-strategy")));
+        }
+
     }
 
     @Override

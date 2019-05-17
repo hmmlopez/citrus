@@ -18,12 +18,10 @@ package com.consol.citrus.cucumber.step.xml;
 
 import com.consol.citrus.cucumber.container.StepTemplate;
 import cucumber.api.java.ObjectFactory;
-import cucumber.runtime.*;
-import gherkin.I18n;
-import gherkin.formatter.Argument;
-import gherkin.formatter.model.Step;
+import cucumber.runtime.StepDefinition;
+import gherkin.pickles.PickleStep;
+import io.cucumber.stepexpression.*;
 
-import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -33,24 +31,22 @@ import java.util.List;
  */
 public class XmlStepDefinition implements StepDefinition {
 
-    private final JdkPatternArgumentMatcher argumentMatcher;
-    private final List<ParameterInfo> parameterInfos;
+    private final ExpressionArgumentMatcher argumentMatcher;
 
     private final ObjectFactory objectFactory;
 
     private final StepTemplate stepTemplate;
 
-    public XmlStepDefinition(StepTemplate stepTemplate, ObjectFactory objectFactory) {
+    public XmlStepDefinition(StepTemplate stepTemplate, ObjectFactory objectFactory, TypeRegistry typeRegistry) {
         this.objectFactory = objectFactory;
         this.stepTemplate = stepTemplate;
 
-        this.argumentMatcher = new JdkPatternArgumentMatcher(stepTemplate.getPattern());
-        this.parameterInfos = ParameterInfo.fromTypes(stepTemplate.getParameterTypes());
+        this.argumentMatcher = new ExpressionArgumentMatcher(new StepExpressionFactory(typeRegistry).createExpression(stepTemplate.getPattern().pattern()));
     }
 
     @Override
-    public List<Argument> matchedArguments(Step step) {
-        return argumentMatcher.argumentsFrom(step.getName());
+    public List<Argument> matchedArguments(PickleStep step) {
+        return argumentMatcher.argumentsFrom(step);
     }
 
     @Override
@@ -60,22 +56,17 @@ public class XmlStepDefinition implements StepDefinition {
 
     @Override
     public Integer getParameterCount() {
-        return parameterInfos.size();
+        return stepTemplate.getParameterTypes().length;
     }
 
     @Override
-    public ParameterInfo getParameterType(int n, Type argumentType) throws IndexOutOfBoundsException {
-        return parameterInfos.get(n);
-    }
-
-    @Override
-    public void execute(I18n i18n, Object[] args) throws Throwable {
+    public void execute(String language, Object[] args) throws Throwable {
         objectFactory.getInstance(XmlSteps.class).execute(stepTemplate, args);
     }
 
     @Override
     public boolean isDefinedAt(StackTraceElement stackTraceElement) {
-        return stackTraceElement.getClassName().equals(XmlSteps.class);
+        return stackTraceElement.getClassName().equals(XmlSteps.class.getName());
     }
 
     @Override

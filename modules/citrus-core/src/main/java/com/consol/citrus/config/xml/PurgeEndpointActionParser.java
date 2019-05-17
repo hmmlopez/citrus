@@ -41,30 +41,15 @@ public class PurgeEndpointActionParser implements BeanDefinitionParser {
         BeanDefinitionBuilder beanDefinition = BeanDefinitionBuilder.rootBeanDefinition(PurgeEndpointAction.class);
 
         DescriptionElementParser.doParse(element, beanDefinition);
-
-        Element messageSelectorElement = DomUtils.getChildElementByTagName(element, "selector");
-        if (messageSelectorElement != null) {
-            Element selectorStringElement = DomUtils.getChildElementByTagName(messageSelectorElement, "value");
-            if (selectorStringElement != null) {
-                beanDefinition.addPropertyValue("messageSelectorString", DomUtils.getTextValue(selectorStringElement));
-            }
-
-            Map<String, String> messageSelector = new HashMap<String, String>();
-            List<?> messageSelectorElements = DomUtils.getChildElementsByTagName(messageSelectorElement, "element");
-            for (Iterator<?> iter = messageSelectorElements.iterator(); iter.hasNext();) {
-                Element selectorElement = (Element) iter.next();
-                messageSelector.put(selectorElement.getAttribute("name"), selectorElement.getAttribute("value"));
-            }
-            beanDefinition.addPropertyValue("messageSelector", messageSelector);
-        }
+        MessageSelectorParser.doParse(element, beanDefinition);
 
         BeanDefinitionParserUtils.setPropertyValue(beanDefinition, element.getAttribute("receive-timeout"), "receiveTimeout");
 
-        List<String> endpointNames = new ArrayList<String>();
-        ManagedList<BeanDefinition> endpointRefs = new ManagedList<BeanDefinition>();
+        List<String> endpointNames = new ArrayList<>();
+        ManagedList<BeanDefinition> endpointRefs = new ManagedList<>();
         List<?> endpointElements = DomUtils.getChildElementsByTagName(element, "endpoint");
-        for (Iterator<?> iter = endpointElements.iterator(); iter.hasNext();) {
-            Element endpoint = (Element) iter.next();
+        for (Object endpointElement : endpointElements) {
+            Element endpoint = (Element) endpointElement;
             String endpointName = endpoint.getAttribute("name");
             String endpointRef = endpoint.getAttribute("ref");
 

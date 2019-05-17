@@ -17,10 +17,13 @@
 package com.consol.citrus.javadsl.design;
 
 import com.consol.citrus.actions.AbstractTestAction;
-import com.consol.citrus.context.TestContext;
-import com.consol.citrus.dsl.testng.TestNGCitrusTestDesigner;
 import com.consol.citrus.annotations.CitrusTest;
+import com.consol.citrus.context.TestContext;
+import com.consol.citrus.dsl.design.AbstractTestBehavior;
+import com.consol.citrus.dsl.testng.TestNGCitrusTestDesigner;
 import org.testng.annotations.Test;
+
+import static org.hamcrest.Matchers.lessThan;
 
 /**
  * @author Christoph Deppisch
@@ -28,36 +31,6 @@ import org.testng.annotations.Test;
 @Test
 public class IterateJavaIT extends TestNGCitrusTestDesigner {
     
-    @CitrusTest
-    public void iterateContainerNested() {
-        variable("max", "3");
-        
-        iterate(echo("index is: ${i}")).condition("i lt= citrus:randomNumber(1)").index("i");
-        
-        iterate(echo("index is: ${i}")).condition("i lt 20").index("i");
-        
-        iterate(echo("index is: ${i}")).condition("(i lt 5) or (i = 5)").index("i");
-        
-        iterate(echo("index is: ${i}")).condition("(i lt 5) and (i lt 3)").index("i");
-        
-        iterate(echo("index is: ${i}")).condition("i = 0").index("i");
-        
-        iterate(echo("index is: ${i}")).condition("${max} gt= i").index("i");
-
-        iterate(echo("index is: ${i}")).condition("i lt= 50").index("i")
-                                       .startsWith(0)
-                                       .step(5);
-
-        AbstractTestAction anonymous = new AbstractTestAction() {
-            @Override
-            public void doExecute(TestContext context) {
-                log.info(context.getVariable("index"));
-            }
-        };
-
-        iterate(createVariable("index", "${i}"), anonymous).condition("i lt 5").index("i");
-    }
-
     @CitrusTest
     public void iterateContainer() {
         variable("max", "3");
@@ -87,5 +60,15 @@ public class IterateJavaIT extends TestNGCitrusTestDesigner {
         };
 
         iterate().condition("i lt 5").index("i").actions(createVariable("index", "${i}"), anonymous);
+    }
+
+    @CitrusTest
+    public void iterateBehavior() {
+        applyBehavior(new AbstractTestBehavior() {
+            @Override
+            public void apply() {
+                iterate().condition(lessThan(3)).actions(echo("index is: ${i}"));
+            }
+        });
     }
 }

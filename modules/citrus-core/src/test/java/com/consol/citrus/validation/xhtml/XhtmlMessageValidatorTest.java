@@ -20,8 +20,7 @@ import com.consol.citrus.actions.ReceiveMessageAction;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.endpoint.Endpoint;
 import com.consol.citrus.endpoint.EndpointConfiguration;
-import com.consol.citrus.message.DefaultMessage;
-import com.consol.citrus.message.Message;
+import com.consol.citrus.message.*;
 import com.consol.citrus.messaging.Consumer;
 import com.consol.citrus.testng.AbstractTestNGUnitTest;
 import com.consol.citrus.validation.builder.PayloadTemplateMessageBuilder;
@@ -46,8 +45,6 @@ public class XhtmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
     private ReceiveMessageAction receiveMessageBean;
 
-    private XhtmlMessageValidator xhtmlMessageValidator = new XhtmlMessageValidator();
-    
     @Override
     @BeforeMethod
     public void prepareTest() {
@@ -55,14 +52,6 @@ public class XhtmlMessageValidatorTest extends AbstractTestNGUnitTest {
         
         receiveMessageBean = new ReceiveMessageAction();
         receiveMessageBean.setEndpoint(endpoint);
-        
-        try {
-            xhtmlMessageValidator.afterPropertiesSet();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        
-        receiveMessageBean.setValidator(xhtmlMessageValidator);
     }
     
     @Test
@@ -77,12 +66,16 @@ public class XhtmlMessageValidatorTest extends AbstractTestNGUnitTest {
                         + "<html>"
                             + "<body>"
                                 + "<p>Hello TestFramework!</p>"
+                                + "<hr>"
+                                + "<form action=\"/\">"
+                                    + "<input name=\"foo\" type=\"text\">"
+                                + "</form>"
                             + "</body>"
                         + "</html>");
-        
+
         when(consumer.receive(any(TestContext.class), anyLong())).thenReturn(message);
         when(endpoint.getActor()).thenReturn(null);
-        
+
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         receiveMessageBean.setMessageBuilder(controlMessageBuilder);
@@ -93,15 +86,20 @@ public class XhtmlMessageValidatorTest extends AbstractTestNGUnitTest {
                             + "</head>"
                             + "<body>"
                                 + "<p>Hello TestFramework!</p>"
+                                + "<hr/>"
+                                + "<form action=\"/\">"
+                                    + "<input name=\"foo\" type=\"text\" />"
+                                + "</form>"
                             + "</body>"
                         + "</html>");
-        
-        List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
+
+        List<ValidationContext> validationContexts = new ArrayList<>();
         validationContexts.add(validationContext);
         receiveMessageBean.setValidationContexts(validationContexts);
+        receiveMessageBean.setMessageType(MessageType.XHTML.name());
         receiveMessageBean.execute(context);
     }
-    
+
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void testXhtmlValidation() throws Exception {
@@ -109,20 +107,23 @@ public class XhtmlMessageValidatorTest extends AbstractTestNGUnitTest {
         when(endpoint.createConsumer()).thenReturn(consumer);
         when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
         when(endpointConfiguration.getTimeout()).thenReturn(5000L);
-        
+
         Message message = new DefaultMessage("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"org/w3/xhtml/xhtml1-strict.dtd\">"
                         + "<html xmlns=\"http://www.w3.org/1999/xhtml\">"
                             + "<head>"
                                 + "<title>Sample XHTML content</title>"
-                            + "</head>"    
+                            + "</head>"
                             + "<body>"
                                 + "<p>Hello TestFramework!</p>"
+                                + "<form action=\"/\">"
+                                    + "<input name=\"foo\" type=\"text\" />"
+                                + "</form>"
                             + "</body>"
                         + "</html>");
-        
+
         when(consumer.receive(any(TestContext.class), anyLong())).thenReturn(message);
         when(endpoint.getActor()).thenReturn(null);
-        
+
         PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
         XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
         receiveMessageBean.setMessageBuilder(controlMessageBuilder);
@@ -133,13 +134,17 @@ public class XhtmlMessageValidatorTest extends AbstractTestNGUnitTest {
                             + "</head>"
                             + "<body>"
                                 + "<p>Hello TestFramework!</p>"
+                                + "<form action=\"/\">"
+                                    + "<input name=\"foo\" type=\"text\" />"
+                                + "</form>"
                             + "</body>"
                         + "</html>");
-        
-        List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
+
+        List<ValidationContext> validationContexts = new ArrayList<>();
         validationContexts.add(validationContext);
         receiveMessageBean.setValidationContexts(validationContexts);
+        receiveMessageBean.setMessageType(MessageType.XHTML.name());
         receiveMessageBean.execute(context);
     }
-    
+
 }

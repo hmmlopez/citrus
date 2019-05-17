@@ -41,7 +41,7 @@ public class FtpServerBuilder extends AbstractEndpointBuilder<FtpServer> {
      * @return
      */
     public FtpServerBuilder port(int port) {
-        endpoint.setPort(port);
+        endpoint.getEndpointConfiguration().setPort(port);
         return this;
     }
 
@@ -52,6 +52,36 @@ public class FtpServerBuilder extends AbstractEndpointBuilder<FtpServer> {
      */
     public FtpServerBuilder autoStart(boolean autoStart) {
         endpoint.setAutoStart(autoStart);
+        return this;
+    }
+
+    /**
+     * Sets the autoConnect property.
+     * @param autoConnect
+     * @return
+     */
+    public FtpServerBuilder autoConnect(boolean autoConnect) {
+        endpoint.getEndpointConfiguration().setAutoConnect(autoConnect);
+        return this;
+    }
+
+    /**
+     * Sets the autoLogin property.
+     * @param autoLogin
+     * @return
+     */
+    public FtpServerBuilder autoLogin(boolean autoLogin) {
+        endpoint.getEndpointConfiguration().setAutoLogin(autoLogin);
+        return this;
+    }
+
+    /**
+     * Sets the autoHandleCommands property.
+     * @param autoHandleCommands
+     * @return
+     */
+    public FtpServerBuilder autoHandleCommands(String autoHandleCommands) {
+        endpoint.getEndpointConfiguration().setAutoHandleCommands(autoHandleCommands);
         return this;
     }
 
@@ -92,6 +122,16 @@ public class FtpServerBuilder extends AbstractEndpointBuilder<FtpServer> {
      */
     public FtpServerBuilder endpointAdapter(EndpointAdapter endpointAdapter) {
         endpoint.setEndpointAdapter(endpointAdapter);
+        return this;
+    }
+
+    /**
+     * Sets the debug logging enabled flag.
+     * @param enabled
+     * @return
+     */
+    public FtpServerBuilder debugLogging(boolean enabled) {
+        endpoint.setDebugLogging(enabled);
         return this;
     }
 

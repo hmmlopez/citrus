@@ -25,11 +25,16 @@ import com.consol.citrus.http.client.HttpClient;
 import com.consol.citrus.http.client.HttpClientBuilder;
 import com.consol.citrus.http.message.HttpMessageConverter;
 import com.consol.citrus.message.MessageCorrelator;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.integration.http.support.DefaultHttpHeaderMapper;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Christoph Deppisch
@@ -59,9 +64,11 @@ public class HttpClientConfigParser extends AbstractAnnotationConfigParser<HttpC
                     "'endpoint-resolver' is required!");
         }
 
-        if (StringUtils.hasText(annotation.restTemplate())){
+        if (StringUtils.hasText(annotation.restTemplate())) {
             builder.restTemplate(getReferenceResolver().resolve(annotation.restTemplate(), RestTemplate.class));
-        } else {
+        }
+
+        if (StringUtils.hasText(annotation.requestFactory())) {
             builder.requestFactory(getReferenceResolver().resolve(annotation.requestFactory(), ClientHttpRequestFactory.class));
         }
 
@@ -80,12 +87,26 @@ public class HttpClientConfigParser extends AbstractAnnotationConfigParser<HttpC
             builder.endpointResolver(getReferenceResolver().resolve(annotation.endpointResolver(), EndpointUriResolver.class));
         }
 
+        builder.defaultAcceptHeader(annotation.defaultAcceptHeader());
+        builder.handleCookies(annotation.handleCookies());
         builder.charset(annotation.charset());
         builder.contentType(annotation.contentType());
         builder.pollingInterval(annotation.pollingInterval());
 
         builder.errorHandlingStrategy(annotation.errorStrategy());
+        if (StringUtils.hasText(annotation.errorHandler())) {
+            builder.errorHandler(getReferenceResolver().resolve(annotation.errorHandler(), ResponseErrorHandler.class));
+        }
 
+        List<MediaType> binaryMediaTypes = new ArrayList<>();
+        for (String mediaType : annotation.binaryMediaTypes()) {
+            binaryMediaTypes.add(MediaType.valueOf(mediaType));
+        }
+
+        if (!binaryMediaTypes.isEmpty()) {
+            builder.binaryMediaTypes(binaryMediaTypes);
+        }
+        
         builder.interceptors(getReferenceResolver().resolve(annotation.interceptors(), ClientHttpRequestInterceptor.class));
 
         // Set outbound header mapper
@@ -97,6 +118,6 @@ public class HttpClientConfigParser extends AbstractAnnotationConfigParser<HttpC
             builder.actor(getReferenceResolver().resolve(annotation.actor(), TestActor.class));
         }
 
-        return builder.build();
+        return builder.initialize().build();
     }
 }

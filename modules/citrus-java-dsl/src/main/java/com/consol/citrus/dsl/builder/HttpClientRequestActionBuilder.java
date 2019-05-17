@@ -20,9 +20,13 @@ import com.consol.citrus.TestAction;
 import com.consol.citrus.actions.SendMessageAction;
 import com.consol.citrus.dsl.actions.DelegatingTestAction;
 import com.consol.citrus.endpoint.Endpoint;
-import com.consol.citrus.http.message.HttpMessage;
+import com.consol.citrus.http.message.*;
+import com.consol.citrus.message.Message;
 import com.consol.citrus.validation.builder.StaticMessageContentBuilder;
 import org.springframework.http.HttpMethod;
+import org.springframework.util.MultiValueMap;
+
+import javax.servlet.http.Cookie;
 
 /**
  * @author Christoph Deppisch
@@ -42,7 +46,7 @@ public class HttpClientRequestActionBuilder extends SendMessageBuilder<SendMessa
         super(delegate);
         delegate.setDelegate(new SendMessageAction());
         getAction().setEndpoint(httpClient);
-        getAction().setMessageBuilder(new StaticMessageContentBuilder(httpMessage));
+        initMessage(httpMessage);
     }
 
     /**
@@ -54,12 +58,39 @@ public class HttpClientRequestActionBuilder extends SendMessageBuilder<SendMessa
         super(delegate);
         delegate.setDelegate(new SendMessageAction());
         getAction().setEndpointUri(httpClientUri);
-        getAction().setMessageBuilder(new StaticMessageContentBuilder(httpMessage));
+        initMessage(httpMessage);
+    }
+
+    /**
+     * Initialize message builder.
+     * @param message
+     */
+    private void initMessage(HttpMessage message) {
+        StaticMessageContentBuilder staticMessageContentBuilder = StaticMessageContentBuilder.withMessage(message);
+        staticMessageContentBuilder.setMessageHeaders(message.getHeaders());
+        getAction().setMessageBuilder(new HttpMessageContentBuilder(message, staticMessageContentBuilder));
     }
 
     @Override
     protected void setPayload(String payload) {
         httpMessage.setPayload(payload);
+    }
+
+    /**
+     * Adds message payload multi value map data to this builder. This is used when using multipart file upload via
+     * Spring RestTemplate.
+     * @param payload
+     * @return
+     */
+    public HttpClientRequestActionBuilder payload(MultiValueMap<String,Object> payload) {
+        httpMessage.setPayload(payload);
+        return this;
+    }
+
+    @Override
+    public HttpClientRequestActionBuilder name(String name) {
+        httpMessage.setName(name);
+        return super.name(name);
     }
 
     /**
@@ -91,6 +122,16 @@ public class HttpClientRequestActionBuilder extends SendMessageBuilder<SendMessa
      */
     public HttpClientRequestActionBuilder uri(String uri) {
         httpMessage.uri(uri);
+        return this;
+    }
+
+    /**
+     * Adds a query param to the request uri.
+     * @param name
+     * @return
+     */
+    public HttpClientRequestActionBuilder queryParam(String name) {
+        httpMessage.queryParam(name, null);
         return this;
     }
 
@@ -132,6 +173,22 @@ public class HttpClientRequestActionBuilder extends SendMessageBuilder<SendMessa
      */
     public HttpClientRequestActionBuilder accept(String accept) {
         httpMessage.accept(accept);
+        return this;
+    }
+
+    /**
+     * Adds cookie to response by "Cookie" header.
+     * @param cookie
+     * @return
+     */
+    public HttpClientRequestActionBuilder cookie(Cookie cookie) {
+        httpMessage.cookie(cookie);
+        return this;
+    }
+
+    @Override
+    public HttpClientRequestActionBuilder message(Message message) {
+        HttpMessageUtils.copy(message, httpMessage);
         return this;
     }
 }

@@ -19,6 +19,7 @@ package com.consol.citrus.ftp.config.xml;
 import com.consol.citrus.TestActor;
 import com.consol.citrus.ftp.client.FtpClient;
 import com.consol.citrus.message.DefaultMessageCorrelator;
+import com.consol.citrus.message.ErrorHandlingStrategy;
 import com.consol.citrus.testng.AbstractBeanDefinitionParserTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -42,7 +43,10 @@ public class FtpClientParserTest extends AbstractBeanDefinitionParserTest {
         Assert.assertEquals(ftpClient.getEndpointConfiguration().getHost(), "localhost");
         Assert.assertEquals(ftpClient.getEndpointConfiguration().getPort(), new Integer(22222));
         Assert.assertEquals(ftpClient.getEndpointConfiguration().getCorrelator().getClass(), DefaultMessageCorrelator.class);
+        Assert.assertTrue(ftpClient.getEndpointConfiguration().isAutoReadFiles());
+        Assert.assertTrue(ftpClient.getEndpointConfiguration().isLocalPassiveMode());
         Assert.assertEquals(ftpClient.getEndpointConfiguration().getTimeout(), 5000L);
+        Assert.assertEquals(ftpClient.getEndpointConfiguration().getErrorHandlingStrategy(), ErrorHandlingStrategy.PROPAGATE);
 
         // 2nd ftp client
         ftpClient = clients.get("ftpClient2");
@@ -51,7 +55,10 @@ public class FtpClientParserTest extends AbstractBeanDefinitionParserTest {
         Assert.assertEquals(ftpClient.getEndpointConfiguration().getCorrelator().getClass(), DefaultMessageCorrelator.class);
         Assert.assertEquals(ftpClient.getEndpointConfiguration().getUser(), "user");
         Assert.assertEquals(ftpClient.getEndpointConfiguration().getPassword(), "consol");
+        Assert.assertFalse(ftpClient.getEndpointConfiguration().isAutoReadFiles());
+        Assert.assertFalse(ftpClient.getEndpointConfiguration().isLocalPassiveMode());
         Assert.assertEquals(ftpClient.getEndpointConfiguration().getTimeout(), 10000L);
+        Assert.assertEquals(ftpClient.getEndpointConfiguration().getErrorHandlingStrategy(), ErrorHandlingStrategy.THROWS_EXCEPTION);
 
         // 3rd ftp client
         ftpClient = clients.get("ftpClient3");

@@ -17,6 +17,7 @@
 package com.consol.citrus.ftp.config.annotation;
 
 import com.consol.citrus.annotations.CitrusEndpointConfig;
+import com.consol.citrus.message.ErrorHandlingStrategy;
 
 import java.lang.annotation.*;
 
@@ -42,6 +43,18 @@ public @interface FtpClientConfig {
     int port() default 22222;
 
     /**
+     * Auto read files
+     * @return
+     */
+    boolean autoReadFiles() default true;
+
+    /**
+     * Local passive mode
+     * @return
+     */
+    boolean localPassiveMode() default true;
+
+    /**
      * Username
      * @return
      */
@@ -58,6 +71,12 @@ public @interface FtpClientConfig {
      * @return
      */
     String correlator() default "";
+
+    /**
+     * Error handling strategy.
+     * @return
+     */
+    ErrorHandlingStrategy errorStrategy() default ErrorHandlingStrategy.PROPAGATE;
 
     /**
      * Polling interval.

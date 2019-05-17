@@ -77,7 +77,6 @@ public @interface SshClientConfig {
      */
     String knownHosts() default "";
 
-
     /**
      * CommandTimeout.
      * @return

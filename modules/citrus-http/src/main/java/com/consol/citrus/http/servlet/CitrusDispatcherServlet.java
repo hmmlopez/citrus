@@ -16,12 +16,21 @@
 
 package com.consol.citrus.http.servlet;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.consol.citrus.endpoint.EndpointAdapter;
 import com.consol.citrus.http.client.HttpEndpointConfiguration;
 import com.consol.citrus.http.controller.HttpMessageController;
-import com.consol.citrus.http.interceptor.*;
+import com.consol.citrus.http.interceptor.DelegatingHandlerInterceptor;
+import com.consol.citrus.http.interceptor.LoggingHandlerInterceptor;
+import com.consol.citrus.http.interceptor.MappedInterceptorAdapter;
+import com.consol.citrus.http.message.DelegatingHttpEntityMessageConverter;
 import com.consol.citrus.http.server.HttpServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.integration.http.support.DefaultHttpHeaderMapper;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.context.request.WebRequestInterceptor;
@@ -30,9 +39,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.handler.MappedInterceptor;
 import org.springframework.web.servlet.handler.WebRequestHandlerInterceptorAdapter;
 import org.springframework.web.util.UrlPathHelper;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Citrus dispatcher servlet extends Spring's message dispatcher servlet and just
@@ -43,6 +49,9 @@ import java.util.List;
  */
 public class CitrusDispatcherServlet extends DispatcherServlet {
 
+    /** Logger */
+    private static Logger log = LoggerFactory.getLogger(CitrusDispatcherServlet.class);
+
     /** Http server hosting the servlet */
     private HttpServer httpServer;
 
@@ -50,6 +59,7 @@ public class CitrusDispatcherServlet extends DispatcherServlet {
     protected static final String LOGGING_INTERCEPTOR_BEAN_NAME = "citrusLoggingInterceptor";
     protected static final String HANDLER_INTERCEPTOR_BEAN_NAME = "citrusHandlerInterceptor";
     protected static final String MESSAGE_CONTROLLER_BEAN_NAME = "citrusHttpMessageController";
+    protected static final String MESSAGE_CONVERTER_BEAN_NAME = "citrusHttpMessageConverter";
 
     /**
      * Default constructor using http server instance that
@@ -66,6 +76,7 @@ public class CitrusDispatcherServlet extends DispatcherServlet {
 
         configureHandlerInterceptor(context);
         configureMessageController(context);
+        configureMessageConverter(context);
     }
 
     /**
@@ -91,10 +102,27 @@ public class CitrusDispatcherServlet extends DispatcherServlet {
             HttpEndpointConfiguration endpointConfiguration = new HttpEndpointConfiguration();
             endpointConfiguration.setMessageConverter(httpServer.getMessageConverter());
             endpointConfiguration.setHeaderMapper(DefaultHttpHeaderMapper.inboundMapper());
+            endpointConfiguration.setHandleAttributeHeaders(httpServer.isHandleAttributeHeaders());
+            endpointConfiguration.setHandleCookies(httpServer.isHandleCookies());
+            endpointConfiguration.setDefaultStatusCode(httpServer.getDefaultStatusCode());
             messageController.setEndpointConfiguration(endpointConfiguration);
 
             if (endpointAdapter != null) {
                 messageController.setEndpointAdapter(endpointAdapter);
+            }
+        }
+    }
+
+    /**
+     * Post process message converter.
+     * @param context
+     */
+    protected void configureMessageConverter(ApplicationContext context) {
+        if (context.containsBean(MESSAGE_CONVERTER_BEAN_NAME)) {
+            HttpMessageConverter messageConverter = context.getBean(MESSAGE_CONVERTER_BEAN_NAME, HttpMessageConverter.class);
+
+            if (messageConverter instanceof DelegatingHttpEntityMessageConverter) {
+                ((DelegatingHttpEntityMessageConverter) messageConverter).setBinaryMediaTypes(httpServer.getBinaryMediaTypes());
             }
         }
     }
@@ -115,13 +143,15 @@ public class CitrusDispatcherServlet extends DispatcherServlet {
 
         if (interceptors != null) {
             for (Object interceptor : interceptors) {
-                if (interceptor instanceof HandlerInterceptor) {
+                if (interceptor instanceof MappedInterceptor) {
+                    handlerInterceptors.add(new MappedInterceptorAdapter((MappedInterceptor)interceptor,
+                            new UrlPathHelper(), new AntPathMatcher()));
+                } else if (interceptor instanceof HandlerInterceptor) {
                     handlerInterceptors.add((HandlerInterceptor) interceptor);
                 } else if (interceptor instanceof WebRequestInterceptor) {
                     handlerInterceptors.add(new WebRequestHandlerInterceptorAdapter((WebRequestInterceptor) interceptor));
-                } else if (interceptor instanceof MappedInterceptor) {
-                    handlerInterceptors.add(new MappedInterceptorAdapter((MappedInterceptor)interceptor,
-                            new UrlPathHelper(), new AntPathMatcher()));
+                } else {
+                    log.warn("Unsupported interceptor type: {}", interceptor.getClass().getName());
                 }
             }
         }

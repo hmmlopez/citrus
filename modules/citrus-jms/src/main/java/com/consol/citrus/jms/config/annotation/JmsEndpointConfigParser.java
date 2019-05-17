@@ -19,11 +19,13 @@ package com.consol.citrus.jms.config.annotation;
 import com.consol.citrus.TestActor;
 import com.consol.citrus.config.annotation.AbstractAnnotationConfigParser;
 import com.consol.citrus.context.ReferenceResolver;
+import com.consol.citrus.endpoint.resolver.EndpointUriResolver;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.jms.endpoint.JmsEndpoint;
 import com.consol.citrus.jms.endpoint.JmsEndpointBuilder;
 import com.consol.citrus.jms.message.JmsMessageConverter;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.support.destination.DestinationResolver;
 import org.springframework.util.StringUtils;
 
 import javax.jms.ConnectionFactory;
@@ -85,11 +87,35 @@ public class JmsEndpointConfigParser extends AbstractAnnotationConfigParser<JmsE
                     "or one of destination or destination-name must be provided");
         }
 
+        if (annotation.autoStart() && !annotation.pubSubDomain()) {
+            throw new CitrusRuntimeException("When providing auto start enabled,  " +
+                    "pubSubDomain should also be enabled");
+        }
+
+        if (annotation.durableSubscription() && !annotation.pubSubDomain()) {
+            throw new CitrusRuntimeException("When providing durable subscription enabled,  " +
+                    "pubSubDomain should also be enabled");
+        }
+
         builder.pubSubDomain(annotation.pubSubDomain());
+        builder.autoStart(annotation.autoStart());
+        builder.durableSubscription(annotation.durableSubscription());
+        if (StringUtils.hasText(annotation.durableSubscriberName())) {
+            builder.durableSubscriberName(annotation.durableSubscriberName());
+        }
+
         builder.useObjectMessages(annotation.useObjectMessages());
 
         if (StringUtils.hasText(annotation.messageConverter())) {
             builder.messageConverter(getReferenceResolver().resolve(annotation.messageConverter(), JmsMessageConverter.class));
+        }
+
+        if (StringUtils.hasText(annotation.destinationResolver())) {
+            builder.destinationResolver(getReferenceResolver().resolve(annotation.destinationResolver(), DestinationResolver.class));
+        }
+
+        if (StringUtils.hasText(annotation.destinationNameResolver())) {
+            builder.destinationNameResolver(getReferenceResolver().resolve(annotation.destinationNameResolver(), EndpointUriResolver.class));
         }
 
         builder.timeout(annotation.timeout());
@@ -98,6 +124,6 @@ public class JmsEndpointConfigParser extends AbstractAnnotationConfigParser<JmsE
             builder.actor(getReferenceResolver().resolve(annotation.actor(), TestActor.class));
         }
 
-        return builder.build();
+        return builder.initialize().build();
     }
 }

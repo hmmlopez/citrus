@@ -34,7 +34,7 @@ public abstract class AbstractTestAction implements TestAction {
     
     /** This actions explicit test actor */
     private TestActor actor;
-    
+
     /**
      * Do basic logging and delegate execution to subclass.
      */

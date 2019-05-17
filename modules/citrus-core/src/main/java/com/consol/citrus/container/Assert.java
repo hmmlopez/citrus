@@ -33,6 +33,7 @@ import java.util.List;
  * @since 2009
  */
 public class Assert extends AbstractActionContainer {
+
     /** Nested test action */
     private TestAction action;
 
@@ -59,7 +60,7 @@ public class Assert extends AbstractActionContainer {
         }
 
         try {
-            setLastExecutedAction(action);
+            setActiveAction(action);
             action.execute(context);
         } catch (Exception e) {
             log.debug("Validating caught exception ...");
@@ -72,7 +73,7 @@ public class Assert extends AbstractActionContainer {
             if (message != null) {
                 if (ValidationMatcherUtils.isValidationMatcherExpression(message)) {
                     ValidationMatcherUtils.resolveValidationMatcher("message", e.getLocalizedMessage(), message, context);
-                } else if(!context.replaceDynamicContentInString(message).equals(e.getLocalizedMessage())) {
+                } else if (!context.replaceDynamicContentInString(message).equals(e.getLocalizedMessage())) {
                     throw new ValidationException("Validation failed for asserted exception message - expected: '" + 
                         message + "' but was: '" + e.getLocalizedMessage() + "'", e);
                 }

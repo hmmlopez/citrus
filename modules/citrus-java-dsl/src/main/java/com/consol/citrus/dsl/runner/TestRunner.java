@@ -18,8 +18,7 @@ package com.consol.citrus.dsl.runner;
 
 import com.consol.citrus.*;
 import com.consol.citrus.actions.*;
-import com.consol.citrus.container.AbstractActionContainer;
-import com.consol.citrus.container.Template;
+import com.consol.citrus.container.*;
 import com.consol.citrus.dsl.builder.*;
 import com.consol.citrus.script.GroovyAction;
 import com.consol.citrus.server.Server;
@@ -254,16 +253,6 @@ public interface TestRunner extends ApplicationContextAware {
     SendMessageAction send(BuilderSupport<SendMessageBuilder> configurer);
 
     /**
-     * Create SOAP fault send message action definition with message endpoint instance. Returns SOAP fault definition with
-     * specific properties for SOAP fault messages.
-     *
-     * @param configurer
-     * @return
-     * @deprecated since 2.6 in favor of using {@link TestRunner#soap(BuilderSupport)} )}
-     */
-    TestAction sendSoapFault(BuilderSupport<SendSoapFaultBuilder> configurer);
-
-    /**
      * Add sleep action with default delay time.
      * @return
      */
@@ -282,8 +271,16 @@ public interface TestRunner extends ApplicationContextAware {
      *
      * @param configurer
      * @return
+     * @deprecated in favor of {@link TestRunner#waitFor()}
      */
-    WaitAction waitFor(BuilderSupport<WaitActionBuilder> configurer);
+    @Deprecated
+    Wait waitFor(BuilderSupport<WaitBuilder> configurer);
+
+    /**
+     * Creates a wait action that waits for a condition to be satisfied before continuing.
+     * @return
+     */
+    WaitBuilder waitFor();
 
     /**
      * Creates a new start server action definition
@@ -334,6 +331,15 @@ public interface TestRunner extends ApplicationContextAware {
      * @return
      */
     StopTimeAction stopTime(String id);
+
+    /**
+     * Creates a new stop time action.
+     *
+     * @param id
+     * @param suffix
+     * @return
+     */
+    StopTimeAction stopTime(String id, String suffix);
 
     /**
      * Creates a new trace variables action definition
@@ -425,6 +431,12 @@ public interface TestRunner extends ApplicationContextAware {
     SequenceBuilder sequential();
 
     /**
+     * Adds async container with nested test actions.
+     * @return
+     */
+    AsyncBuilder async();
+
+    /**
      * Repeat nested test actions based on a timer interval.
      * @return
      */
@@ -448,6 +460,18 @@ public interface TestRunner extends ApplicationContextAware {
      * @return
      */
     TestAction docker(BuilderSupport<DockerActionBuilder> configurer);
+
+    /**
+     * Run kubernetes command action.
+     * @return
+     */
+    TestAction kubernetes(BuilderSupport<KubernetesActionBuilder> configurer);
+
+    /**
+     * Run selenium command action.
+     * @return
+     */
+    TestAction selenium(BuilderSupport<SeleniumActionBuilder> configurer);
 
     /**
      * Run http command action.

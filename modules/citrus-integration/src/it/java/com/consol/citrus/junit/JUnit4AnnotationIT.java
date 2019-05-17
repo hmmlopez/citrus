@@ -16,13 +16,17 @@
 
 package com.consol.citrus.junit;
 
+import com.consol.citrus.ShouldFailGroup;
 import com.consol.citrus.annotations.CitrusXmlTest;
+import com.consol.citrus.exceptions.TestCaseFailedException;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * @author Christoph Deppisch
  * @since 2.2
  */
+@SuppressWarnings("squid:S2699")
 public class JUnit4AnnotationIT extends AbstractJUnit4CitrusTest {
 
     @Test
@@ -43,5 +47,11 @@ public class JUnit4AnnotationIT extends AbstractJUnit4CitrusTest {
     @Test
     @CitrusXmlTest(packageScan = "com.consol.citrus.functions")
     public void JUnit4Annotation_3_IT() {
+    }
+
+    @Test(expected = TestCaseFailedException.class)
+    @Category( ShouldFailGroup.class )
+    @CitrusXmlTest(name = "FailJUnit4IT")
+    public void JUnit4Annotation_4_IT() {
     }
 }

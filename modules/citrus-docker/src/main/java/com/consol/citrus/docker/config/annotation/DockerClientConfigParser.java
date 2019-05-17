@@ -60,9 +60,11 @@ public class DockerClientConfigParser extends AbstractAnnotationConfigParser<Doc
             builder.email(annotation.email());
         }
 
-        if (StringUtils.hasText(annotation.serverAddress())) {
-            builder.serverAddress(annotation.serverAddress());
+        if (StringUtils.hasText(annotation.registry())) {
+            builder.registry(annotation.registry());
         }
+
+        builder.verifyTls(annotation.verifyTls());
 
         if (StringUtils.hasText(annotation.certPath())) {
             builder.certPath(annotation.certPath());
@@ -72,6 +74,6 @@ public class DockerClientConfigParser extends AbstractAnnotationConfigParser<Doc
             builder.configPath(annotation.configPath());
         }
 
-        return builder.build();
+        return builder.initialize().build();
     }
 }

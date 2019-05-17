@@ -17,6 +17,7 @@
 package com.consol.citrus.ftp.client;
 
 import com.consol.citrus.endpoint.AbstractEndpointBuilder;
+import com.consol.citrus.message.ErrorHandlingStrategy;
 import com.consol.citrus.message.MessageCorrelator;
 
 /**
@@ -54,6 +55,26 @@ public class FtpClientBuilder extends AbstractEndpointBuilder<FtpClient> {
     }
 
     /**
+     * Sets the auto read files property.
+     * @param autoReadFiles
+     * @return
+     */
+    public FtpClientBuilder autoReadFiles(boolean autoReadFiles) {
+        endpoint.getEndpointConfiguration().setAutoReadFiles(autoReadFiles);
+        return this;
+    }
+
+    /**
+     * Sets the local passive mode property.
+     * @param localPassiveMode
+     * @return
+     */
+    public FtpClientBuilder localPassiveMode(boolean localPassiveMode) {
+        endpoint.getEndpointConfiguration().setLocalPassiveMode(localPassiveMode);
+        return this;
+    }
+
+    /**
      * Sets the client username.
      * @param username
      * @return
@@ -80,6 +101,16 @@ public class FtpClientBuilder extends AbstractEndpointBuilder<FtpClient> {
      */
     public FtpClientBuilder correlator(MessageCorrelator correlator) {
         endpoint.getEndpointConfiguration().setCorrelator(correlator);
+        return this;
+    }
+
+    /**
+     * Sets the error handling strategy.
+     * @param errorStrategy
+     * @return
+     */
+    public FtpClientBuilder errorHandlingStrategy(ErrorHandlingStrategy errorStrategy) {
+        endpoint.getEndpointConfiguration().setErrorHandlingStrategy(errorStrategy);
         return this;
     }
 

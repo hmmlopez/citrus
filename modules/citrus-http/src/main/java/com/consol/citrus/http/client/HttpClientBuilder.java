@@ -22,9 +22,11 @@ import com.consol.citrus.http.message.HttpMessageConverter;
 import com.consol.citrus.message.ErrorHandlingStrategy;
 import com.consol.citrus.message.MessageCorrelator;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.integration.http.support.DefaultHttpHeaderMapper;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -125,6 +127,26 @@ public class HttpClientBuilder extends AbstractEndpointBuilder<HttpClient> {
     }
 
     /**
+     * Sets the default accept header.
+     * @param flag
+     * @return
+     */
+    public HttpClientBuilder defaultAcceptHeader(boolean flag) {
+        endpoint.getEndpointConfiguration().setDefaultAcceptHeader(flag);
+        return this;
+    }
+
+    /**
+     * Sets the handleCookies property.
+     * @param flag
+     * @return
+     */
+    public HttpClientBuilder handleCookies(boolean flag) {
+        endpoint.getEndpointConfiguration().setHandleCookies(flag);
+        return this;
+    }
+
+    /**
      * Sets the content type.
      * @param contentType
      * @return
@@ -155,12 +177,32 @@ public class HttpClientBuilder extends AbstractEndpointBuilder<HttpClient> {
     }
 
     /**
+     * Sets the error handler.
+     * @param errorHandler
+     * @return
+     */
+    public HttpClientBuilder errorHandler(ResponseErrorHandler errorHandler) {
+        endpoint.getEndpointConfiguration().setErrorHandler(errorHandler);
+        return this;
+    }
+
+    /**
      * Sets the client interceptors.
      * @param interceptors
      * @return
      */
     public HttpClientBuilder interceptors(List<ClientHttpRequestInterceptor> interceptors) {
         endpoint.getEndpointConfiguration().setClientInterceptors(interceptors);
+        return this;
+    }
+
+    /**
+     * Sets the binaryMediaTypes.
+     * @param binaryMediaTypes
+     * @return
+     */
+    public HttpClientBuilder binaryMediaTypes(List<MediaType> binaryMediaTypes) {
+        endpoint.getEndpointConfiguration().setBinaryMediaTypes(binaryMediaTypes);
         return this;
     }
 

@@ -54,6 +54,12 @@ public @interface SshServerConfig {
     String hostKeyPath() default "";
 
     /**
+     * UserHomeDir.
+     * @return
+     */
+    String userHomePath() default "";
+
+    /**
      * AllowedKeyPath.
      * @return
      */
@@ -76,6 +82,12 @@ public @interface SshServerConfig {
      * @return
      */
     String endpointAdapter() default "";
+
+    /**
+     * Debug logging enabled.
+     * @return
+     */
+    boolean debugLogging() default false;
 
     /**
      * Auto start.

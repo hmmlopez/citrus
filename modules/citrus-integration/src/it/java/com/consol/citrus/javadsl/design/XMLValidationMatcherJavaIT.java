@@ -31,8 +31,9 @@ public class XMLValidationMatcherJavaIT extends TestNGCitrusTestDesigner {
     public void xmlValidationMatcher() {
         variable("greetingText", "Hello Citrus");      
         
-        parallel(
+        parallel().actions(
             http().client("httpClient")
+                .send()
                 .post()
                 .payload("<testRequestMessage>" +
                             "<text>citrus:cdataSection('<data>" +
@@ -40,10 +41,11 @@ public class XMLValidationMatcherJavaIT extends TestNGCitrusTestDesigner {
                               "<timestamp>2012-07-01T00:00:00</timestamp>" +
                             "</data>')</text>" +
                         "</testRequestMessage>")
-                .contentType("text/xml")
-                .accept("text/xml, */*"),
-            sequential(
+                .contentType("application/xml")
+                .accept("application/xml"),
+            sequential().actions(
                 http().server("httpServerRequestEndpoint")
+                    .receive()
                     .post("/test")
                     .payload("<testRequestMessage>" +
                                     "<text>citrus:cdataSection('@matchesXml('<data>" +
@@ -51,22 +53,24 @@ public class XMLValidationMatcherJavaIT extends TestNGCitrusTestDesigner {
                                   "<timestamp>@ignore@</timestamp>" +
                                 "</data>')@')</text>" +
                                 "</testRequestMessage>")
-                    .contentType("text/xml")
-                    .accept("text/xml, */*")
+                    .contentType("application/xml")
+                    .accept("application/xml")
                     .header("Authorization", "Basic c29tZVVzZXJuYW1lOnNvbWVQYXNzd29yZA==")
                     .extractFromHeader("citrus_jms_messageId", "correlation_id"),
                 http().server("httpServerResponseEndpoint")
-                    .respond(HttpStatus.OK)
+                    .send()
+                    .response(HttpStatus.OK)
                     .payload("<testResponseMessage>" +
                                     "<text>Hello Citrus</text>" +
                                 "</testResponseMessage>")
                     .version("HTTP/1.1")
-                    .contentType("text/xml")
+                    .contentType("application/xml")
                     .header("citrus_jms_correlationId", "${correlation_id}")
             )
         );
         
         http().client("httpClient")
+            .receive()
             .response(HttpStatus.OK)
             .payload("<testResponseMessage>" +
                         "<text>Hello Citrus</text>" +

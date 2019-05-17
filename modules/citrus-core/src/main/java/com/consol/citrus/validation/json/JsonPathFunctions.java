@@ -19,8 +19,7 @@ package com.consol.citrus.validation.json;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * Custom JsonPath function support for size(), keySet() and toString() operations on Json objects and arrays.
@@ -30,7 +29,7 @@ import java.util.Collections;
  */
 public class JsonPathFunctions {
 
-    private static final String[] FUNCTION_NAMES = {"keySet", "size", "values", "toString"};
+    private static final String[] FUNCTION_NAMES = {"keySet", "size", "values", "toString", "exists"};
 
     /**
      * Evaluates function on result. Supported functions are size(), keySet(), values() and toString().
@@ -39,29 +38,52 @@ public class JsonPathFunctions {
      * @return
      */
     public static Object evaluate(Object jsonPathResult, String jsonPathFunction) {
-        if (jsonPathFunction.equals("size")) {
-            if (jsonPathResult instanceof JSONArray) {
-                return ((JSONArray) jsonPathResult).size();
-            } else if (jsonPathResult instanceof JSONObject) {
-                return ((JSONObject) jsonPathResult).size();
-            } else {
-                return 0;
-            }
-        } else if (jsonPathFunction.equals("keySet")) {
-            if (jsonPathResult instanceof JSONObject) {
-                return ((JSONObject) jsonPathResult).keySet();
-            } else {
-                return Collections.emptySet();
-            }
-        } else if (jsonPathFunction.equals("values")) {
-            if (jsonPathResult instanceof JSONObject) {
-                return ((JSONObject) jsonPathResult).values().toArray();
-            } else {
-                return new Object[] {};
-            }
+        switch (jsonPathFunction) {
+            case "exists":
+                return jsonPathResult != null;
+            case "size":
+                if (jsonPathResult instanceof JSONArray) {
+                    return ((JSONArray) jsonPathResult).size();
+                } else if (jsonPathResult instanceof JSONObject) {
+                    return ((JSONObject) jsonPathResult).size();
+                } else {
+                    return jsonPathResult != null ? 1 : 0;
+                }
+            case "keySet":
+                if (jsonPathResult instanceof JSONObject) {
+                    return ((JSONObject) jsonPathResult).keySet();
+                } else {
+                    return Collections.emptySet();
+                }
+            case "values":
+                if (jsonPathResult instanceof JSONObject) {
+                    Object[] valueObjects = ((JSONObject) jsonPathResult).values().toArray();
+                    List<String> values = new ArrayList<>(valueObjects.length);
+                    for (Object value : valueObjects) {
+                        if (value instanceof JSONObject) {
+                            values.add(((JSONObject) value).toJSONString());
+                        } else if (value instanceof JSONArray) {
+                            values.add(((JSONArray) value).toJSONString());
+                        } else {
+                            values.add(String.valueOf(value));
+                        }
+                    }
+
+                    return values.toString();
+                } else {
+                    return new Object[]{};
+                }
+            case "toString":
+                if (jsonPathResult instanceof JSONArray) {
+                    return ((JSONArray) jsonPathResult).toJSONString();
+                } else if (jsonPathResult instanceof JSONObject) {
+                    return ((JSONObject) jsonPathResult).toJSONString();
+                } else {
+                    return jsonPathResult.toString();
+                }
         }
 
-        return jsonPathResult.toString();
+        return jsonPathResult;
     }
 
     /**

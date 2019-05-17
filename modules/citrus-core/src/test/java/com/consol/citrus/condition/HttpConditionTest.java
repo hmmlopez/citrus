@@ -16,7 +16,9 @@
 
 package com.consol.citrus.condition;
 
-import com.consol.citrus.context.TestContext;
+import com.consol.citrus.testng.AbstractTestNGUnitTest;
+import com.jparams.verifier.tostring.ToStringVerifier;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -24,20 +26,21 @@ import org.testng.annotations.Test;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 /**
  * @author Martin Maher
  * @since 2.4
  */
-public class HttpConditionTest {
+public class HttpConditionTest extends AbstractTestNGUnitTest {
 
-    private TestContext context = Mockito.mock(TestContext.class);
     private HttpURLConnection connection = Mockito.mock(HttpURLConnection.class);
 
     @Test
-    public void isSatisfiedShouldSucceedWithValidUrl() throws Exception {
+    public void testValidUrl() throws Exception {
         String url = "http://www.citrusframework.org";
         String timeout = "3000";
         String httpResponseCode = "200";
@@ -59,10 +62,6 @@ public class HttpConditionTest {
         testling.setTimeout(timeout);
         testling.setHttpResponseCode(httpResponseCode);
 
-        reset(context);
-        when(context.resolveDynamicValue(url)).thenReturn(url);
-        when(context.resolveDynamicValue(httpResponseCode)).thenReturn(httpResponseCode);
-        when(context.resolveDynamicValue(timeout)).thenReturn(timeout);
         Assert.assertTrue(testling.isSatisfied(context));
 
         verify(connection).setConnectTimeout(3000);
@@ -71,7 +70,37 @@ public class HttpConditionTest {
     }
 
     @Test
-    public void isSatisfiedShouldFailDueToInvalidUrl() throws Exception {
+    public void testValidUrlVariableSupport() throws Exception {
+        context.setVariable("url", "http://www.citrusframework.org");
+        context.setVariable("timeout", "3000");
+        context.setVariable("httpResponseCode", "200");
+
+        reset(connection);
+
+        when(connection.getResponseCode()).thenReturn(200);
+
+        HttpCondition testling = new HttpCondition() {
+            @Override
+            protected HttpURLConnection openConnection(URL url) {
+                Assert.assertEquals(url.toExternalForm(), "http://www.citrusframework.org");
+
+                return connection;
+            }
+        };
+
+        testling.setUrl("${url}");
+        testling.setTimeout("${timeout}");
+        testling.setHttpResponseCode("${httpResponseCode}");
+
+        Assert.assertTrue(testling.isSatisfied(context));
+
+        verify(connection).setConnectTimeout(3000);
+        verify(connection).setRequestMethod("HEAD");
+        verify(connection).disconnect();
+    }
+
+    @Test
+    public void testInvalidUrl() {
         String url = "http://127.0.0.1:13333/some/unknown/path";
         String httpResponseCode = "200";
         String timeout = "1000";
@@ -80,11 +109,22 @@ public class HttpConditionTest {
         testling.setHttpResponseCode(httpResponseCode);
         testling.setTimeout(timeout);
 
-        reset(context);
-        when(context.resolveDynamicValue(url)).thenReturn(url);
-        when(context.resolveDynamicValue(httpResponseCode)).thenReturn(httpResponseCode);
-        when(context.resolveDynamicValue(timeout)).thenReturn(timeout);
         Assert.assertFalse(testling.isSatisfied(context));
+    }
+
+    @Test
+    public void testEqualsContract(){
+        EqualsVerifier
+                .forClass(HttpCondition.class)
+                .withRedefinedSuperclass()
+                .verify();
+    }
+
+    @Test
+    public void testToString(){
+        ToStringVerifier
+                .forClass(HttpCondition.class)
+                .verify();
     }
 
 }

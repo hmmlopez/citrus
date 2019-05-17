@@ -18,7 +18,7 @@ package com.consol.citrus.ssh.server;
 
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import org.apache.sshd.common.util.io.IoUtils;
-import org.apache.sshd.common.util.SecurityUtils;
+import org.apache.sshd.common.util.security.SecurityUtils;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
@@ -104,7 +104,7 @@ public class SinglePublicKeyAuthenticatorTest {
      * @throws IOException
      */
     private File copyToTempFile(String pResource) throws IOException {
-        File temp = File.createTempFile("citrus-ssh-test", "pem");
+        File temp = File.createTempFile("citrus-ssh", "pem");
         FileCopyUtils.copy(getClass().getResourceAsStream(pResource),
                            new FileOutputStream(temp));
         return temp;

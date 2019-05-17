@@ -19,24 +19,20 @@ package com.consol.citrus.http.client;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.endpoint.AbstractEndpoint;
 import com.consol.citrus.exceptions.ActionTimeoutException;
-import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.http.interceptor.LoggingClientInterceptor;
 import com.consol.citrus.http.message.HttpMessage;
-import com.consol.citrus.message.*;
+import com.consol.citrus.message.Message;
 import com.consol.citrus.message.correlation.CorrelationManager;
 import com.consol.citrus.message.correlation.PollingCorrelationManager;
 import com.consol.citrus.messaging.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
-import org.springframework.http.client.ClientHttpRequestInterceptor;
-import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.DefaultResponseErrorHandler;
-import org.springframework.web.client.ResponseErrorHandler;
 
-import java.io.IOException;
-import java.util.Arrays;
+import java.net.URI;
+import java.util.Collections;
+import java.util.Optional;
 
 /**
  * Http client sends messages via Http protocol to some Http server instance, defined by a request endpoint url. Synchronous response
@@ -66,7 +62,7 @@ public class HttpClient extends AbstractEndpoint implements Producer, ReplyConsu
     public HttpClient(HttpEndpointConfiguration endpointConfiguration) {
         super(endpointConfiguration);
 
-        this.correlationManager = new PollingCorrelationManager(endpointConfiguration, "Reply message did not arrive yet");
+        this.correlationManager = new PollingCorrelationManager<>(endpointConfiguration, "Reply message did not arrive yet");
     }
 
     @Override
@@ -80,7 +76,7 @@ public class HttpClient extends AbstractEndpoint implements Producer, ReplyConsu
             LoggingClientInterceptor loggingClientInterceptor = new LoggingClientInterceptor();
             loggingClientInterceptor.setMessageListener(context.getMessageListeners());
 
-            getEndpointConfiguration().setClientInterceptors(Arrays.<ClientHttpRequestInterceptor>asList(loggingClientInterceptor));
+            getEndpointConfiguration().setClientInterceptors(Collections.singletonList(loggingClientInterceptor));
         }
 
         HttpMessage httpMessage;
@@ -113,12 +109,36 @@ public class HttpClient extends AbstractEndpoint implements Producer, ReplyConsu
 
         HttpEntity<?> requestEntity = getEndpointConfiguration().getMessageConverter().convertOutbound(httpMessage, getEndpointConfiguration(), context);
 
-        getEndpointConfiguration().getRestTemplate().setErrorHandler(new InternalResponseErrorHandler(correlationKey, context));
-        ResponseEntity<?> response = getEndpointConfiguration().getRestTemplate().exchange(endpointUri, method, requestEntity, String.class);
+        try {
+            ResponseEntity<?> response;
+            MediaType accept = Optional.ofNullable(httpMessage.getAccept())
+                                .map(mediaType -> mediaType.split(","))
+                                .map(mediaType -> {
+                                    try {
+                                        return MediaType.valueOf(mediaType[0]);
+                                    } catch (InvalidMediaTypeException e) {
+                                        log.warn(String.format("Failed to parse accept media type '%s' - using default media type '%s'",
+                                                mediaType[0], MediaType.ALL_VALUE), e);
+                                        return MediaType.ALL;
+                                    }
+                                })
+                                .orElse(MediaType.ALL);
 
-        log.info("HTTP message was sent to endpoint: '" + endpointUri + "'");
+            if (getEndpointConfiguration().getBinaryMediaTypes().stream().anyMatch(mediaType -> mediaType.includes(accept))) {
+                response = getEndpointConfiguration().getRestTemplate().exchange(URI.create(endpointUri), method, requestEntity, byte[].class);
+            } else {
+                response = getEndpointConfiguration().getRestTemplate().exchange(URI.create(endpointUri), method, requestEntity, String.class);
+            }
 
-        correlationManager.store(correlationKey, getEndpointConfiguration().getMessageConverter().convertInbound(response, getEndpointConfiguration(), context));
+            log.info("HTTP message was sent to endpoint: '" + endpointUri + "'");
+            correlationManager.store(correlationKey, getEndpointConfiguration().getMessageConverter().convertInbound(response, getEndpointConfiguration(), context));
+        } catch (HttpErrorPropagatingException e) {
+            log.info("Caught HTTP rest client exception: " + e.getMessage());
+            log.info("Propagating HTTP rest client exception according to error handling strategy");
+            Message responseMessage = getEndpointConfiguration().getMessageConverter().convertInbound(
+                    new ResponseEntity<>(e.getResponseBodyAsString(), e.getResponseHeaders(), e.getStatusCode()), getEndpointConfiguration(), context);
+            correlationManager.store(correlationKey, responseMessage);
+        }
     }
 
     @Override
@@ -147,52 +167,6 @@ public class HttpClient extends AbstractEndpoint implements Producer, ReplyConsu
         }
 
         return message;
-    }
-
-    /**
-     * Handles error response messages constructing a proper response message
-     * which will be propagated to the respective reply handler for
-     * further processing.
-     */
-    private class InternalResponseErrorHandler implements ResponseErrorHandler {
-
-        /** Request message associated with this response error handler */
-        private String correlationKey;
-
-        /** Test context */
-        private TestContext context;
-
-        /**
-         * Default constructor provided with request message
-         * associated with this error handler.
-         */
-        public InternalResponseErrorHandler(String correlationKey, TestContext context) {
-            this.correlationKey = correlationKey;
-        }
-
-        /**
-         * Check for error HTTP status code in response message.
-         * Delegates to default Spring implementation.
-         */
-        public boolean hasError(ClientHttpResponse response) throws IOException {
-            return new DefaultResponseErrorHandler().hasError(response);
-        }
-
-        /**
-         * Handle error response message according to error strategy.
-         */
-        public void handleError(ClientHttpResponse response) throws IOException {
-            if (getEndpointConfiguration().getErrorHandlingStrategy().equals(ErrorHandlingStrategy.PROPAGATE)) {
-                Message responseMessage = getEndpointConfiguration().getMessageConverter().convertInbound(
-                        new ResponseEntity(response.getBody(), response.getHeaders(), response.getStatusCode()), getEndpointConfiguration(), context);
-                correlationManager.store(correlationKey, responseMessage);
-            } else if (getEndpointConfiguration().getErrorHandlingStrategy().equals(ErrorHandlingStrategy.THROWS_EXCEPTION)) {
-                new DefaultResponseErrorHandler().handleError(response);
-            } else {
-                throw new CitrusRuntimeException("Unsupported error strategy: " + getEndpointConfiguration().getErrorHandlingStrategy());
-            }
-        }
-
     }
 
     /**

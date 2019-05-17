@@ -17,8 +17,10 @@
 package com.consol.citrus.jms.endpoint;
 
 import com.consol.citrus.endpoint.AbstractEndpointBuilder;
+import com.consol.citrus.endpoint.resolver.EndpointUriResolver;
 import com.consol.citrus.jms.message.JmsMessageConverter;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.support.destination.DestinationResolver;
 
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -88,12 +90,62 @@ public class JmsEndpointBuilder extends AbstractEndpointBuilder<JmsEndpoint> {
     }
 
     /**
+     * Sets the destination resolver.
+     * @param resolver
+     * @return
+     */
+    public JmsEndpointBuilder destinationResolver(DestinationResolver resolver) {
+        endpoint.getEndpointConfiguration().setDestinationResolver(resolver);
+        return this;
+    }
+
+    /**
+     * Sets the destination name resolver.
+     * @param resolver
+     * @return
+     */
+    public JmsEndpointBuilder destinationNameResolver(EndpointUriResolver resolver) {
+        endpoint.getEndpointConfiguration().setDestinationNameResolver(resolver);
+        return this;
+    }
+
+    /**
      * Sets the pubSubDomain property.
      * @param pubSubDomain
      * @return
      */
     public JmsEndpointBuilder pubSubDomain(boolean pubSubDomain) {
         endpoint.getEndpointConfiguration().setPubSubDomain(pubSubDomain);
+        return this;
+    }
+
+    /**
+     * Sets the autoStart property.
+     * @param autoStart
+     * @return
+     */
+    public JmsEndpointBuilder autoStart(boolean autoStart) {
+        endpoint.getEndpointConfiguration().setAutoStart(autoStart);
+        return this;
+    }
+
+    /**
+     * Sets the durableSubscription property.
+     * @param durableSubscription
+     * @return
+     */
+    public JmsEndpointBuilder durableSubscription(boolean durableSubscription) {
+        endpoint.getEndpointConfiguration().setDurableSubscription(durableSubscription);
+        return this;
+    }
+
+    /**
+     * Sets the durableSubscriberName property.
+     * @param durableSubscriberName
+     * @return
+     */
+    public JmsEndpointBuilder durableSubscriberName(String durableSubscriberName) {
+        endpoint.getEndpointConfiguration().setDurableSubscriberName(durableSubscriberName);
         return this;
     }
 

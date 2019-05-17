@@ -57,7 +57,7 @@ public class DefaultTestRunner implements TestRunner {
     private ApplicationContext applicationContext;
 
     /** Optional stack of containers cached for execution */
-    private Stack<AbstractActionContainer> containers = new Stack<>();
+    protected Stack<AbstractActionContainer> containers = new Stack<>();
 
     /** Default constructor */
     public DefaultTestRunner() {
@@ -157,7 +157,7 @@ public class DefaultTestRunner implements TestRunner {
         testCase.getVariableDefinitions().put(name, value);
 
         if (value instanceof String) {
-            String resolved = context.resolveDynamicValue((String) value);
+            String resolved = context.replaceDynamicContentInString(value.toString());
             context.setVariable(name, resolved);
             return (T) resolved;
         } else {
@@ -169,7 +169,6 @@ public class DefaultTestRunner implements TestRunner {
     @Override
     public <T extends TestAction> T run(T testAction) {
         if (testAction instanceof TestActionContainer) {
-
             if (containers.lastElement().equals(testAction)) {
                 containers.pop();
             } else {
@@ -203,7 +202,7 @@ public class DefaultTestRunner implements TestRunner {
     @Override
     public <T extends AbstractActionContainer> AbstractTestContainerBuilder<T> container(T container) {
         AbstractTestContainerBuilder<T> containerBuilder = new AbstractTestContainerBuilder<T>(this, container) {};
-        this.containers.push(containerBuilder.build());
+        containers.push(containerBuilder.build());
         return containerBuilder;
     }
 
@@ -319,15 +318,6 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     @Override
-    @Deprecated
-    public TestAction sendSoapFault(BuilderSupport<SendSoapFaultBuilder> configurer) {
-        SendSoapFaultBuilder builder = new SendSoapFaultBuilder()
-                .withApplicationContext(applicationContext);
-        configurer.configure(builder);
-        return run(builder.build().getDelegate());
-    }
-
-    @Override
     public SleepAction sleep() {
         return run(new SleepAction());
     }
@@ -340,10 +330,19 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     @Override
-    public WaitAction waitFor(BuilderSupport<WaitActionBuilder> configurer) {
-        WaitActionBuilder builder = new WaitActionBuilder();
+    @Deprecated
+    public Wait waitFor(BuilderSupport<WaitBuilder> configurer) {
+        WaitBuilder builder = new WaitBuilder(null, new Wait());
         configurer.configure(builder);
+        containers.push(builder.build());
         return run(builder.build());
+    }
+
+    @Override
+    public WaitBuilder waitFor() {
+        WaitBuilder builder = new WaitBuilder(this, new Wait());
+        containers.push(builder.build());
+        return builder;
     }
 
     @Override
@@ -383,6 +382,14 @@ public class DefaultTestRunner implements TestRunner {
     public StopTimeAction stopTime(String id) {
         StopTimeAction action = new StopTimeAction();
         action.setId(id);
+        return run(action);
+    }
+
+    @Override
+    public StopTimeAction stopTime(String id, String suffix) {
+        StopTimeAction action = new StopTimeAction();
+        action.setId(id);
+        action.setSuffix(suffix);
         return run(action);
     }
 
@@ -478,6 +485,13 @@ public class DefaultTestRunner implements TestRunner {
     }
 
     @Override
+    public AsyncBuilder async() {
+        AsyncBuilder builder = new AsyncBuilder(this);
+        containers.push(builder.build());
+        return builder;
+    }
+
+    @Override
     public TimerBuilder timer() {
         TimerBuilder builder = new TimerBuilder(this);
         containers.push(builder.build());
@@ -500,6 +514,20 @@ public class DefaultTestRunner implements TestRunner {
     @Override
     public TestAction docker(BuilderSupport<DockerActionBuilder> configurer) {
         DockerActionBuilder builder = new DockerActionBuilder();
+        configurer.configure(builder);
+        return run(builder.build());
+    }
+
+    @Override
+    public TestAction kubernetes(BuilderSupport<KubernetesActionBuilder> configurer) {
+        KubernetesActionBuilder builder = new KubernetesActionBuilder();
+        configurer.configure(builder);
+        return run(builder.build());
+    }
+
+    @Override
+    public TestAction selenium(BuilderSupport<SeleniumActionBuilder> configurer) {
+        SeleniumActionBuilder builder = new SeleniumActionBuilder();
         configurer.configure(builder);
         return run(builder.build());
     }

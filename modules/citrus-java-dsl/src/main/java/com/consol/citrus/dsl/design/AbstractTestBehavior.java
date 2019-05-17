@@ -17,7 +17,10 @@
 package com.consol.citrus.dsl.design;
 
 import com.consol.citrus.TestAction;
+import com.consol.citrus.container.AbstractActionContainer;
 import com.consol.citrus.dsl.builder.FinallySequenceBuilder;
+
+import java.util.Stack;
 
 /**
  * Abstract Citrus test behavior provides interface method implementations for
@@ -40,6 +43,13 @@ public abstract class AbstractTestBehavior extends DefaultTestDesigner implement
     @Override
     public void apply(TestDesigner target) {
         this.target = target;
+        containers = new Stack<AbstractActionContainer>() {
+            @Override
+            public AbstractActionContainer push(AbstractActionContainer item) {
+                target.container(item);
+                return item;
+            }
+        };
         apply();
     }
 
@@ -51,12 +61,6 @@ public abstract class AbstractTestBehavior extends DefaultTestDesigner implement
     @Override
     public void action(TestAction testAction) {
         target.action(testAction);
-    }
-
-    @Override
-    @Deprecated
-    public FinallySequenceBuilder doFinally(TestAction... actions) {
-        return target.doFinally(actions);
     }
 
     @Override

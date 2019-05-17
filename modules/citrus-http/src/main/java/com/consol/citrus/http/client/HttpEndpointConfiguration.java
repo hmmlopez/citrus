@@ -21,13 +21,15 @@ import com.consol.citrus.endpoint.resolver.DynamicEndpointUriResolver;
 import com.consol.citrus.endpoint.resolver.EndpointUriResolver;
 import com.consol.citrus.http.message.HttpMessageConverter;
 import com.consol.citrus.message.*;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.*;
 import org.springframework.http.client.*;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.integration.http.support.DefaultHttpHeaderMapper;
 import org.springframework.integration.mapping.HeaderMapper;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -69,8 +71,31 @@ public class HttpEndpointConfiguration extends AbstractPollableEndpointConfigura
     /** Should http errors be handled within endpoint consumer or simply throw exception */
     private ErrorHandlingStrategy errorHandlingStrategy = ErrorHandlingStrategy.PROPAGATE;
 
+    /** Response error handler */
+    private ResponseErrorHandler errorHandler;
+
     /** Reply message correlator */
     private MessageCorrelator correlator = new DefaultMessageCorrelator();
+
+    /** Auto add default accept header with os supported content-types */
+    private boolean defaultAcceptHeader = true;
+
+    /** Should handle http attributes */
+    private boolean handleAttributeHeaders = false;
+
+    /** Should handle http cookies */
+    private boolean handleCookies = false;
+
+    /** Default status code returned by http server */
+    private int defaultStatusCode = HttpStatus.OK.value();
+
+    /** List of media types that should be handled with binary content processing */
+    private List<MediaType> binaryMediaTypes = Arrays.asList(MediaType.APPLICATION_OCTET_STREAM,
+                                                                MediaType.APPLICATION_PDF,
+                                                                MediaType.IMAGE_GIF,
+                                                                MediaType.IMAGE_JPEG,
+                                                                MediaType.IMAGE_PNG,
+                                                                MediaType.valueOf("application/zip"));
 
     /**
      * Get the complete request URL.
@@ -186,6 +211,16 @@ public class HttpEndpointConfiguration extends AbstractPollableEndpointConfigura
             restTemplate.setRequestFactory(getRequestFactory());
         }
 
+        restTemplate.setErrorHandler(getErrorHandler());
+
+        if (!defaultAcceptHeader) {
+            for (org.springframework.http.converter.HttpMessageConverter messageConverter: restTemplate.getMessageConverters()) {
+                if (messageConverter instanceof StringHttpMessageConverter) {
+                    ((StringHttpMessageConverter) messageConverter).setWriteAcceptCharset(defaultAcceptHeader);
+                }
+            }
+        }
+
         return restTemplate;
     }
 
@@ -274,4 +309,115 @@ public class HttpEndpointConfiguration extends AbstractPollableEndpointConfigura
         this.messageConverter = messageConverter;
     }
 
+    /**
+     * Sets the defaultAcceptHeader property.
+     *
+     * @param defaultAcceptHeader
+     */
+    public void setDefaultAcceptHeader(boolean defaultAcceptHeader) {
+        this.defaultAcceptHeader = defaultAcceptHeader;
+    }
+
+    /**
+     * Gets the value of the defaultAcceptHeader property.
+     *
+     * @return the defaultAcceptHeader
+     */
+    public boolean isDefaultAcceptHeader() {
+        return defaultAcceptHeader;
+    }
+
+    /**
+     * Gets the handleAttributeHeaders.
+     *
+     * @return
+     */
+    public boolean isHandleAttributeHeaders() {
+        return handleAttributeHeaders;
+    }
+
+    /**
+     * Sets the handleAttributeHeaders.
+     *
+     * @param handleAttributeHeaders
+     */
+    public void setHandleAttributeHeaders(boolean handleAttributeHeaders) {
+        this.handleAttributeHeaders = handleAttributeHeaders;
+    }
+
+    /**
+     * Gets the handleCookies.
+     *
+     * @return
+     */
+    public boolean isHandleCookies() {
+        return handleCookies;
+    }
+
+    /**
+     * Sets the handleCookies.
+     *
+     * @param handleCookies
+     */
+    public void setHandleCookies(boolean handleCookies) {
+        this.handleCookies = handleCookies;
+    }
+
+    /**
+     * Gets the errorHandler.
+     *
+     * @return
+     */
+    public ResponseErrorHandler getErrorHandler() {
+        if (errorHandler == null) {
+            errorHandler = new HttpResponseErrorHandler(errorHandlingStrategy);
+        }
+
+        return errorHandler;
+    }
+
+    /**
+     * Sets the errorHandler.
+     *
+     * @param errorHandler
+     */
+    public void setErrorHandler(ResponseErrorHandler errorHandler) {
+        this.errorHandler = errorHandler;
+    }
+
+    /**
+     * Gets the defaultStatusCode.
+     *
+     * @return
+     */
+    public int getDefaultStatusCode() {
+        return defaultStatusCode;
+    }
+
+    /**
+     * Sets the defaultStatusCode.
+     *
+     * @param defaultStatusCode
+     */
+    public void setDefaultStatusCode(int defaultStatusCode) {
+        this.defaultStatusCode = defaultStatusCode;
+    }
+
+    /**
+     * Gets the binaryMediaTypes.
+     *
+     * @return
+     */
+    public List<MediaType> getBinaryMediaTypes() {
+        return binaryMediaTypes;
+    }
+
+    /**
+     * Sets the binaryMediaTypes.
+     *
+     * @param binaryMediaTypes
+     */
+    public void setBinaryMediaTypes(List<MediaType> binaryMediaTypes) {
+        this.binaryMediaTypes = binaryMediaTypes;
+    }
 }

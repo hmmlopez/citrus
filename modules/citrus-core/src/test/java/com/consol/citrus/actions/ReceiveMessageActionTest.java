@@ -17,6 +17,8 @@
 package com.consol.citrus.actions;
 
 import com.consol.citrus.*;
+import com.consol.citrus.channel.ChannelEndpointConfiguration;
+import com.consol.citrus.channel.ChannelMessageConverter;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.endpoint.Endpoint;
 import com.consol.citrus.endpoint.EndpointConfiguration;
@@ -36,6 +38,8 @@ import com.consol.citrus.validation.xml.*;
 import com.consol.citrus.variable.MessageHeaderVariableExtractor;
 import com.consol.citrus.variable.VariableExtractor;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.integration.channel.QueueChannel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -51,7 +55,63 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
     private Endpoint endpoint = Mockito.mock(Endpoint.class);
     private SelectiveConsumer consumer = Mockito.mock(SelectiveConsumer.class);
     private EndpointConfiguration endpointConfiguration = Mockito.mock(EndpointConfiguration.class);
-    
+
+    @Autowired
+    private QueueChannel mockChannel;
+
+    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void testReceiveMessageWithEndpointUri() {
+        ReceiveMessageAction receiveAction = new ReceiveMessageAction();
+        receiveAction.setEndpointUri("channel:mockChannel?timeout=15000");
+
+        TestActor testActor = new TestActor();
+        testActor.setName("TESTACTOR");
+
+        receiveAction.setActor(testActor);
+
+        PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
+        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        receiveAction.setMessageBuilder(controlMessageBuilder);
+        controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        when(mockChannel.receive(15000)).thenReturn(new ChannelMessageConverter().convertOutbound(controlMessage, new ChannelEndpointConfiguration(), context));
+
+        List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
+        validationContexts.add(validationContext);
+        receiveAction.setValidationContexts(validationContexts);
+        receiveAction.execute(context);
+    }
+
+    @Test
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void testReceiveMessageWithVariableEndpointName() {
+        ReceiveMessageAction receiveAction = new ReceiveMessageAction();
+        receiveAction.setEndpointUri("${varEndpoint}");
+
+        context.setVariable("varEndpoint", "channel:mockChannel");
+        TestActor testActor = new TestActor();
+        testActor.setName("TESTACTOR");
+
+        receiveAction.setActor(testActor);
+
+        PayloadTemplateMessageBuilder controlMessageBuilder = new PayloadTemplateMessageBuilder();
+        XmlMessageValidationContext validationContext = new XmlMessageValidationContext();
+        receiveAction.setMessageBuilder(controlMessageBuilder);
+        controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        Message controlMessage = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
+
+        when(mockChannel.receive(5000)).thenReturn(new ChannelMessageConverter().convertOutbound(controlMessage, new ChannelEndpointConfiguration(), context));
+
+        List<ValidationContext> validationContexts = new ArrayList<ValidationContext>();
+        validationContexts.add(validationContext);
+        receiveAction.setValidationContexts(validationContexts);
+        receiveAction.execute(context);
+    }
+
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
 	public void testReceiveMessageWithMessagePayloadData() {
@@ -1217,7 +1277,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         receiveAction.execute(context);
     }
 
-    @Test(expectedExceptions = ValidationException.class)
+    @Test(expectedExceptions = CitrusRuntimeException.class)
     public void testReceiveMessageWithJsonPathValidationNoPathResult() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
         receiveAction.setEndpoint(endpoint);
@@ -1279,7 +1339,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public void testReceiveSelectedWithMessageSelectorString() {
+    public void testReceiveSelectedWithMessageSelector() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
         receiveAction.setEndpoint(endpoint);
 
@@ -1288,8 +1348,8 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         receiveAction.setMessageBuilder(controlMessageBuilder);
         controlMessageBuilder.setPayloadData("<TestRequest><Message>Hello World!</Message></TestRequest>");
         
-        String messageSelectorString = "Operation = 'sayHello'";
-        receiveAction.setMessageSelectorString(messageSelectorString);
+        String messageSelector = "Operation = 'sayHello'";
+        receiveAction.setMessageSelector(messageSelector);
         
         Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
@@ -1300,7 +1360,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
         when(endpointConfiguration.getTimeout()).thenReturn(5000L);
 
-        when(consumer.receive(messageSelectorString, context, 5000L)).thenReturn(controlMessage);
+        when(consumer.receive(messageSelector, context, 5000L)).thenReturn(controlMessage);
         when(endpoint.getActor()).thenReturn(null);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
@@ -1312,7 +1372,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
     
     @Test
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public void testReceiveSelectedWithMessageSelectorStringAndTimeout() {
+    public void testReceiveSelectedWithMessageSelectorAndTimeout() {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
         receiveAction.setEndpoint(endpoint);
 
@@ -1323,8 +1383,8 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         receiveAction.setReceiveTimeout(5000L);
         
-        String messageSelectorString = "Operation = 'sayHello'";
-        receiveAction.setMessageSelectorString(messageSelectorString);
+        String messageSelector = "Operation = 'sayHello'";
+        receiveAction.setMessageSelector(messageSelector);
         
         Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
@@ -1335,7 +1395,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
         when(endpointConfiguration.getTimeout()).thenReturn(5000L);
 
-        when(consumer.receive(messageSelectorString, context, 5000L)).thenReturn(controlMessage);
+        when(consumer.receive(messageSelector, context, 5000L)).thenReturn(controlMessage);
         when(endpoint.getActor()).thenReturn(null);
         
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
@@ -1358,7 +1418,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Map<String, Object> messageSelector = new HashMap<>();
         messageSelector.put("Operation", "sayHello");
-        receiveAction.setMessageSelector(messageSelector);
+        receiveAction.setMessageSelectorMap(messageSelector);
         
         Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
@@ -1394,7 +1454,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         
         Map<String, Object> messageSelector = new HashMap<>();
         messageSelector.put("Operation", "sayHello");
-        receiveAction.setMessageSelector(messageSelector);
+        receiveAction.setMessageSelectorMap(messageSelector);
         
         Map<String, Object> headers = new HashMap<String, Object>();
         headers.put("Operation", "sayHello");
@@ -1513,7 +1573,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
         receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(new GroovyXmlMessageValidator());
+        receiveAction.addValidator(new GroovyXmlMessageValidator());
         
         ScriptValidationContext validationContext = new ScriptValidationContext(ScriptTypes.GROOVY);
         validationContext.setValidationScript("assert root.Message.name() == 'Message'\n" + 
@@ -1542,7 +1602,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
         receiveAction.setEndpoint(endpoint);
 
-        receiveAction.setValidator(new GroovyXmlMessageValidator());
+        receiveAction.addValidator(new GroovyXmlMessageValidator());
         ScriptValidationContext validationContext = new ScriptValidationContext(ScriptTypes.GROOVY);
         validationContext.setValidationScriptResourcePath("classpath:com/consol/citrus/actions/test-validation-script.groovy");
         
@@ -1615,7 +1675,6 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         TestCase testCase = new TestCase();
         ReceiveMessageAction receiveAction = new ReceiveMessageAction();
         receiveAction.setEndpoint(endpoint);
-        
 
         TestActor disabledActor = new TestActor();
         disabledActor.setDisabled(true);
@@ -1661,9 +1720,7 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
         when(endpointConfiguration.getTimeout()).thenReturn(5000L);
 
-        when(endpoint.getActor()).thenReturn(disabledActor)
-                                 .thenReturn(disabledActor)
-                                 .thenReturn(null);
+        when(endpoint.getActor()).thenReturn(disabledActor);
 
         List<ValidationContext> validationContexts = new ArrayList<ValidationContext>(); 
         validationContexts.add(validationContext);
@@ -1671,6 +1728,5 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
 
         testCase.addTestAction(receiveAction);
         testCase.execute(context);
-
     }
 }

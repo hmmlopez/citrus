@@ -23,11 +23,14 @@ package com.consol.citrus.message;
  */
 public enum MessageType {
     XML,
+    XHTML,
     CSV,
     JSON,
     PLAINTEXT,
     BINARY,
     BINARY_BASE64,
+    GZIP,
+    GZIP_BASE64,
     MSCONS;
 
     /**

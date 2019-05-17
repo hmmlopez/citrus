@@ -95,6 +95,8 @@ public final class CitrusArchiveBuilder {
     public CitrusArchiveBuilder all() {
         core();
         jms();
+        kafka();
+        jdbc();
         http();
         websocket();
         ws();
@@ -104,6 +106,8 @@ public final class CitrusArchiveBuilder {
         camel();
         vertx();
         docker();
+        kubernetes();
+        selenium();
         cucumber();
         zookeeper();
         rmi();
@@ -129,6 +133,24 @@ public final class CitrusArchiveBuilder {
      */
     public CitrusArchiveBuilder jms() {
         artifactCoordinates.add(getCoordinates("citrus-jms"));
+        return this;
+    }
+
+    /**
+     * Gets the kafka Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder kafka() {
+        artifactCoordinates.add(getCoordinates("citrus-kafka"));
+        return this;
+    }
+
+    /**
+     * Gets the jdbc Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder jdbc() {
+        artifactCoordinates.add(getCoordinates("citrus-jdbc"));
         return this;
     }
 
@@ -192,6 +214,24 @@ public final class CitrusArchiveBuilder {
      */
     public CitrusArchiveBuilder docker() {
         artifactCoordinates.add(getCoordinates("citrus-docker"));
+        return this;
+    }
+
+    /**
+     * Gets the kubernetes Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder kubernetes() {
+        artifactCoordinates.add(getCoordinates("citrus-kubernetes"));
+        return this;
+    }
+
+    /**
+     * Gets the selenium Citrus artifact as resolved Maven dependency set.
+     * @return
+     */
+    public CitrusArchiveBuilder selenium() {
+        artifactCoordinates.add(getCoordinates("citrus-selenium"));
         return this;
     }
 

@@ -16,12 +16,11 @@
 
 package com.consol.citrus.report;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.consol.citrus.TestCase;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.consol.citrus.TestCase;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class that spreads test events to all available test listeners 
@@ -29,51 +28,36 @@ import com.consol.citrus.TestCase;
  * 
  * @author Christoph Deppisch
  */
-public class TestListeners implements TestListener {
+public class TestListeners {
     
     /** List of test listeners **/
     @Autowired
     private List<TestListener> testListeners = new ArrayList<TestListener>();
-   
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestFailure(com.consol.citrus.TestCase, java.lang.Throwable)
-     */
+
     public void onTestFailure(TestCase test, Throwable cause) {
         for (TestListener listener : testListeners) {
             listener.onTestFailure(test, cause);
         }
     }
 
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestFinish(com.consol.citrus.TestCase)
-     */
     public void onTestFinish(TestCase test) {
         for (TestListener listener : testListeners) {
             listener.onTestFinish(test);
         }
     }
 
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestSkipped(com.consol.citrus.TestCase)
-     */
     public void onTestSkipped(TestCase test) {
         for (TestListener listener : testListeners) {
             listener.onTestSkipped(test);
         }
     }
 
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestStart(com.consol.citrus.TestCase)
-     */
     public void onTestStart(TestCase test) {
         for (TestListener listener : testListeners) {
             listener.onTestStart(test);
         }
     }
 
-    /**
-     * @see com.consol.citrus.report.TestListener#onTestSuccess(com.consol.citrus.TestCase)
-     */
     public void onTestSuccess(TestCase test) {
         for (TestListener listener : testListeners) {
             listener.onTestSuccess(test);
@@ -85,6 +69,8 @@ public class TestListeners implements TestListener {
      * @param listener
      */
     public void addTestListener(TestListener listener) {
-        this.testListeners.add(listener);
+        if (!testListeners.contains(listener)) {
+            this.testListeners.add(listener);
+        }
     }
 }

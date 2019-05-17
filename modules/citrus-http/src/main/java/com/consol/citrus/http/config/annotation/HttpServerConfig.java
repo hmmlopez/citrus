@@ -17,6 +17,7 @@
 package com.consol.citrus.http.config.annotation;
 
 import com.consol.citrus.annotations.CitrusEndpointConfig;
+import org.springframework.http.HttpStatus;
 
 import java.lang.annotation.*;
 
@@ -66,6 +67,18 @@ public @interface HttpServerConfig {
     String connector() default "";
 
     /**
+     * Filter references.
+     * @return
+     */
+    String[] filters() default {};
+
+    /**
+     * Filter mapping references.
+     * @return
+     */
+    String[] filterMappings() default {};
+
+    /**
      * Servlet name.
      * @return
      */
@@ -102,6 +115,30 @@ public @interface HttpServerConfig {
     String messageConverter() default "";
 
     /**
+     * Handle attribute headers.
+     * @return
+     */
+    boolean handleAttributeHeaders() default false;
+
+    /**
+     * Handle cookies.
+     * @return
+     */
+    boolean handleCookies() default false;
+
+    /**
+     * Server default response status.
+     * @return
+     */
+    HttpStatus defaultStatus() default HttpStatus.OK;
+
+    /**
+     * Binary media types.
+     * @return
+     */
+    String[] binaryMediaTypes() default {};
+
+    /**
      * Auto start.
      * @return
      */
@@ -118,6 +155,12 @@ public @interface HttpServerConfig {
      * @return
      */
     String endpointAdapter() default "";
+
+    /**
+     * Debug logging enabled.
+     * @return
+     */
+    boolean debugLogging() default false;
 
     /**
      * Interceptor references.

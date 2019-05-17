@@ -29,17 +29,17 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- * Class represents a previously defined block of test actions. Test cases can call
- * templates and reuse its functionality.
+ * This class represents a previously defined block of test actions. Test cases can call
+ * templates and reuse their functionality.
  * 
- * Templates operate on test variables. While calling the template caller can set these
+ * Templates operate on test variables. While calling, the template caller can set these
  * variables as parameters.
  * 
- * Nested test actions are executes in sequence.
+ * Nested test actions are executed in sequence.
  * 
  * The template execution may affect existing variable values in the calling test case. So
  * variables may have different values in the test case after template execution. Therefore
- * user can create a local test context by setting globalContext to false. Template then will 
+ * users can create a local test context by setting globalContext to false. Templates then will 
  * have no affect on the variables used in the test case.
  *
  * @author Christoph Deppisch
@@ -69,22 +69,24 @@ public class Template extends AbstractTestAction {
 
         TestContext innerContext;
         
-        //decide wheather to use global test context or not
+        //decide whether to use global test context or not
         if (globalContext) {
             innerContext = context;
         } else {
             innerContext = new TestContext();
             innerContext.setFunctionRegistry(context.getFunctionRegistry());
+
             GlobalVariables globalVariables = new GlobalVariables();
             globalVariables.getVariables().putAll(context.getGlobalVariables());
             innerContext.setGlobalVariables(globalVariables);
             innerContext.getVariables().putAll(context.getVariables());
-            
+
+            innerContext.setMessageStore(context.getMessageStore());
             innerContext.setMessageValidatorRegistry(context.getMessageValidatorRegistry());
             innerContext.setValidationMatcherRegistry(context.getValidationMatcherRegistry());
             innerContext.setTestListeners(context.getTestListeners());
             innerContext.setMessageListeners(context.getMessageListeners());
-            innerContext.setMessageConstructionInterceptors(context.getMessageConstructionInterceptors());
+            innerContext.setGlobalMessageConstructionInterceptors(context.getGlobalMessageConstructionInterceptors());
             innerContext.setEndpointFactory(context.getEndpointFactory());
             innerContext.setNamespaceContextBuilder(context.getNamespaceContextBuilder());
             innerContext.setApplicationContext(context.getApplicationContext());

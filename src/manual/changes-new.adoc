@@ -1,0 +1,18 @@
+[[changes-new]]
+= What's new in Citrus 2.9.x?
+
+[[changes-2-9-0]]
+== Since Citrus 2.9.0
+Beside all bug fixes included in 2.7.10, version 2.9.0 of Citrus contains a lot of new features for the jdbc integration
+as well as deprecations concerning the XML DSL and the Java TestDesigner and improvements to the logging functionality
+and documentation.
+
+[[changes-2-9-0-enhancements]]
+== Enhancements
+
+=== Validate received messages by map
+https://github.com/citrusframework/citrus/issues/571
+
+It is now possible to validate received messages based on a map containing xpath or json path expressions as keys with
+their corresponding values for validation. For an example of this enhancement, please have a look at the
+link:#validate-with-jsonpath[JSON path validation] or link:#xpath-validation[XPath validation] section.

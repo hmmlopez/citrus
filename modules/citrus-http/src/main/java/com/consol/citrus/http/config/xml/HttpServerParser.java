@@ -40,6 +40,10 @@ public class HttpServerParser extends AbstractServerParser {
         BeanDefinitionParserUtils.setPropertyReference(builder, element.getAttribute("connectors"), "connectors");
         BeanDefinitionParserUtils.setPropertyReference(builder, element.getAttribute("connector"), "connector");
 
+        BeanDefinitionParserUtils.setPropertyReference(builder, element.getAttribute("filters"), "filters");
+        BeanDefinitionParserUtils.setPropertyReference(builder, element.getAttribute("filter-mappings"), "filterMappings");
+        BeanDefinitionParserUtils.setPropertyReference(builder, element.getAttribute("binary-media-types"), "binaryMediaTypes");
+
         BeanDefinitionParserUtils.setPropertyValue(builder, element.getAttribute("servlet-name"), "servletName");
         BeanDefinitionParserUtils.setPropertyValue(builder, element.getAttribute("servlet-mapping-path"), "servletMappingPath");
         BeanDefinitionParserUtils.setPropertyValue(builder, element.getAttribute("context-path"), "contextPath");
@@ -47,6 +51,9 @@ public class HttpServerParser extends AbstractServerParser {
         BeanDefinitionParserUtils.setPropertyReference(builder, element.getAttribute("security-handler"), "securityHandler");
 
         BeanDefinitionParserUtils.setPropertyReference(builder, element.getAttribute("message-converter"), "messageConverter");
+        BeanDefinitionParserUtils.setPropertyValue(builder, element.getAttribute("handle-header-attributes"), "handleAttributeHeaders");
+        BeanDefinitionParserUtils.setPropertyValue(builder, element.getAttribute("handle-cookies"), "handleCookies");
+        BeanDefinitionParserUtils.setPropertyValue(builder, element.getAttribute("default-status-code"), "defaultStatusCode");
     }
 
     @Override

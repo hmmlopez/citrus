@@ -60,10 +60,40 @@ public @interface JmsEndpointConfig {
     String messageConverter() default "";
 
     /**
+     * Destination resolver.
+     * @return
+     */
+    String destinationResolver() default "";
+
+    /**
+     * Destination name resolver.
+     * @return
+     */
+    String destinationNameResolver() default "";
+
+    /**
      * Publish subscribe domain.
      * @return
      */
     boolean pubSubDomain() default false;
+
+    /**
+     * Use auto start subscriber mode.
+     * @return
+     */
+    boolean autoStart() default false;
+
+    /**
+     * Use durable subscription.
+     * @return
+     */
+    boolean durableSubscription() default false;
+
+    /**
+     * Durable subscriber name.
+     * @return
+     */
+    String durableSubscriberName() default "";
 
     /**
      * Should use object messages.

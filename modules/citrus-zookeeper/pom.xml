@@ -5,7 +5,7 @@
   <parent>
     <artifactId>citrus</artifactId>
     <groupId>com.consol.citrus</groupId>
-    <version>2.7-SNAPSHOT</version>
+    <version>2.9.0-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -17,28 +17,6 @@
     <zookeeper.port.listen>21181</zookeeper.port.listen>
     <zookeeper.port.shutdown>21182</zookeeper.port.shutdown>
   </properties>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>net.revelc.code</groupId>
-        <artifactId>zookeeper-maven-plugin</artifactId>
-        <configuration>
-          <clientPort>${zookeeper.port.listen}</clientPort>
-          <shutdownString>UniqueShutDownString</shutdownString>
-          <shutdownPort>${zookeeper.port.shutdown}</shutdownPort>
-        </configuration>
-        <executions>
-          <execution>
-            <id>run-zookeeper</id>
-            <goals>
-              <goal>start</goal>
-              <goal>stop</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 
   <dependencies>
     <dependency>

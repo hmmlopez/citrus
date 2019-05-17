@@ -53,7 +53,7 @@ public class ChannelSyncProducer extends ChannelProducer implements ReplyConsume
         super(name, endpointConfiguration);
         this.endpointConfiguration = endpointConfiguration;
 
-        this.correlationManager = new PollingCorrelationManager(endpointConfiguration, "Reply message did not arrive yet");
+        this.correlationManager = new PollingCorrelationManager<>(endpointConfiguration, "Reply message did not arrive yet");
     }
 
     @Override
@@ -73,7 +73,7 @@ public class ChannelSyncProducer extends ChannelProducer implements ReplyConsume
 
         log.info("Message was sent to channel: '" + destinationChannelName + "'");
 
-        org.springframework.messaging.Message replyMessage = endpointConfiguration.getMessagingTemplate().sendAndReceive(getDestinationChannel(),
+        org.springframework.messaging.Message replyMessage = endpointConfiguration.getMessagingTemplate().sendAndReceive(getDestinationChannel(context),
                 endpointConfiguration.getMessageConverter().convertOutbound(message, endpointConfiguration, context));
 
         if (replyMessage == null) {

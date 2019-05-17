@@ -47,6 +47,8 @@ public class FtpClientConfigParser extends AbstractAnnotationConfigParser<FtpCli
         }
 
         builder.port(annotation.port());
+        builder.autoReadFiles(annotation.autoReadFiles());
+        builder.localPassiveMode(annotation.localPassiveMode());
 
         if (StringUtils.hasText(annotation.username())) {
             builder.username(annotation.username());
@@ -60,6 +62,8 @@ public class FtpClientConfigParser extends AbstractAnnotationConfigParser<FtpCli
             builder.correlator(getReferenceResolver().resolve(annotation.correlator(), MessageCorrelator.class));
         }
 
+        builder.errorHandlingStrategy(annotation.errorStrategy());
+
         builder.pollingInterval(annotation.pollingInterval());
 
         builder.timeout(annotation.timeout());
@@ -68,6 +72,6 @@ public class FtpClientConfigParser extends AbstractAnnotationConfigParser<FtpCli
             builder.actor(getReferenceResolver().resolve(annotation.actor(), TestActor.class));
         }
 
-        return builder.build();
+        return builder.initialize().build();
     }
 }

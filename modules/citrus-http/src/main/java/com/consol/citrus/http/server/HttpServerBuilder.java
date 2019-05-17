@@ -22,9 +22,13 @@ import com.consol.citrus.http.message.HttpMessageConverter;
 import org.eclipse.jetty.security.SecurityHandler;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.servlet.ServletHandler;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import javax.servlet.Filter;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Christoph Deppisch
@@ -111,6 +115,36 @@ public class HttpServerBuilder extends AbstractEndpointBuilder<HttpServer> {
     }
 
     /**
+     * Sets the filters.
+     * @param filters
+     * @return
+     */
+    public HttpServerBuilder filters(Map<String, Filter> filters) {
+        endpoint.setFilters(filters);
+        return this;
+    }
+
+    /**
+     * Sets the filterMappings.
+     * @param filterMappings
+     * @return
+     */
+    public HttpServerBuilder filterMappings(Map<String, String> filterMappings) {
+        endpoint.setFilterMappings(filterMappings);
+        return this;
+    }
+
+    /**
+     * Sets the binaryMediaTypes.
+     * @param binaryMediaTypes
+     * @return
+     */
+    public HttpServerBuilder binaryMediaTypes(List<MediaType> binaryMediaTypes) {
+        endpoint.setBinaryMediaTypes(binaryMediaTypes);
+        return this;
+    }
+
+    /**
      * Sets the servlet name.
      * @param servletName
      * @return
@@ -171,6 +205,36 @@ public class HttpServerBuilder extends AbstractEndpointBuilder<HttpServer> {
     }
 
     /**
+     * Sets the handleAttributeHeaders property.
+     * @param flag
+     * @return
+     */
+    public HttpServerBuilder handleAttributeHeaders(boolean flag) {
+        endpoint.setHandleAttributeHeaders(flag);
+        return this;
+    }
+
+    /**
+     * Sets the handleCookies property.
+     * @param flag
+     * @return
+     */
+    public HttpServerBuilder handleCookies(boolean flag) {
+        endpoint.setHandleCookies(flag);
+        return this;
+    }
+
+    /**
+     * Sets the default status code property.
+     * @param status
+     * @return
+     */
+    public HttpServerBuilder defaultStatus(HttpStatus status) {
+        endpoint.setDefaultStatusCode(status.value());
+        return this;
+    }
+
+    /**
      * Sets the default timeout.
      * @param timeout
      * @return
@@ -187,6 +251,16 @@ public class HttpServerBuilder extends AbstractEndpointBuilder<HttpServer> {
      */
     public HttpServerBuilder endpointAdapter(EndpointAdapter endpointAdapter) {
         endpoint.setEndpointAdapter(endpointAdapter);
+        return this;
+    }
+
+    /**
+     * Sets the debug logging enabled flag.
+     * @param enabled
+     * @return
+     */
+    public HttpServerBuilder debugLogging(boolean enabled) {
+        endpoint.setDebugLogging(enabled);
         return this;
     }
 

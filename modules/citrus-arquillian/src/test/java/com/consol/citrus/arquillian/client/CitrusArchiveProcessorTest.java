@@ -21,19 +21,28 @@ import com.consol.citrus.arquillian.configuration.CitrusConfiguration;
 import com.consol.citrus.arquillian.helper.InjectionHelper;
 import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.test.spi.TestClass;
-import org.jboss.shrinkwrap.api.*;
-import org.jboss.shrinkwrap.api.spec.*;
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.ArchivePath;
+import org.jboss.shrinkwrap.api.ConfigurationBuilder;
+import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.impl.base.MemoryMapArchiveImpl;
-import org.jboss.shrinkwrap.impl.base.spec.*;
+import org.jboss.shrinkwrap.impl.base.spec.EnterpriseArchiveImpl;
+import org.jboss.shrinkwrap.impl.base.spec.JavaArchiveImpl;
+import org.jboss.shrinkwrap.impl.base.spec.WebArchiveImpl;
 import org.mockito.Mockito;
 import org.springframework.util.ReflectionUtils;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
 import java.util.Properties;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
 public class CitrusArchiveProcessorTest {
 
@@ -46,7 +55,7 @@ public class CitrusArchiveProcessorTest {
     public void setCitrusVersion() {
         Field version = ReflectionUtils.findField(Citrus.class, "version");
         ReflectionUtils.makeAccessible(version);
-        ReflectionUtils.setField(version, Citrus.class, "2.7-SNAPSHOT");
+        ReflectionUtils.setField(version, Citrus.class, "2.9.0-SNAPSHOT");
     }
 
     @BeforeMethod
@@ -65,12 +74,16 @@ public class CitrusArchiveProcessorTest {
         archiveProcessor.process(enterpriseArchive, new TestClass(this.getClass()));
         verifyArtifact(enterpriseArchive, "/citrus-core-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-jms-.*jar");
+        verifyArtifact(enterpriseArchive, "/citrus-kafka-.*jar");
+        verifyArtifact(enterpriseArchive, "/citrus-jdbc-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-http-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-websocket-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-ws-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-ftp-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-camel-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-docker-.*jar");
+        verifyArtifact(enterpriseArchive, "/citrus-kubernetes-.*jar");
+        verifyArtifact(enterpriseArchive, "/citrus-selenium-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-cucumber-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-zookeeper-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-rmi-.*jar");
@@ -95,12 +108,16 @@ public class CitrusArchiveProcessorTest {
         archiveProcessor.process(enterpriseArchive, new TestClass(this.getClass()));
         verifyArtifact(enterpriseArchive, "/citrus-core-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-jms-.*jar");
+        verifyArtifact(enterpriseArchive, "/citrus-kafka-.*jar");
+        verifyArtifact(enterpriseArchive, "/citrus-jdbc-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-http-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-websocket-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-ws-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-ftp-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-camel-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-docker-.*jar");
+        verifyArtifact(enterpriseArchive, "/citrus-kubernetes-.*jar");
+        verifyArtifact(enterpriseArchive, "/citrus-selenium-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-cucumber-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-zookeeper-.*jar");
         verifyArtifact(enterpriseArchive, "/citrus-rmi-.*jar");
@@ -119,12 +136,16 @@ public class CitrusArchiveProcessorTest {
         archiveProcessor.process(webArchive, new TestClass(this.getClass()));
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-core-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-jms-.*jar");
+        verifyArtifact(webArchive, "/WEB-INF/lib/citrus-kafka-.*jar");
+        verifyArtifact(webArchive, "/WEB-INF/lib/citrus-jdbc-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-http-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-websocket-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-ws-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-ftp-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-camel-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-docker-.*jar");
+        verifyArtifact(webArchive, "/WEB-INF/lib/citrus-kubernetes-.*jar");
+        verifyArtifact(webArchive, "/WEB-INF/lib/citrus-selenium-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-cucumber-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-zookeeper-.*jar");
         verifyArtifact(webArchive, "/WEB-INF/lib/citrus-rmi-.*jar");

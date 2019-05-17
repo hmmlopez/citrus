@@ -33,41 +33,45 @@ public class HttpServerJavaIT extends TestNGCitrusTestDesigner {
         
         echo("Send Http message and respond with 200 OK");
         
-        parallel(
+        parallel().actions(
             http().client("httpClient")
+                .send()
                 .post()
                 .payload("<testRequestMessage>" +
                         "<text>Hello HttpServer</text>" +
                         "</testRequestMessage>")
                 .header("CustomHeaderId", "${custom_header_id}")
-                .contentType("text/xml")
-                .accept("text/xml, */*"),
+                .contentType("application/xml")
+                .accept("application/xml"),
             
-            sequential(
+            sequential().actions(
                 http().server("httpServerRequestEndpoint")
+                    .receive()
                     .post("/test")
                     .payload("<testRequestMessage>" +
                                 "<text>Hello HttpServer</text>" +
                             "</testRequestMessage>")
                     .header("CustomHeaderId", "${custom_header_id}")
-                    .contentType("text/xml")
-                    .accept("text/xml, */*")
+                    .contentType("application/xml")
+                    .accept("application/xml")
                     .header("Authorization", "Basic c29tZVVzZXJuYW1lOnNvbWVQYXNzd29yZA==")
                     .extractFromHeader("citrus_jms_messageId", "correlation_id"),
                     
                http().server("httpServerResponseEndpoint")
-                   .respond(HttpStatus.OK)
+                   .send()
+                   .response(HttpStatus.OK)
                    .payload("<testResponseMessage>" +
                                 "<text>Hello Citrus</text>" +
                             "</testResponseMessage>")
                     .header("CustomHeaderId", "${custom_header_id}")
                     .version("HTTP/1.1")
-                    .contentType("text/xml")
+                    .contentType("application/xml")
                     .header("citrus_jms_correlationId", "${correlation_id}")
             )
         );
         
         http().client("httpClient")
+            .receive()
             .response(HttpStatus.OK)
             .payload("<testResponseMessage>" +
                     "<text>Hello Citrus</text>" +
@@ -77,43 +81,47 @@ public class HttpServerJavaIT extends TestNGCitrusTestDesigner {
 
         echo("Send Http request and respond with 404 status code");
         
-        parallel(
+        parallel().actions(
             http().client("httpClient")
+                .send()
                 .post()
                 .payload("<testRequestMessage>" +
                                 "<text>Hello HttpServer</text>" +
                             "</testRequestMessage>")
                 .header("CustomHeaderId", "${custom_header_id}")
-                .contentType("text/xml")
-                .accept("text/xml, */*"),
+                .contentType("application/xml")
+                .accept("application/xml"),
             
-            sequential(
+            sequential().actions(
                 http().server("httpServerRequestEndpoint")
+                    .receive()
                     .post()
                     .path("/test")
                     .payload("<testRequestMessage>" +
                                 "<text>Hello HttpServer</text>" +
                             "</testRequestMessage>")
                     .header("CustomHeaderId", "${custom_header_id}")
-                    .contentType("text/xml")
-                    .accept("text/xml, */*")
+                    .contentType("application/xml")
+                    .accept("application/xml")
                     .header("Authorization", "Basic c29tZVVzZXJuYW1lOnNvbWVQYXNzd29yZA==")
                     .extractFromHeader("citrus_jms_messageId", "correlation_id"),
                     
                http().server("httpServerResponseEndpoint")
-                   .respond()
+                   .send()
+                   .response()
                    .status(HttpStatus.NOT_FOUND)
                    .payload("<testResponseMessage>" +
                                 "<text>Hello Citrus</text>" +
                             "</testResponseMessage>")
                     .header("CustomHeaderId", "${custom_header_id}")
                     .version("HTTP/1.1")
-                    .contentType("text/xml")
+                    .contentType("application/xml")
                     .header("citrus_jms_correlationId", "${correlation_id}")
             )
         );
         
         http().client("httpClient")
+            .receive()
             .response()
             .status(HttpStatus.NOT_FOUND)
             .payload("<testResponseMessage>" +
@@ -125,15 +133,17 @@ public class HttpServerJavaIT extends TestNGCitrusTestDesigner {
         echo("Skip response and use fallback endpoint adapter");
         
         http().client("httpClient")
+            .send()
             .post()
             .payload("<testRequestMessage>" +
                             "<text>Hello HttpServer</text>" +
                         "</testRequestMessage>")
             .header("CustomHeaderId", "${custom_header_id}")
-            .contentType("text/xml")
-            .accept("text/xml, */*");
+            .contentType("application/xml")
+            .accept("application/xml");
 
         http().client("httpClient")
+            .receive()
             .response(HttpStatus.OK)
             .version("HTTP/1.1")
             .timeout(2000L);

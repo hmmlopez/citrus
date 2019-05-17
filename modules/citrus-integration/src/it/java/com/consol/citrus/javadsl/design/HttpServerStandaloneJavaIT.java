@@ -18,6 +18,9 @@ package com.consol.citrus.javadsl.design;
 
 import com.consol.citrus.dsl.testng.TestNGCitrusTestDesigner;
 import com.consol.citrus.annotations.CitrusTest;
+import com.consol.citrus.exceptions.ValidationException;
+import com.consol.citrus.http.message.HttpMessageHeaders;
+import org.hamcrest.Matchers;
 import org.springframework.http.HttpStatus;
 import org.testng.annotations.Test;
 
@@ -32,6 +35,7 @@ public class HttpServerStandaloneJavaIT extends TestNGCitrusTestDesigner {
         variable("custom_header_id", "123456789");
         
         http().client("httpStandaloneClient")
+            .send()
             .post()
             .payload("<testRequestMessage>" +
                             "<text>Hello HttpServer</text>" +
@@ -39,6 +43,7 @@ public class HttpServerStandaloneJavaIT extends TestNGCitrusTestDesigner {
             .header("CustomHeaderId", "${custom_header_id}");
         
         http().client("httpStandaloneClient")
+            .receive()
             .response(HttpStatus.OK)
             .payload("<testResponseMessage>" +
                         "<text>Hello TestFramework</text>" +
@@ -46,6 +51,7 @@ public class HttpServerStandaloneJavaIT extends TestNGCitrusTestDesigner {
             .version("HTTP/1.1");
         
         http().client("httpStandaloneClient")
+            .send()
             .post()
             .payload("<moreRequestMessage>" +
                             "<text>Hello HttpServer</text>" +
@@ -53,10 +59,59 @@ public class HttpServerStandaloneJavaIT extends TestNGCitrusTestDesigner {
             .header("CustomHeaderId", "${custom_header_id}");
         
         http().client("httpStandaloneClient")
-            .response(HttpStatus.OK)
+            .receive()
+            .response()
+            .status(HttpStatus.OK)
             .payload("<testResponseMessage>" +
                         "<text>Hello TestFramework</text>" +
                     "</testResponseMessage>")
             .version("HTTP/1.1");
+
+        echo("Test pure Http status code validation");
+
+        http().client("httpStandaloneClient")
+            .send()
+            .post()
+            .payload("<moreRequestMessage>" +
+                            "<text>Hello HttpServer</text>" +
+                        "</moreRequestMessage>")
+            .header("CustomHeaderId", "${custom_header_id}");
+
+        http().client("httpStandaloneClient")
+            .receive()
+            .response(HttpStatus.OK);
+
+        echo("Test Http status code matcher validation");
+
+        http().client("httpStandaloneClient")
+                .send()
+                .post()
+                .payload("<moreRequestMessage>" +
+                        "<text>Hello HttpServer</text>" +
+                        "</moreRequestMessage>")
+                .header("CustomHeaderId", "${custom_header_id}");
+
+        http().client("httpStandaloneClient")
+                .receive()
+                .response()
+                .header(HttpMessageHeaders.HTTP_STATUS_CODE, Matchers.isOneOf(HttpStatus.CREATED.value(),
+                                                                                HttpStatus.ACCEPTED.value(),
+                                                                                HttpStatus.OK.value()));
+
+        echo("Test header validation error");
+
+        http().client("httpStandaloneClient")
+            .send()
+            .post()
+            .payload("<moreRequestMessage>" +
+                            "<text>Hello HttpServer</text>" +
+                        "</moreRequestMessage>")
+            .header("CustomHeaderId", "${custom_header_id}");
+
+        assertException().exception(ValidationException.class).when(
+            http().client("httpStandaloneClient")
+                .receive()
+                .response(HttpStatus.NOT_FOUND)
+        );
     }
 }

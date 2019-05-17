@@ -26,9 +26,10 @@ import com.consol.citrus.message.correlation.PollingCorrelationManager;
 import com.consol.citrus.messaging.*;
 import com.consol.citrus.ssh.model.SshRequest;
 import com.consol.citrus.ssh.model.SshResponse;
+import com.consol.citrus.util.FileUtils;
 import com.jcraft.jsch.*;
-import org.springframework.util.FileCopyUtils;
-import org.springframework.util.StringUtils;
+import org.apache.sshd.client.keyverifier.KnownHostsServerKeyVerifier;
+import org.springframework.util.*;
 
 import java.io.*;
 
@@ -39,8 +40,6 @@ import java.io.*;
  * @since 1.4
  */
 public class SshClient extends AbstractEndpoint implements Producer, ReplyConsumer {
-
-    public static final String CLASSPATH_PREFIX = "classpath:";
 
     /** Store of reply messages */
     private CorrelationManager<Message> correlationManager;
@@ -65,7 +64,7 @@ public class SshClient extends AbstractEndpoint implements Producer, ReplyConsum
     protected SshClient(SshEndpointConfiguration endpointConfiguration) {
         super(endpointConfiguration);
 
-        this.correlationManager = new PollingCorrelationManager(endpointConfiguration, "Reply message did not arrive yet");
+        this.correlationManager = new PollingCorrelationManager<>(endpointConfiguration, "Reply message did not arrive yet");
     }
 
     @Override
@@ -96,7 +95,7 @@ public class SshClient extends AbstractEndpoint implements Producer, ReplyConsum
         ChannelExec channelExec = null;
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         ByteArrayOutputStream errStream = new ByteArrayOutputStream();
-        int rc = 0;
+        int rc;
         try {
             channelExec = openChannelExec();
             channelExec.setErrStream(errStream);
@@ -170,13 +169,14 @@ public class SshClient extends AbstractEndpoint implements Producer, ReplyConsum
             } catch (IOException e) {
                 throw new CitrusRuntimeException("Cannot open private key file " + getEndpointConfiguration().getPrivateKeyPath() + ": " + e,e);
             }
+
             try {
                 session = jsch.getSession(rUser, getEndpointConfiguration().getHost(), getEndpointConfiguration().getPort());
                 if (StringUtils.hasText(getEndpointConfiguration().getPassword())) {
                     session.setUserInfo(new UserInfoWithPlainPassword(getEndpointConfiguration().getPassword()));
                     session.setPassword(getEndpointConfiguration().getPassword());
                 }
-                session.setConfig("StrictHostKeyChecking", getEndpointConfiguration().isStrictHostChecking() ? "yes" : "no");
+                session.setConfig(KnownHostsServerKeyVerifier.STRICT_CHECKING_OPTION, getEndpointConfiguration().isStrictHostChecking() ? "yes" : "no");
                 session.connect();
             } catch (JSchException e) {
                 throw new CitrusRuntimeException("Cannot connect via SSH: " + e,e);
@@ -262,33 +262,26 @@ public class SshClient extends AbstractEndpoint implements Producer, ReplyConsum
         if (getEndpointConfiguration().getKnownHosts() == null) {
             throw new CitrusRuntimeException("Strict host checking is enabled but no knownHosts given");
         }
+
         try {
-            InputStream khIs = getInputStreamFromPath(getEndpointConfiguration().getKnownHosts());
+            InputStream khIs = FileUtils.getFileResource(getEndpointConfiguration().getKnownHosts()).getInputStream();
             if (khIs == null) {
                 throw new CitrusRuntimeException("Cannot find knownHosts at " + getEndpointConfiguration().getKnownHosts());
             }
             jsch.setKnownHosts(khIs);
         } catch (JSchException e) {
             throw new CitrusRuntimeException("Cannot add known hosts from " + getEndpointConfiguration().getKnownHosts() + ": " + e,e);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             throw new CitrusRuntimeException("Cannot find known hosts file " + getEndpointConfiguration().getKnownHosts() + ": " + e,e);
-        }
-    }
-
-    private InputStream getInputStreamFromPath(String pPath) throws FileNotFoundException {
-        if (pPath.startsWith(CLASSPATH_PREFIX)) {
-            return getClass().getClassLoader().getResourceAsStream(pPath.substring(CLASSPATH_PREFIX.length()));
-        } else {
-            return new FileInputStream(pPath);
         }
     }
 
     private String getPrivateKeyPath() throws IOException {
         if (!StringUtils.hasText(getEndpointConfiguration().getPrivateKeyPath())) {
             return null;
-        } else if (getEndpointConfiguration().getPrivateKeyPath().startsWith(CLASSPATH_PREFIX)) {
-            File priv = File.createTempFile("citrus-ssh-test","priv");
-            InputStream is = getClass().getClassLoader().getResourceAsStream(getEndpointConfiguration().getPrivateKeyPath().substring(CLASSPATH_PREFIX.length()));
+        } else if (getEndpointConfiguration().getPrivateKeyPath().startsWith(ResourceUtils.CLASSPATH_URL_PREFIX)) {
+            File priv = File.createTempFile("citrus-ssh","priv");
+            InputStream is = getClass().getClassLoader().getResourceAsStream(getEndpointConfiguration().getPrivateKeyPath().substring(ResourceUtils.CLASSPATH_URL_PREFIX.length()));
             if (is == null) {
                 throw new CitrusRuntimeException("No private key found at " + getEndpointConfiguration().getPrivateKeyPath());
             }

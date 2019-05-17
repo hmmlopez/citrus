@@ -34,6 +34,7 @@
   <!-- Xsd schema resources and definitions -->
   <citrus:schema-repository id="helloSchemaRepository">
     <citrus:schemas>
+      <citrus:schema id="wsdl" location="classpath:schemas/wsdl.xsd"/>
       <citrus:schema id="soap11" location="classpath:schemas/soap-1.1.xsd"/>
       <citrus:reference schema="helloSchema"/>
       <citrus:reference schema="helloSchemaExtended"/>
@@ -64,6 +65,13 @@
 
   <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
     <property name="brokerURL" value="tcp://localhost:61616" />
+    <property name="trustedPackages">
+      <list>
+        <value>java.util</value>
+        <value>java.lang</value>
+        <value>com.consol.citrus</value>
+      </list>
+    </property>
     <property name="watchTopicAdvisories" value="false"/>
   </bean>
 
@@ -154,6 +162,8 @@
                     port="14080"
                     auto-start="true"
                     root-parent-context="true"
+                    handle-mime-headers="true"
+                    handle-header-attributes="true"
                     timeout="3000"
                     resource-base="src/it/resources"/>
 

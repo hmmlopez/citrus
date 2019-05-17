@@ -18,8 +18,7 @@ package com.consol.citrus.dsl.junit;
 
 import com.consol.citrus.*;
 import com.consol.citrus.actions.*;
-import com.consol.citrus.container.AbstractActionContainer;
-import com.consol.citrus.container.Template;
+import com.consol.citrus.container.*;
 import com.consol.citrus.context.TestContext;
 import com.consol.citrus.dsl.builder.*;
 import com.consol.citrus.dsl.runner.*;
@@ -217,12 +216,6 @@ public class JUnit4CitrusTestRunner extends JUnit4CitrusTest implements TestRunn
     }
 
     @Override
-    @Deprecated
-    public TestAction sendSoapFault(BuilderSupport<SendSoapFaultBuilder> configurer) {
-        return testRunner.sendSoapFault(configurer);
-    }
-
-    @Override
     public SleepAction sleep() {
         return testRunner.sleep();
     }
@@ -233,8 +226,14 @@ public class JUnit4CitrusTestRunner extends JUnit4CitrusTest implements TestRunn
     }
 
     @Override
-    public WaitAction waitFor(BuilderSupport<WaitActionBuilder> configurer) {
+    @Deprecated
+    public Wait waitFor(BuilderSupport<WaitBuilder> configurer) {
         return testRunner.waitFor(configurer);
+    }
+
+    @Override
+    public WaitBuilder waitFor() {
+        return testRunner.waitFor();
     }
 
     @Override
@@ -265,6 +264,11 @@ public class JUnit4CitrusTestRunner extends JUnit4CitrusTest implements TestRunn
     @Override
     public StopTimeAction stopTime(String id) {
         return testRunner.stopTime(id);
+    }
+
+    @Override
+    public StopTimeAction stopTime(String id, String suffix) {
+        return testRunner.stopTime(id, suffix);
     }
 
     @Override
@@ -333,6 +337,11 @@ public class JUnit4CitrusTestRunner extends JUnit4CitrusTest implements TestRunn
     }
 
     @Override
+    public AsyncBuilder async() {
+        return testRunner.async();
+    }
+
+    @Override
     public TimerBuilder timer() {
         return testRunner.timer();
     }
@@ -350,6 +359,16 @@ public class JUnit4CitrusTestRunner extends JUnit4CitrusTest implements TestRunn
     @Override
     public TestAction docker(BuilderSupport<DockerActionBuilder> configurer) {
         return testRunner.docker(configurer);
+    }
+
+    @Override
+    public TestAction kubernetes(BuilderSupport<KubernetesActionBuilder> configurer) {
+        return testRunner.kubernetes(configurer);
+    }
+
+    @Override
+    public TestAction selenium(BuilderSupport<SeleniumActionBuilder> configurer) {
+        return testRunner.selenium(configurer);
     }
 
     @Override

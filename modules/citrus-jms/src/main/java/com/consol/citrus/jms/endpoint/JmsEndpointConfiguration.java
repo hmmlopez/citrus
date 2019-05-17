@@ -16,13 +16,15 @@
 
 package com.consol.citrus.jms.endpoint;
 
-import com.consol.citrus.endpoint.AbstractEndpointConfiguration;
+import com.consol.citrus.endpoint.AbstractPollableEndpointConfiguration;
+import com.consol.citrus.endpoint.resolver.EndpointUriResolver;
+import com.consol.citrus.jms.endpoint.resolver.DynamicDestinationNameResolver;
 import com.consol.citrus.jms.message.JmsMessageConverter;
 import com.consol.citrus.jms.message.JmsMessageHeaderMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.integration.jms.JmsHeaderMapper;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.support.JmsHeaderMapper;
 import org.springframework.jms.support.destination.DestinationResolver;
 import org.springframework.util.Assert;
 
@@ -32,7 +34,7 @@ import javax.jms.*;
  * @author Christoph Deppisch
  * @since 1.4
  */
-public class JmsEndpointConfiguration extends AbstractEndpointConfiguration {
+public class JmsEndpointConfiguration extends AbstractPollableEndpointConfiguration {
 
     /** Logger */
     private static Logger log = LoggerFactory.getLogger(JmsEndpointConfiguration.class);
@@ -49,6 +51,9 @@ public class JmsEndpointConfiguration extends AbstractEndpointConfiguration {
     /** The destination resolver */
     private DestinationResolver destinationResolver;
 
+    /** Resolves dynamic destination names */
+    private EndpointUriResolver destinationNameResolver = new DynamicDestinationNameResolver();
+
     /** The JMS template */
     private JmsTemplate jmsTemplate;
 
@@ -61,26 +66,29 @@ public class JmsEndpointConfiguration extends AbstractEndpointConfiguration {
     /** Use topics instead of queues */
     private boolean pubSubDomain = false;
 
+    /** Start topic subscription immediately at startup and cache all incoming message events in local channel */
+    private boolean autoStart = false;
+
+    /** Durable subscriber settings */
+    private boolean durableSubscription = false;
+    private String durableSubscriberName;
+
     /** Should always use object messages */
     private boolean useObjectMessages = false;
 
     /**
-     * Gets the destination name.
+     * Get the destination name (either a queue name or a topic name).
+     * @param destination
      * @return the destinationName
      */
-    public String getDefaultDestinationName() {
-        Destination defaultDestination = getJmsTemplate().getDefaultDestination();
+    public String getDestinationName(Destination destination) {
         try {
-            if (defaultDestination != null) {
-                if (defaultDestination instanceof Queue) {
-                    return ((Queue)defaultDestination).getQueueName();
-                } else if (defaultDestination instanceof Topic) {
-                    return ((Topic)defaultDestination).getTopicName();
-                } else {
-                    return defaultDestination.toString();
-                }
+            if (destination instanceof Queue) {
+                return ((Queue) destination).getQueueName();
+            } else if (destination instanceof Topic) {
+                return ((Topic) destination).getTopicName();
             } else {
-                return getJmsTemplate().getDefaultDestinationName();
+                return destination.toString();
             }
         } catch (JMSException e) {
             log.error("Unable to resolve destination name", e);
@@ -259,5 +267,77 @@ public class JmsEndpointConfiguration extends AbstractEndpointConfiguration {
      */
     public void setUseObjectMessages(boolean useObjectMessages) {
         this.useObjectMessages = useObjectMessages;
+    }
+
+    /**
+     * Gets the destinationNameResolver.
+     *
+     * @return
+     */
+    public EndpointUriResolver getDestinationNameResolver() {
+        return destinationNameResolver;
+    }
+
+    /**
+     * Sets the destinationNameResolver.
+     *
+     * @param destinationNameResolver
+     */
+    public void setDestinationNameResolver(EndpointUriResolver destinationNameResolver) {
+        this.destinationNameResolver = destinationNameResolver;
+    }
+
+    /**
+     * Gets the autoStart.
+     *
+     * @return
+     */
+    public boolean isAutoStart() {
+        return autoStart;
+    }
+
+    /**
+     * Sets the autoStart.
+     *
+     * @param autoStart
+     */
+    public void setAutoStart(boolean autoStart) {
+        this.autoStart = autoStart;
+    }
+
+    /**
+     * Gets the durableSubscription.
+     *
+     * @return
+     */
+    public boolean isDurableSubscription() {
+        return durableSubscription;
+    }
+
+    /**
+     * Sets the durableSubscription.
+     *
+     * @param durableSubscription
+     */
+    public void setDurableSubscription(boolean durableSubscription) {
+        this.durableSubscription = durableSubscription;
+    }
+
+    /**
+     * Gets the durableSubscriberName.
+     *
+     * @return
+     */
+    public String getDurableSubscriberName() {
+        return durableSubscriberName;
+    }
+
+    /**
+     * Sets the durableSubscriberName.
+     *
+     * @param durableSubscriberName
+     */
+    public void setDurableSubscriberName(String durableSubscriberName) {
+        this.durableSubscriberName = durableSubscriberName;
     }
 }

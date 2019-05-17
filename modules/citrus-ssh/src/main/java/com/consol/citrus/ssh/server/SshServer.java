@@ -16,21 +16,29 @@
 
 package com.consol.citrus.ssh.server;
 
+import com.consol.citrus.endpoint.AbstractPollableEndpointConfiguration;
 import com.consol.citrus.exceptions.CitrusRuntimeException;
 import com.consol.citrus.server.AbstractServer;
 import com.consol.citrus.ssh.SshCommand;
 import com.consol.citrus.ssh.client.SshEndpointConfiguration;
 import com.consol.citrus.ssh.message.SshMessageConverter;
-import org.apache.sshd.common.keyprovider.AbstractClassLoadableResourceKeyPairProvider;
-import org.apache.sshd.common.keyprovider.AbstractFileKeyPairProvider;
-import org.apache.sshd.common.util.SecurityUtils;
-import org.apache.sshd.server.Command;
-import org.apache.sshd.server.CommandFactory;
+import com.consol.citrus.util.FileUtils;
+import org.apache.sshd.common.NamedFactory;
+import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory;
+import org.apache.sshd.common.keyprovider.ClassLoadableResourceKeyPairProvider;
+import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
+import org.apache.sshd.common.scp.AbstractScpTransferEventListenerAdapter;
+import org.apache.sshd.common.scp.ScpTransferEventListener;
+import org.apache.sshd.server.command.Command;
+import org.apache.sshd.server.scp.ScpCommandFactory;
+import org.apache.sshd.server.subsystem.sftp.*;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.nio.file.*;
+import java.util.*;
 
 /**
  * SSH Server implemented with Apache SSHD (http://mina.apache.org/sshd/).
@@ -68,19 +76,40 @@ public class SshServer extends AbstractServer {
     /** User's password or ... **/
     private String password;
 
-    /** ... path to its public key **/
-    /** Use this to convert to PEM: ssh-keygen -f key.pub -e -m pem **/
+    /** ... path to its public key
+      Use this to convert to PEM: ssh-keygen -f key.pub -e -m pem **/
     private String allowedKeyPath;
 
-    /** Path to our own host keys. If not provided, a default is used. The format of this **/
-    /** file should be PEM, a serialized {@link java.security.KeyPair}. **/
+    /* Path to our own host keys. If not provided, a default is used. The format of this
+       file should be PEM, a serialized {@link java.security.KeyPair}. **/
     private String hostKeyPath;
 
-    /** Ssh message converter */
+    /** User home directory path  **/
+    private String userHomePath;
+
+    /** Ssh message converter **/
     private SshMessageConverter messageConverter = new SshMessageConverter();
 
     /** SSH server used **/
     private org.apache.sshd.server.SshServer sshd;
+
+    /**  This servers endpoint configuration */
+    private final SshEndpointConfiguration endpointConfiguration;
+
+    /**
+     * Default constructor using default endpoint configuration.
+     */
+    public SshServer() {
+        this(new SshEndpointConfiguration());
+    }
+
+    /**
+     * Constructor using endpoint configuration.
+     * @param endpointConfiguration
+     */
+    public SshServer(SshEndpointConfiguration endpointConfiguration) {
+        this.endpointConfiguration = endpointConfiguration;
+    }
 
     @Override
     protected void startup() {
@@ -90,13 +119,36 @@ public class SshServer extends AbstractServer {
         sshd = org.apache.sshd.server.SshServer.setUpDefaultServer();
         sshd.setPort(port);
 
+        VirtualFileSystemFactory fileSystemFactory = new VirtualFileSystemFactory();
+        Path userHomeDir = Optional.ofNullable(userHomePath).map(Paths::get).map(Path::toAbsolutePath).orElse(Paths.get(String.format("target/%s/home/%s", getName(), user)).toAbsolutePath());
+
+        if (!Files.exists(userHomeDir)) {
+            try {
+                Files.createDirectories(userHomeDir);
+            } catch (IOException e) {
+                throw new CitrusRuntimeException("Failed to setup user home dir", e);
+            }
+        }
+
+        fileSystemFactory.setUserHomeDir(user, userHomeDir);
+        sshd.setFileSystemFactory(fileSystemFactory);
+
         if (hostKeyPath != null) {
-            AbstractFileKeyPairProvider fileKeyPairProvider = SecurityUtils.createFileKeyPairProvider();
-            fileKeyPairProvider.setPaths(Arrays.asList(new File(hostKeyPath).toPath()));
-            sshd.setKeyPairProvider(fileKeyPairProvider);
+            Resource hostKey = FileUtils.getFileResource(hostKeyPath);
+
+            if (hostKey instanceof ClassPathResource) {
+                ClassLoadableResourceKeyPairProvider resourceKeyPairProvider = new ClassLoadableResourceKeyPairProvider(Collections.singletonList(((ClassPathResource) hostKey).getPath()));
+                sshd.setKeyPairProvider(resourceKeyPairProvider);
+            } else {
+                try {
+                    FileKeyPairProvider fileKeyPairProvider = new FileKeyPairProvider(Collections.singletonList(hostKey.getFile().toPath()));
+                    sshd.setKeyPairProvider(fileKeyPairProvider);
+                } catch (IOException e) {
+                    throw new CitrusRuntimeException("Failed to read host key path", e);
+                }
+            }
         } else {
-            AbstractClassLoadableResourceKeyPairProvider resourceKeyPairProvider = SecurityUtils.createClassLoadableResourceKeyPairProvider();
-            resourceKeyPairProvider.setResources(Arrays.asList("com/consol/citrus/ssh/citrus.pem"));
+            ClassLoadableResourceKeyPairProvider resourceKeyPairProvider = new ClassLoadableResourceKeyPairProvider(Collections.singletonList("com/consol/citrus/ssh/citrus.pem"));
             sshd.setKeyPairProvider(resourceKeyPairProvider);
         }
 
@@ -117,17 +169,41 @@ public class SshServer extends AbstractServer {
         }
 
         // Setup endpoint adapter
-        sshd.setCommandFactory(new CommandFactory() {
-            public Command createCommand(String command) {
-                return new SshCommand(command, getEndpointAdapter(), getEndpointConfiguration());
-            }
-        });
+        ScpCommandFactory commandFactory = new ScpCommandFactory.Builder()
+                .withDelegate(command -> new SshCommand(command, getEndpointAdapter(), endpointConfiguration))
+                .build();
+
+        commandFactory.addEventListener(getScpTransferEventListener());
+        sshd.setCommandFactory(commandFactory);
+
+        ArrayList<NamedFactory<Command>> subsystemFactories = new ArrayList<>();
+        SftpSubsystemFactory sftpSubsystemFactory = new SftpSubsystemFactory.Builder().build();
+        sftpSubsystemFactory.addSftpEventListener(getSftpEventListener());
+
+        subsystemFactories.add(sftpSubsystemFactory);
+        sshd.setSubsystemFactories(subsystemFactories);
 
         try {
             sshd.start();
         } catch (IOException e) {
-            throw new CitrusRuntimeException("Cannot start SSHD: " + e,e);
+            throw new CitrusRuntimeException("Failed to start SSH server - " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Gets Scp trsanfer event listener. By default uses abstract implementation that use trace level logging of all operations.
+     * @return
+     */
+    protected ScpTransferEventListener getScpTransferEventListener() {
+        return new AbstractScpTransferEventListenerAdapter() {};
+    }
+
+    /**
+     * Gets Sftp event listener. By default uses abstract implementation that use trace level logging of all operations.
+     * @return
+     */
+    protected SftpEventListener getSftpEventListener() {
+        return new AbstractSftpEventListenerAdapter(){};
     }
 
     @Override
@@ -135,17 +211,12 @@ public class SshServer extends AbstractServer {
         try {
             sshd.stop();
         } catch (IOException e) {
-            throw new CitrusRuntimeException("Cannot stop SSHD: " + e,e);
+            throw new CitrusRuntimeException("Failed to stop SSH server - " + e.getMessage(), e);
         }
     }
 
     @Override
-    public SshEndpointConfiguration getEndpointConfiguration() {
-        SshEndpointConfiguration endpointConfiguration = new SshEndpointConfiguration();
-        endpointConfiguration.setMessageConverter(messageConverter);
-        endpointConfiguration.setPort(port);
-        endpointConfiguration.setUser(user);
-        endpointConfiguration.setPassword(password);
+    public AbstractPollableEndpointConfiguration getEndpointConfiguration() {
         return endpointConfiguration;
     }
 
@@ -163,6 +234,7 @@ public class SshServer extends AbstractServer {
      */
     public void setPort(int port) {
         this.port = port;
+        this.endpointConfiguration.setPort(port);
     }
 
     /**
@@ -179,6 +251,7 @@ public class SshServer extends AbstractServer {
      */
     public void setUser(String user) {
         this.user = user;
+        this.endpointConfiguration.setUser(user);
     }
 
     /**
@@ -195,6 +268,7 @@ public class SshServer extends AbstractServer {
      */
     public void setPassword(String password) {
         this.password = password;
+        this.endpointConfiguration.setPassword(password);
     }
 
     /**
@@ -230,6 +304,24 @@ public class SshServer extends AbstractServer {
     }
 
     /**
+     * Gets the userHomePath.
+     *
+     * @return
+     */
+    public String getUserHomePath() {
+        return userHomePath;
+    }
+
+    /**
+     * Sets the userHomePath.
+     *
+     * @param userHomePath
+     */
+    public void setUserHomePath(String userHomePath) {
+        this.userHomePath = userHomePath;
+    }
+
+    /**
      * Gets the message converter.
      * @return
      */
@@ -243,6 +335,7 @@ public class SshServer extends AbstractServer {
      */
     public void setMessageConverter(SshMessageConverter messageConverter) {
         this.messageConverter = messageConverter;
+        this.endpointConfiguration.setMessageConverter(messageConverter);
     }
 
 }

@@ -53,6 +53,7 @@ public final class TestActionRegistry {
         registerActionParser("call-template", new CallTemplateParser());
         registerActionParser("conditional", new ConditionalParser());
         registerActionParser("sequential", new SequenceParser());
+        registerActionParser("async", new AsyncParser());
         registerActionParser("iterate", new IterateParser());
         registerActionParser("repeat-until-true", new RepeatUntilTrueParser());
         registerActionParser("repeat-onerror-until-true", new RepeatOnErrorUntilTrueParser());
@@ -68,7 +69,7 @@ public final class TestActionRegistry {
         registerActionParser("ant", new AntRunActionParser());
         registerActionParser("start", new StartServerActionParser());
         registerActionParser("stop", new StopServerActionParser());
-        registerActionParser("wait", new WaitActionParser());
+        registerActionParser("wait", new WaitParser());
         registerActionParser("timer", new TimerParser());
         registerActionParser("stop-timer", new StopTimerParser());
     }
