@@ -5,7 +5,7 @@
   <parent>
     <artifactId>citrus</artifactId>
     <groupId>org.citrusframework</groupId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.2.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -15,6 +15,7 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>citrus-openapi</module>
     <module>citrus-docker</module>
     <module>citrus-kubernetes</module>
     <module>citrus-selenium</module>

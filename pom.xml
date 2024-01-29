@@ -21,7 +21,7 @@
   <groupId>org.citrusframework</groupId>
   <artifactId>citrus</artifactId>
   <packaging>pom</packaging>
-  <version>4.1.0-SNAPSHOT</version>
+  <version>4.2.0-SNAPSHOT</version>
   <name>Citrus</name>
   <description>Citrus Test Framework</description>
   <url>https://citrusframework.org</url>
@@ -67,6 +67,26 @@
       <email>citrus-dev@googlegroups.com</email>
       <organization>Red Hat</organization>
       <organizationUrl>https://www.redhat.com/</organizationUrl>
+      <roles>
+        <role>Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>bbortt</id>
+      <name>Timon Borter</name>
+      <email>citrus-dev@googlegroups.com</email>
+      <organization>PostFinance AG</organization>
+      <organizationUrl>https://www.postfinance.ch/</organizationUrl>
+      <roles>
+        <role>Developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <id>tschlat</id>
+      <name>Thorsten Schlathoelter</name>
+      <email>citrus-dev@googlegroups.com</email>
+      <organization>PostFinance AG</organization>
+      <organizationUrl>https://www.postfinance.ch/</organizationUrl>
       <roles>
         <role>Developer</role>
       </roles>
@@ -154,7 +174,7 @@
     <maven.javadoc.plugin.version>3.5.0</maven.javadoc.plugin.version>
     <maven.nexus-staging.plugin.version>1.6.13</maven.nexus-staging.plugin.version>
     <maven.plugin.plugin.version>3.9.0</maven.plugin.plugin.version>
-    <maven.plugin.annotations.version>3.10.1</maven.plugin.annotations.version>
+    <maven.plugin.annotations.version>3.11.0</maven.plugin.annotations.version>
     <maven.release.plugin.version>3.0.1</maven.release.plugin.version>
     <maven.resource.plugin.version>3.3.1</maven.resource.plugin.version>
     <maven.scm.plugin.version>1.11.2</maven.scm.plugin.version>
@@ -167,32 +187,34 @@
     <asciidoctor.maven.plugin.version>2.2.4</asciidoctor.maven.plugin.version>
     <jaxb.maven.plugin.version>3.1.0</jaxb.maven.plugin.version>
 
-    <activemq.artemis.version>2.31.0</activemq.artemis.version>
+    <activemq.artemis.version>2.31.2</activemq.artemis.version>
     <angus-mail.version>2.0.2</angus-mail.version>
     <apache.ant.version>1.10.14</apache.ant.version>
-    <apache.camel.version>4.1.0</apache.camel.version>
+    <apache.camel.version>4.3.0</apache.camel.version>
+    <apicurio.data-models.version>1.1.27</apicurio.data-models.version>
     <ascii-table-version>1.8.0</ascii-table-version>
-    <bouncycastle.version>1.76</bouncycastle.version>
-    <byte.buddy.version>1.14.9</byte.buddy.version>
+    <assertj.version>3.25.1</assertj.version>
+    <bouncycastle.version>1.77</bouncycastle.version>
+    <byte.buddy.version>1.14.11</byte.buddy.version>
     <citrus.db.version>0.1.4</citrus.db.version>
-    <commons.dbcp2.version>2.10.0</commons.dbcp2.version>
-    <commons.cli.version>1.5.0</commons.cli.version>
+    <commons.dbcp2.version>2.11.0</commons.dbcp2.version>
+    <commons.cli.version>1.6.0</commons.cli.version>
     <commons.codec.version>1.16.0</commons.codec.version>
-    <commons.io.version>2.14.0</commons.io.version>
+    <commons.io.version>2.15.1</commons.io.version>
     <commons.lang.version>3.14.0</commons.lang.version>
-    <commons.logging.version>1.2</commons.logging.version>
+    <commons.logging.version>1.3.0</commons.logging.version>
     <commons.net.version>3.10.0</commons.net.version>
-    <cucumber.version>7.14.0</cucumber.version>
-    <docker-java.version>3.3.3</docker-java.version>
-    <dropwizard.metrics.version>4.2.21</dropwizard.metrics.version>
+    <cucumber.version>7.15.0</cucumber.version>
+    <docker-java.version>3.3.4</docker-java.version>
+    <dropwizard.metrics.version>4.2.25</dropwizard.metrics.version>
     <ftpserver.version>1.2.0</ftpserver.version>
-    <groovy.version>3.0.19</groovy.version>
-    <greenmail.version>2.0.0</greenmail.version>
+    <groovy.version>3.0.20</groovy.version>
+    <greenmail.version>2.0.1</greenmail.version>
     <hamcrest.version>2.2</hamcrest.version>
     <htmlunit.version>4.13.0</htmlunit.version>
-    <httpclient.version>5.2.1</httpclient.version>
+    <httpclient.version>5.3</httpclient.version>
     <hsqldb.version>2.7.2</hsqldb.version>
-    <jackson.version>2.15.3</jackson.version>
+    <jackson.version>2.16.1</jackson.version>
     <jakarta.activation.api.version>2.1.2</jakarta.activation.api.version>
     <jakarta.activation.version>2.0.1</jakarta.activation.version>
     <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
@@ -203,43 +225,43 @@
     <jakarta.websocket-api.version>2.1.1</jakarta.websocket-api.version>
     <jakarta.xml.bind-api.version>4.0.1</jakarta.xml.bind-api.version>
     <jakarta.xml.soap-api.version>3.0.1</jakarta.xml.soap-api.version>
-    <jansi.version>2.4.0</jansi.version>
+    <jansi.version>2.4.1</jansi.version>
     <javapoet.version>1.13.0</javapoet.version>
-    <jaxb.version>4.0.3</jaxb.version>
-    <jetty.version>11.0.17</jetty.version>
+    <jaxb.version>4.0.4</jaxb.version>
+    <jetty.version>12.0.5</jetty.version>
     <jetty.websocket-api.version>2.0.0</jetty.websocket-api.version>
     <jsch.version>0.1.55</jsch.version>
-    <json-path.version>2.8.0</json-path.version>
-    <json-schema-validator.version>1.0.87</json-schema-validator.version>
+    <json-path.version>2.9.0</json-path.version>
+    <json-schema-validator.version>1.2.0</json-schema-validator.version>
     <json-smart.version>2.5.0</json-smart.version>
     <jtidy.version>r938</jtidy.version>
-    <junit.jupiter.version>5.10.0</junit.jupiter.version>
-    <junit.platform.version>1.10.0</junit.platform.version>
+    <junit.jupiter.version>5.10.1</junit.jupiter.version>
+    <junit.platform.version>1.10.1</junit.platform.version>
     <junit.version>4.13.2</junit.version>
-    <junixsocket.version>2.8.1</junixsocket.version>
+    <junixsocket.version>2.8.3</junixsocket.version>
     <k8s.client.version>1.4.34</k8s.client.version>
     <k8s.model.version>1.0.65</k8s.model.version>
-    <kafka.version>3.6.0</kafka.version>
-    <log4j2.version>2.21.0</log4j2.version>
-    <mockito.version>5.6.0</mockito.version>
+    <kafka.version>3.6.1</kafka.version>
+    <log4j2.version>2.22.1</log4j2.version>
+    <mockito.version>5.10.0</mockito.version>
     <mockftpserver.version>3.1.0</mockftpserver.version>
-    <netty.version>4.1.100.Final</netty.version>
+    <netty.version>4.1.105.Final</netty.version>
     <okhttp.version>4.12.0</okhttp.version>
     <picoli-version>4.7.5</picoli-version>
     <saaj.version>3.0.3</saaj.version>
-    <selenium.version>4.14.1</selenium.version>
-    <slf4j.version>2.0.9</slf4j.version>
+    <selenium.version>4.17.0</selenium.version>
+    <slf4j.version>2.0.11</slf4j.version>
     <snappy.version>1.1.10.5</snappy.version>
     <snakeyaml.version>2.2</snakeyaml.version>
-    <spring.version>6.0.14</spring.version>
-    <spring.ws.version>4.0.7</spring.ws.version>
-    <spring.integration.version>6.1.4</spring.integration.version>
-    <spring.restdocs.version>3.0.0</spring.restdocs.version>
-    <sshd.version>2.10.0</sshd.version>
+    <spring.version>6.1.3</spring.version>
+    <spring.ws.version>4.0.10</spring.ws.version>
+    <spring.integration.version>6.2.1</spring.integration.version>
+    <spring.restdocs.version>3.0.1</spring.restdocs.version>
+    <sshd.version>2.12.0</sshd.version>
     <swagger.version>1.6.9</swagger.version>
-    <swagger.parser.version>2.1.16</swagger.parser.version>
-    <testng.version>7.8.0</testng.version>
-    <vertx.version>4.4.6</vertx.version>
+    <swagger.parser.version>2.1.19</swagger.parser.version>
+    <testng.version>7.9.0</testng.version>
+    <vertx.version>4.5.1</vertx.version>
     <wsdl4j.version>1.6.3</wsdl4j.version>
     <xbean-spring.version>4.24</xbean-spring.version>
     <xmlbeans.version>3.0.0</xmlbeans.version>
@@ -554,6 +576,12 @@
         <version>${httpclient.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>io.apicurio</groupId>
+        <artifactId>apicurio-data-models</artifactId>
+        <version>${apicurio.data-models.version}</version>
+      </dependency>
+
       <!-- Jetty -->
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
@@ -561,8 +589,8 @@
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-servlet</artifactId>
+        <groupId>org.eclipse.jetty.ee10</groupId>
+        <artifactId>jetty-ee10-servlet</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
@@ -571,33 +599,28 @@
         <version>${jetty.websocket-api.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty.websocket</groupId>
-        <artifactId>websocket-servlet</artifactId>
+        <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+        <artifactId>jetty-ee10-websocket-jetty-server</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty.websocket</groupId>
-        <artifactId>websocket-jetty-server</artifactId>
+        <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+        <artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty.websocket</groupId>
-        <artifactId>websocket-jakarta-server</artifactId>
+        <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+        <artifactId>jetty-ee10-websocket-jakarta-common</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty.websocket</groupId>
-        <artifactId>websocket-jakarta-common</artifactId>
+        <groupId>org.eclipse.jetty.ee10.websocket</groupId>
+        <artifactId>jetty-ee10-websocket-jakarta-client</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty.websocket</groupId>
-        <artifactId>websocket-jakarta-client</artifactId>
-        <version>${jetty.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-annotations</artifactId>
+        <groupId>org.eclipse.jetty.ee10</groupId>
+        <artifactId>jetty-ee10-annotations</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
@@ -611,8 +634,8 @@
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-webapp</artifactId>
+        <groupId>org.eclipse.jetty.ee10</groupId>
+        <artifactId>jetty-ee10-webapp</artifactId>
         <version>${jetty.version}</version>
       </dependency>
       <dependency>
