@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.citrusframework.report.TestSuiteListenerAware;
  * Citrus main class initializes a new Citrus runtime environment with a Citrus context. Provides before/after suite action execution
  * and test execution methods.
  *
- * @author Christoph Deppisch
  * @since 2.1
  */
 public final class Citrus implements TestListenerAware, TestSuiteListenerAware, TestReporterAware, MessageListenerAware {

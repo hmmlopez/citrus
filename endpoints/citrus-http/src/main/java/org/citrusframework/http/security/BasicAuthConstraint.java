@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import static org.eclipse.jetty.security.Constraint.Transport.INHERIT;
  * Convenient constraint instantiation for basic authentication and multiple user roles. Access allowed only for
  * authenticated user with specific role(s).
  *
- * @author Christoph Deppisch
  * @since 1.3
  */
 public class BasicAuthConstraint implements Constraint {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,22 +24,19 @@ import org.testng.annotations.Test;
 
 import java.util.Iterator;
 
-/**
- * @author Christoph Deppisch
- */
 public class WebServiceServerParserTest extends AbstractBeanDefinitionParserTest {
 
     @Test
     public void testWebServerParser() {
         Iterator<WebServiceServer> servers = beanDefinitionContext.getBeansOfType(WebServiceServer.class).values().iterator();
-        
+
         // 1st server
         WebServiceServer server = servers.next();
         Assert.assertEquals(server.getName(), "soapServer1");
         Assert.assertFalse(server.isAutoStart());
         Assert.assertFalse(server.isRunning());
         Assert.assertEquals(server.getPort(), 8080);
-        Assert.assertEquals(server.getResourceBase(), "src/main/resources");
+        Assert.assertNull(server.getResourceBase());
         Assert.assertEquals(server.getContextConfigLocation(), "classpath:org/citrusframework/ws/citrus-servlet-context.xml");
         Assert.assertEquals(server.getContextPath(), "/");
         Assert.assertEquals(server.getServletName(), "soapServer1-servlet");
@@ -84,7 +81,7 @@ public class WebServiceServerParserTest extends AbstractBeanDefinitionParserTest
         Assert.assertFalse(server.isAutoStart());
         Assert.assertFalse(server.isRunning());
         Assert.assertEquals(server.getPort(), 8080);
-        Assert.assertEquals(server.getResourceBase(), "src/main/resources");
+        Assert.assertNull(server.getResourceBase());
         Assert.assertEquals(server.getContextConfigLocation(), "classpath:org/citrusframework/ws/citrus-servlet-context.xml");
         Assert.assertEquals(server.getContextPath(), "/");
         Assert.assertEquals(server.getServletName(), "soapServer3-servlet");
@@ -101,7 +98,7 @@ public class WebServiceServerParserTest extends AbstractBeanDefinitionParserTest
         Assert.assertFalse(server.isAutoStart());
         Assert.assertFalse(server.isRunning());
         Assert.assertEquals(server.getPort(), 8080);
-        Assert.assertEquals(server.getResourceBase(), "src/main/resources");
+        Assert.assertNull(server.getResourceBase());
         Assert.assertEquals(server.getContextConfigLocation(), "classpath:org/citrusframework/ws/citrus-servlet-context.xml");
         Assert.assertEquals(server.getContextPath(), "/");
         Assert.assertEquals(server.getServletName(), "soapServer4-servlet");
@@ -118,7 +115,7 @@ public class WebServiceServerParserTest extends AbstractBeanDefinitionParserTest
         Assert.assertFalse(server.isAutoStart());
         Assert.assertFalse(server.isRunning());
         Assert.assertEquals(server.getPort(), 8080);
-        Assert.assertEquals(server.getResourceBase(), "src/main/resources");
+        Assert.assertNull(server.getResourceBase());
         Assert.assertEquals(server.getContextConfigLocation(), "classpath:org/citrusframework/ws/citrus-servlet-context.xml");
         Assert.assertEquals(server.getContextPath(), "/");
         Assert.assertEquals(server.getServletName(), "soapServer5-servlet");
@@ -128,14 +125,14 @@ public class WebServiceServerParserTest extends AbstractBeanDefinitionParserTest
         Assert.assertEquals(server.getSecurityHandler(), beanDefinitionContext.getBean("securityHandler"));
         Assert.assertEquals(server.getConnectors().length, 0);
         Assert.assertNull(server.getConnector());
-        
+
         // 6th server
         server = servers.next();
         Assert.assertEquals(server.getName(), "soapServer6");
         Assert.assertFalse(server.isAutoStart());
         Assert.assertFalse(server.isRunning());
         Assert.assertEquals(server.getPort(), 8080);
-        Assert.assertEquals(server.getResourceBase(), "src/main/resources");
+        Assert.assertNull(server.getResourceBase());
         Assert.assertEquals(server.getContextConfigLocation(), "classpath:org/citrusframework/ws/citrus-servlet-context.xml");
         Assert.assertEquals(server.getContextPath(), "/");
         Assert.assertEquals(server.getServletName(), "soapServer6-servlet");

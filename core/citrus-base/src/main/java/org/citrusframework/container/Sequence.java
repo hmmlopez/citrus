@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Sequence container executing a set of nested test actions in simple sequence.
  *
- * @author Christoph Deppisch
  * @since 2007
  */
 public class Sequence extends AbstractActionContainer {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.citrusframework.vertx.message.CitrusVertxMessageHeaders;
 import io.vertx.core.*;
 import io.vertx.core.eventbus.DeliveryOptions;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -36,7 +35,6 @@ import io.vertx.core.eventbus.MessageConsumer;
 import static org.mockito.Mockito.*;
 
 /**
- * @author Christoph Deppisch
  * @since 1.4.1
  */
 public class VertxSyncEndpointTest extends AbstractTestNGUnitTest {
@@ -71,13 +69,10 @@ public class VertxSyncEndpointTest extends AbstractTestNGUnitTest {
         when(asyncResult.result()).thenReturn(messageMock);
 
         when(vertx.eventBus()).thenReturn(eventBus);
-        doAnswer(new Answer<EventBus>() {
-            @Override
-            public EventBus answer(InvocationOnMock invocation) throws Throwable {
-                Handler<AsyncResult> handler = (Handler<AsyncResult>) invocation.getArguments()[3];
-                handler.handle(asyncResult);
-                return eventBus;
-            }
+        doAnswer((Answer<EventBus>) invocation -> {
+            Handler<AsyncResult> handler = (Handler<AsyncResult>) invocation.getArguments()[3];
+            handler.handle(asyncResult);
+            return eventBus;
         }).when(eventBus).request(eq(eventBusAddress), eq(requestMessage.getPayload()), any(DeliveryOptions.class), any(Handler.class));
 
         when(messageMock.body()).thenReturn("Hello from Vertx!");

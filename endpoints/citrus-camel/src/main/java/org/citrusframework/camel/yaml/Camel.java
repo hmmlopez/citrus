@@ -1,14 +1,11 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,20 +17,18 @@
 package org.citrusframework.camel.yaml;
 
 import org.apache.camel.CamelContext;
+import org.citrusframework.AbstractTestActionBuilder;
 import org.citrusframework.TestAction;
 import org.citrusframework.TestActionBuilder;
 import org.citrusframework.TestActor;
-import org.citrusframework.camel.actions.AbstractCamelRouteAction;
+import org.citrusframework.camel.actions.AbstractCamelAction;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.spi.ReferenceResolver;
 import org.citrusframework.spi.ReferenceResolverAware;
 
-/**
- * @author Christoph Deppisch
- */
 public class Camel implements TestActionBuilder<TestAction>, ReferenceResolverAware {
 
-    private CamelRouteActionBuilderWrapper<?> delegate;
+    private CamelActionBuilderWrapper<?> delegate;
 
     private String description;
     private String actor;
@@ -58,6 +53,22 @@ public class Camel implements TestActionBuilder<TestAction>, ReferenceResolverAw
         this.delegate = builder;
     }
 
+    public void setCreateComponent(CreateComponent builder) {
+        this.delegate = builder;
+    }
+
+    public void setCreateContext(CreateContext builder) {
+        this.delegate = builder;
+    }
+
+    public void setStartContext(StartContext builder) {
+        this.delegate = builder;
+    }
+
+    public void setStopContext(StopContext builder) {
+        this.delegate = builder;
+    }
+
     public void setCreateRoutes(CreateRoutes builder) {
         this.delegate = builder;
     }
@@ -74,15 +85,22 @@ public class Camel implements TestActionBuilder<TestAction>, ReferenceResolverAw
         this.delegate = builder;
     }
 
+    public void setJbang(JBang builder) {
+        this.delegate = builder;
+    }
+
     @Override
     public TestAction build() {
         if (delegate == null) {
             throw new CitrusRuntimeException("Missing Camel action - please provide proper action details");
         }
 
-        AbstractCamelRouteAction.Builder<?, ?> builder = delegate.getBuilder();
+        AbstractTestActionBuilder<?, ?> builder = delegate.getBuilder();
 
-        builder.setReferenceResolver(referenceResolver);
+        if (builder instanceof ReferenceResolverAware referenceResolverAware) {
+            referenceResolverAware.setReferenceResolver(referenceResolver);
+        }
+
         builder.description(description);
 
         if (referenceResolver != null) {
@@ -90,8 +108,8 @@ public class Camel implements TestActionBuilder<TestAction>, ReferenceResolverAw
                 builder.actor(referenceResolver.resolve(actor, TestActor.class));
             }
 
-            if (camelContext != null) {
-                builder.context(referenceResolver.resolve(camelContext, CamelContext.class));
+            if (camelContext != null && builder instanceof AbstractCamelAction.Builder<?, ?> camelActionBuilder) {
+                camelActionBuilder.context(referenceResolver.resolve(camelContext, CamelContext.class));
             }
         }
 
@@ -102,5 +120,4 @@ public class Camel implements TestActionBuilder<TestAction>, ReferenceResolverAw
     public void setReferenceResolver(ReferenceResolver referenceResolver) {
         this.referenceResolver = referenceResolver;
     }
-
 }

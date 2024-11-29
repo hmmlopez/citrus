@@ -1,14 +1,11 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,14 +21,12 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.citrusframework.TestCase;
 import org.citrusframework.TestCaseMetaInfo;
+import org.citrusframework.camel.CamelSettings;
 import org.citrusframework.camel.actions.CamelControlBusAction;
 import org.citrusframework.yaml.YamlTestLoader;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
 public class ControlBusTest extends AbstractYamlActionTest {
 
     @Test
@@ -59,7 +54,7 @@ public class ControlBusTest extends AbstractYamlActionTest {
 
         citrusCamelContext.start();
 
-        context.getReferenceResolver().bind("citrusCamelContext", citrusCamelContext);
+        context.getReferenceResolver().bind(CamelSettings.getContextName(), citrusCamelContext);
         context.getReferenceResolver().bind("camelContext", citrusCamelContext);
 
         testLoader.load();
@@ -76,7 +71,7 @@ public class ControlBusTest extends AbstractYamlActionTest {
 
         CamelControlBusAction action = (CamelControlBusAction) result.getTestAction(actionIndex++);
         Assert.assertNotNull(action.getCamelContext());
-        Assert.assertEquals(action.getCamelContext(), context.getReferenceResolver().resolve("citrusCamelContext", CamelContext.class));
+        Assert.assertEquals(action.getCamelContext(), context.getReferenceResolver().resolve(CamelSettings.getContextName(), CamelContext.class));
         Assert.assertEquals(action.getRouteId(), "route_1");
         Assert.assertEquals(action.getAction(), "start");
         Assert.assertNull(action.getResult());
@@ -95,9 +90,9 @@ public class ControlBusTest extends AbstractYamlActionTest {
         Assert.assertEquals(action.getLanguageExpression(), "${camelContext.getRouteController().getRouteStatus('route_3')}");
         Assert.assertEquals(action.getResult(), "Started");
 
-        action = (CamelControlBusAction) result.getTestAction(actionIndex++);
+        action = (CamelControlBusAction) result.getTestAction(actionIndex);
         Assert.assertNotNull(action.getCamelContext());
-        Assert.assertEquals(action.getCamelContext(), context.getReferenceResolver().resolve("citrusCamelContext", CamelContext.class));
+        Assert.assertEquals(action.getCamelContext(), context.getReferenceResolver().resolve(CamelSettings.getContextName(), CamelContext.class));
         Assert.assertEquals(action.getLanguageType(), "simple");
         Assert.assertEquals(action.getLanguageExpression(), "${camelContext.stop()}");
         Assert.assertNull(action.getResult());

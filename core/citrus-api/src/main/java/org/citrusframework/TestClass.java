@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.citrusframework;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
 public class TestClass extends TestSource {
@@ -70,6 +69,22 @@ public class TestClass extends TestSource {
             return new TestClass(Class.forName(className));
         } catch (ClassNotFoundException e) {
             throw new CitrusRuntimeException("Failed to create test class", e);
+        }
+    }
+
+    public static boolean isKnownToClasspath(String testClass) {
+        try {
+            String className;
+            if (testClass.contains("#")) {
+                className = testClass.substring(0, testClass.indexOf("#"));
+            } else {
+                className = testClass;
+            }
+
+            Class.forName(className);
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
         }
     }
 }

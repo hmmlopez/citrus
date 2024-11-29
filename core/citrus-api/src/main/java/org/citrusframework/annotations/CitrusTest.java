@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import java.lang.annotation.Target;
  * Citrus test case annotation used in Java DSL test cases to execute several tests within one single
  * test builder class. Each method annotated with this annotation will result in a separate test execution.
  *
- * @author Christoph Deppisch
  * @since 1.3.1
  */
 @Retention(RetentionPolicy.RUNTIME)

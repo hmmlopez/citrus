@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.citrusframework.jms.integration.service.model;
 
 import jakarta.xml.bind.annotation.XmlRegistry;
 
-
 /**
  * This object contains factory methods for each
  * Java content interface and Java element interface
@@ -35,7 +34,6 @@ import jakarta.xml.bind.annotation.XmlRegistry;
  */
 @XmlRegistry
 public class ObjectFactory {
-
 
     /**
      * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: org.citrusframework.demo.model
@@ -91,5 +89,4 @@ public class ObjectFactory {
     public RequestHeader createRequestHeader() {
         return new RequestHeader();
     }
-
 }

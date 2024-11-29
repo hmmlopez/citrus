@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,21 +32,18 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class GenerateDocsMojoTest {
 
     private ExcelTestDocsGenerator excelTestDocGenerator = Mockito.mock(ExcelTestDocsGenerator.class);
     private HtmlTestDocsGenerator htmlTestDocGenerator = Mockito.mock(HtmlTestDocsGenerator.class);
 
     private GenerateDocsMojo mojo;
-    
+
     @BeforeMethod
     public void setup() {
         mojo = new GenerateDocsMojo(excelTestDocGenerator, htmlTestDocGenerator);
     }
-    
+
     @Test
     public void testCreateXls() throws PrompterException, MojoExecutionException, MojoFailureException {
         reset(excelTestDocGenerator);

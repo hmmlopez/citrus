@@ -1,0 +1,27 @@
+name: "CreateServiceTest"
+author: "Christoph"
+status: "FINAL"
+description: Sample test in XML
+actions:
+  - kubernetes:
+      client: "k8sClient"
+      namespace: "test"
+      autoRemove: false
+      createService:
+        name: "my-service-1"
+        autoCreateServerBinding: false
+
+  - kubernetes:
+      client: "k8sClient"
+      namespace: "test"
+      autoRemove: false
+      createService:
+        name: "my-service-2"
+        server: "myServer"
+        ports:
+          - port: "80"
+            targetPort: "8888"
+        selector:
+          labels:
+            - name: "test"
+              value: "citrus"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,6 @@ import org.citrusframework.UnitTestSupport;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
 public class JavaActionTest extends UnitTestSupport {
 
 	@Test
@@ -40,7 +37,7 @@ public class JavaActionTest extends UnitTestSupport {
 
 	@Test
 	public void testJavaCallSingleMethodParameter() {
-		List<Object> args = new ArrayList<Object>();
+		List<Object> args = new ArrayList<>();
 		args.add("Test");
 
 		JavaAction action = new JavaAction.Builder()
@@ -53,7 +50,7 @@ public class JavaActionTest extends UnitTestSupport {
 
 	@Test
 	public void testJavaCallMethodParameters() {
-		List<Object> args = new ArrayList<Object>();
+		List<Object> args = new ArrayList<>();
 		args.add(4);
 		args.add("Test");
 		args.add(true);
@@ -78,7 +75,7 @@ public class JavaActionTest extends UnitTestSupport {
 
 	@Test
 	public void testJavaCallSingleConstructorArg() {
-		List<Object> args = new ArrayList<Object>();
+		List<Object> args = new ArrayList<>();
         args.add("Test");
 
 		JavaAction action = new JavaAction.Builder()
@@ -91,7 +88,7 @@ public class JavaActionTest extends UnitTestSupport {
 
 	@Test
 	public void testJavaCallConstructorArgs() {
-		List<Object> args = new ArrayList<Object>();
+		List<Object> args = new ArrayList<>();
 		args.add(4);
 		args.add("Test");
 		args.add(true);
@@ -108,7 +105,7 @@ public class JavaActionTest extends UnitTestSupport {
     public void testJavaCallConstructorArgsVariableSupport() {
         context.setVariable("text", "Test");
 
-        List<Object> args = new ArrayList<Object>();
+        List<Object> args = new ArrayList<>();
         args.add(4);
         args.add("${text}");
         args.add(true);
@@ -123,7 +120,7 @@ public class JavaActionTest extends UnitTestSupport {
 
 	@Test
 	public void testJavaCall() {
-		List<Object> args = new ArrayList<Object>();
+		List<Object> args = new ArrayList<>();
 		args.add(4);
 		args.add("Test");
 		args.add(true);
@@ -141,7 +138,7 @@ public class JavaActionTest extends UnitTestSupport {
     public void testJavaCallVariableSupport() {
         context.setVariable("text", "Test");
 
-        List<Object> args = new ArrayList<Object>();
+        List<Object> args = new ArrayList<>();
         args.add(4);
         args.add("${text}");
         args.add(true);
@@ -157,7 +154,7 @@ public class JavaActionTest extends UnitTestSupport {
 
 	@Test(expectedExceptions = {CitrusRuntimeException.class})
 	public void testJavaCallWrongConstructorArgs() {
-		List<Object> args = new ArrayList<Object>();
+		List<Object> args = new ArrayList<>();
 		args.add("Wrong");
 		args.add(4);
 		args.add(true);
@@ -172,7 +169,7 @@ public class JavaActionTest extends UnitTestSupport {
 
 	@Test(expectedExceptions = {CitrusRuntimeException.class})
 	public void testJavaCallWrongMethodParameters() {
-		List<Object> args = new ArrayList<Object>();
+		List<Object> args = new ArrayList<>();
 		args.add("Wrong");
 		args.add(4);
 		args.add(true);

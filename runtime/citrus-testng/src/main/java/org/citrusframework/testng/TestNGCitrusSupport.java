@@ -1,14 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -55,7 +52,6 @@ import org.testng.annotations.Listeners;
  * and resource injection. Users can just extend this class and make use of the action runner methods provided in {@link org.citrusframework.TestActionRunner}
  * and {@link GherkinTestActionRunner}.
  *
- * @author Christoph Deppisch
  */
 @Listeners( { TestNGCitrusMethodInterceptor.class } )
 public class TestNGCitrusSupport implements IHookable, GherkinTestActionRunner {
@@ -132,7 +128,7 @@ public class TestNGCitrusSupport implements IHookable, GherkinTestActionRunner {
                     }
                 }
             } else {
-                testLoader = new DefaultTestLoader();
+                testLoader = createTestLoader();
             }
 
             CitrusAnnotations.injectAll(testLoader, citrus, ctx);
@@ -240,6 +236,15 @@ public class TestNGCitrusSupport implements IHookable, GherkinTestActionRunner {
         testLoader.setPackageName(packageName);
 
         return testLoader;
+    }
+
+    /**
+     * Create default test loader.
+     * Subclasses may overwrite in order to provide custom loaders.
+     * @return
+     */
+    protected TestLoader createTestLoader() {
+        return new DefaultTestLoader();
     }
 
     @Override

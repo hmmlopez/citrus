@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,17 @@ package org.citrusframework.kubernetes.command;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.fabric8.kubernetes.api.model.KubernetesResource;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CommandResult<R extends KubernetesResource> {
+public class CommandResult<T> {
 
     /** The result model */
     @JsonProperty("result")
-    private R result;
+    private T result;
 
     /** Optional error on this result */
     @JsonProperty("error")
@@ -47,7 +45,7 @@ public class CommandResult<R extends KubernetesResource> {
      * Constructor using result model.
      * @param result
      */
-    public CommandResult(R result) {
+    public CommandResult(T result) {
         this.result = result;
     }
 
@@ -71,7 +69,7 @@ public class CommandResult<R extends KubernetesResource> {
      * Gets the result model.
      * @return
      */
-    public R getResult() {
+    public T getResult() {
         return result;
     }
 
@@ -79,7 +77,7 @@ public class CommandResult<R extends KubernetesResource> {
      * Sets the result model.
      * @param result
      */
-    public void setResult(R result) {
+    public void setResult(T result) {
         this.result = result;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import org.w3c.dom.Element;
 /**
  * Bean definition parser for purge-jms-queues action in test case.
  *
- * @author Christoph Deppisch
  */
 public class PurgeJmsQueuesActionParser implements BeanDefinitionParser {
 
@@ -64,8 +63,8 @@ public class PurgeJmsQueuesActionParser implements BeanDefinitionParser {
         BeanDefinitionParserUtils.setPropertyValue(beanDefinition, element.getAttribute("timeout"), "receiveTimeout");
         BeanDefinitionParserUtils.setPropertyValue(beanDefinition, element.getAttribute("sleep"), "sleepTime");
 
-        List<String> queueNames = new ArrayList<String>();
-        ManagedList<BeanDefinition> queueRefs = new ManagedList<BeanDefinition>();
+        List<String> queueNames = new ArrayList<>();
+        ManagedList<BeanDefinition> queueRefs = new ManagedList<>();
         List<Element> queueElements = DomUtils.getChildElementsByTagName(element, "queue");
         for (Element queue : queueElements) {
             String queueName = queue.getAttribute("name");

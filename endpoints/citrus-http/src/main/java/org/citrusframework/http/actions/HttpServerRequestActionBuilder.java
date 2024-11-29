@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.util.MultiValueMap;
 
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class HttpServerRequestActionBuilder extends ReceiveMessageAction.ReceiveMessageActionBuilder<ReceiveMessageAction, HttpServerRequestActionBuilder.HttpMessageBuilderSupport, HttpServerRequestActionBuilder> {
@@ -44,8 +43,7 @@ public class HttpServerRequestActionBuilder extends ReceiveMessageAction.Receive
      */
     public HttpServerRequestActionBuilder() {
         this.httpMessage = new HttpMessage();
-        message(new HttpMessageBuilder(httpMessage))
-            .headerNameIgnoreCase(true);
+        message(new HttpMessageBuilder(httpMessage)).headerNameIgnoreCase(true);
         validator(new HttpQueryParamHeaderValidator());
     }
 
@@ -56,8 +54,7 @@ public class HttpServerRequestActionBuilder extends ReceiveMessageAction.Receive
      */
     public HttpServerRequestActionBuilder(MessageBuilder messageBuilder, HttpMessage httpMessage) {
         this.httpMessage = httpMessage;
-        message(messageBuilder)
-                .headerNameIgnoreCase(true);
+        message(messageBuilder).headerNameIgnoreCase(true);
         validator(new HttpQueryParamHeaderValidator());
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.citrusframework.docker.command;
 
-import java.util.Collections;
-
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.model.BuildResponseItem;
@@ -28,8 +26,9 @@ import org.citrusframework.docker.message.DockerMessageHeaders;
 import org.citrusframework.spi.Resource;
 import org.citrusframework.util.FileUtils;
 
+import java.util.Collections;
+
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class ImageBuild extends AbstractDockerCommand<BuildResponseItem> {
@@ -42,35 +41,39 @@ public class ImageBuild extends AbstractDockerCommand<BuildResponseItem> {
     }
 
     @Override
-    public void execute(DockerClient dockerClient, TestContext context) {
-        BuildImageCmd command = dockerClient.getEndpointConfiguration().getDockerClient().buildImageCmd();
+    public void execute(DockerClient dockerClient, TestContext testContext) {
+        try (var command = dockerClient.getEndpointConfiguration().getDockerClient().buildImageCmd()) {
+            executeDockerCommand(command, testContext);
+        }
+    }
 
+    private void executeDockerCommand(BuildImageCmd command, TestContext testContext) {
         if (hasParameter("no-cache")) {
-            command.withNoCache(Boolean.valueOf(getParameter("no-cache", context)));
+            command.withNoCache(Boolean.valueOf(getParameter("no-cache", testContext)));
         }
 
         if (hasParameter("basedir")) {
-            command.withBaseDirectory(FileUtils.getFileResource(getParameter("basedir", context), context).getFile());
+            command.withBaseDirectory(FileUtils.getFileResource(getParameter("basedir", testContext), testContext).getFile());
         }
 
         if (hasParameter("dockerfile")) {
             if (getParameters().get("dockerfile") instanceof Resource) {
                 command.withDockerfile(((Resource)getParameters().get("dockerfile")).getFile());
             } else {
-                command.withDockerfile(FileUtils.getFileResource(getParameter("dockerfile", context), context).getFile());
+                command.withDockerfile(FileUtils.getFileResource(getParameter("dockerfile", testContext), testContext).getFile());
             }
         }
 
         if (hasParameter("quiet")) {
-            command.withNoCache(Boolean.valueOf(getParameter("quiet", context)));
+            command.withNoCache(Boolean.valueOf(getParameter("quiet", testContext)));
         }
 
         if (hasParameter("remove")) {
-            command.withRemove(Boolean.valueOf(getParameter("remove", context)));
+            command.withRemove(Boolean.valueOf(getParameter("remove", testContext)));
         }
 
         if (hasParameter("tag")) {
-            command.withTags(Collections.singleton(getParameter("tag", context)));
+            command.withTags(Collections.singleton(getParameter("tag", testContext)));
         }
 
         BuildImageResultCallback imageResult = new BuildImageResultCallback() {
@@ -84,7 +87,7 @@ public class ImageBuild extends AbstractDockerCommand<BuildResponseItem> {
         command.exec(imageResult);
         String imageId = imageResult.awaitImageId();
 
-        context.setVariable(DockerMessageHeaders.IMAGE_ID, imageId);
+        testContext.setVariable(DockerMessageHeaders.IMAGE_ID, imageId);
     }
 
     /**

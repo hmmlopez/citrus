@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +16,27 @@
 
 package org.citrusframework.endpoint.adapter;
 
-import org.citrusframework.endpoint.EndpointAdapter;
-import org.citrusframework.endpoint.adapter.mapping.MappingKeyExtractor;
 import org.citrusframework.endpoint.adapter.mapping.SimpleMappingStrategy;
 import org.citrusframework.message.DefaultMessage;
 import org.citrusframework.message.Message;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
+import static java.util.Collections.singletonMap;
 
-/**
- * @author Christoph Deppisch
- */
 public class RequestDispatchingEndpointAdapterTest {
 
     @Test
     public void testDispatchRequest() {
         RequestDispatchingEndpointAdapter endpointAdapter = new RequestDispatchingEndpointAdapter();
 
-        endpointAdapter.setMappingKeyExtractor(new MappingKeyExtractor() {
-            @Override
-            public String extractMappingKey(Message request) {
-                return "foo";
-            }
-        });
+        endpointAdapter.setMappingKeyExtractor(request -> "foo");
 
         SimpleMappingStrategy mappingStrategy = new SimpleMappingStrategy();
-        mappingStrategy.setAdapterMappings(Collections.<String, EndpointAdapter>singletonMap("foo", new EmptyResponseEndpointAdapter()));
+        mappingStrategy.setAdapterMappings(singletonMap("foo", new EmptyResponseEndpointAdapter()));
         endpointAdapter.setMappingStrategy(mappingStrategy);
 
-        Message response = endpointAdapter.handleMessage(
-                new DefaultMessage("<TestMessage>Hello World!</TestMessage>"));
+        Message response = endpointAdapter.handleMessage(new DefaultMessage("<TestMessage>Hello World!</TestMessage>"));
 
         Assert.assertEquals(response.getPayload(), "");
     }

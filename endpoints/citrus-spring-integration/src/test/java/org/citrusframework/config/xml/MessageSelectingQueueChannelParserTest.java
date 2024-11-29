@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,24 +23,21 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 
-/**
- * @author Christoph Deppisch
- */
 public class MessageSelectingQueueChannelParserTest extends AbstractBeanDefinitionParserTest {
 
     @Test
     public void testMessageSelectingQueueChannelParser() {
         Map<String, MessageSelectingQueueChannel> channels = beanDefinitionContext.getBeansOfType(MessageSelectingQueueChannel.class);
-        
+
         Assert.assertEquals(channels.size(), 6);
-        
+
         // 1st channel
         Assert.assertTrue(channels.containsKey("channel1"));
-        
+
         // 2nd chanel with capacity
         MessageSelectingQueueChannel channel = channels.get("channel2");
         Assert.assertEquals(channel.getRemainingCapacity(), 5);
-        
+
         // 3rd chanel with polling interval
         channel = channels.get("channel3");
         Assert.assertEquals(channel.getPollingInterval(), 550);

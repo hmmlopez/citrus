@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,13 @@ import org.testng.annotations.Test;
 import org.citrusframework.actions.StopTimeAction;
 import org.citrusframework.testng.AbstractActionParserTest;
 
-/**
- * @author Christoph Deppisch
- */
 public class StopTimeActionParserTest extends AbstractActionParserTest<StopTimeAction> {
 
     @Test
     public void testActionParser() {
         assertActionCount(2);
         assertActionClassAndName(StopTimeAction.class, "stop-time");
-        
+
         StopTimeAction action = getNextTestActionFromTest();
         Assert.assertEquals(action.getId(), StopTimeAction.DEFAULT_TIMELINE_ID);
         Assert.assertEquals(action.getSuffix(), StopTimeAction.DEFAULT_TIMELINE_VALUE_SUFFIX);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,12 @@ import org.citrusframework.validation.DefaultMessageValidator;
 import org.citrusframework.validation.context.ValidationContext;
 import org.citrusframework.validation.matcher.ValidationMatcherUtils;
 
+import static java.lang.Boolean.parseBoolean;
+import static java.lang.Integer.parseInt;
+
 /**
  * Plain text validator using simple String comparison.
  *
- * @author Christoph Deppisch
  */
 public class PlainTextMessageValidator extends DefaultMessageValidator {
 
@@ -41,14 +43,13 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
     public static final String IGNORE_WHITESPACE_PROPERTY = "citrus.plaintext.validation.ignore.whitespace";
     public static final String IGNORE_WHITESPACE_ENV = "CITRUS_PLAINTEXT_VALIDATION_IGNORE_WHITESPACE";
 
-    private boolean ignoreNewLineType = Boolean.valueOf(System.getProperty(IGNORE_NEWLINE_TYPE_PROPERTY, System.getenv(IGNORE_NEWLINE_TYPE_ENV) != null ?
+    private boolean ignoreNewLineType = parseBoolean(System.getProperty(IGNORE_NEWLINE_TYPE_PROPERTY, System.getenv(IGNORE_NEWLINE_TYPE_ENV) != null ?
             System.getenv(IGNORE_NEWLINE_TYPE_ENV) : "false"));
-    private boolean ignoreWhitespace = Boolean.valueOf(System.getProperty(IGNORE_WHITESPACE_PROPERTY, System.getenv(IGNORE_WHITESPACE_ENV) != null ?
+    private boolean ignoreWhitespace = parseBoolean(System.getProperty(IGNORE_WHITESPACE_PROPERTY, System.getenv(IGNORE_WHITESPACE_ENV) != null ?
             System.getenv(IGNORE_WHITESPACE_ENV) : "false"));
 
     @Override
-    public void validateMessage(Message receivedMessage, Message controlMessage,
-                                TestContext context, ValidationContext validationContext) throws ValidationException {
+    public void validateMessage(Message receivedMessage, Message controlMessage, TestContext context, ValidationContext validationContext) throws ValidationException {
         if (controlMessage == null || controlMessage.getPayload() == null) {
             logger.debug("Skip message payload validation as no control message was defined");
             return;
@@ -73,7 +74,7 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
             throw new ValidationException("Failed to validate text content", e);
         }
 
-        logger.info("Text validation successful: All values OK");
+        logger.debug("Text validation successful: All values OK");
     }
 
     /**
@@ -96,7 +97,7 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
             String actualValue;
 
             if (ignoreMatcher.groupCount() > 0 && StringUtils.hasText(ignoreMatcher.group(1))) {
-                int end = ignoreMatcher.start() + Integer.valueOf(ignoreMatcher.group(1));
+                int end = ignoreMatcher.start() + parseInt(ignoreMatcher.group(1));
                 if (end > result.length()) {
                     end = result.length();
                 }

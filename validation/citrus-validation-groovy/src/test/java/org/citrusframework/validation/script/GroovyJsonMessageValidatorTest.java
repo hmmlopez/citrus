@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,6 @@ import org.citrusframework.validation.xml.XpathMessageValidationContext;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author DanielP
- */
 public class GroovyJsonMessageValidatorTest extends AbstractTestNGUnitTest {
 
     private final GroovyJsonMessageValidator validator = new GroovyJsonMessageValidator();
@@ -44,12 +41,14 @@ public class GroovyJsonMessageValidatorTest extends AbstractTestNGUnitTest {
         Message message = new DefaultMessage("{\"person\":{\"name\":\"Christoph\",\"age\":31," +
         		"\"pets\":[\"dog\",\"cat\"]}}");
 
-        String validationScript = "assert json.size() == 1 \n" +
-                                  "assert json.person.name == 'Christoph' \n" +
-                                  "assert json.person.age == 31 \n" +
-                                  "assert json.person.pets.size() == 2 \n" +
-                                  "assert json.person.pets[0] == 'dog' \n" +
-                                  "assert json.person.pets[1] == 'cat' \n";
+        String validationScript = """
+                assert json.size() == 1\s
+                assert json.person.name == 'Christoph'\s
+                assert json.person.age == 31\s
+                assert json.person.pets.size() == 2\s
+                assert json.person.pets[0] == 'dog'\s
+                assert json.person.pets[1] == 'cat'\s
+                """;
 
         ScriptValidationContext validationContext = new ScriptValidationContext.Builder()
                 .scriptType(ScriptTypes.GROOVY)
@@ -88,5 +87,4 @@ public class GroovyJsonMessageValidatorTest extends AbstractTestNGUnitTest {
 
         Assert.assertNotNull(validator.findValidationContext(validationContexts));
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
  * Validator working on SQL result sets. Scripts get the actual test context
  * and a SQL result set representation for validation.
  *
- * @author Christoph Deppisch
  */
 public interface SqlResultSetScriptValidator {
 

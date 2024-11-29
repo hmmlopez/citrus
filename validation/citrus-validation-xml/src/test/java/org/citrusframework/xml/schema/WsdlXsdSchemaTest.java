@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@
 
 package org.citrusframework.xml.schema;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.citrusframework.spi.Resource;
 import org.citrusframework.spi.Resources;
 import org.citrusframework.util.FileUtils;
@@ -28,9 +23,11 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.xml.sax.SAXException;
 
-/**
- * @author Christoph Deppisch
- */
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+
 public class WsdlXsdSchemaTest {
 
     @Test
@@ -80,18 +77,20 @@ public class WsdlXsdSchemaTest {
     }
 
     @Test
-    public void testWsdlSchemaWsdlImportsFromJar() throws ParserConfigurationException, IOException, SAXException {
+    public void testWsdlSchemaWsdlImportsFromJar() throws IOException {
         Resource classPathResource = Resources.create("sample.jar", WsdlXsdSchemaTest.class);
-        URLClassLoader urlClassLoader = URLClassLoader.newInstance(new URL[]{classPathResource.getURL()});
-        URL url = urlClassLoader.getResource("SampleServiceWithWsdlImports.wsdl");
-        WsdlXsdSchema wsdl = new WsdlXsdSchema(Resources.create(url));
-        wsdl.initialize();
 
-        Assert.assertEquals(wsdl.getSchemaResources().size(), 3);
+        try (var urlClassLoader = URLClassLoader.newInstance(new URL[]{classPathResource.getURL()})) {
+            URL url = urlClassLoader.getResource("SampleServiceWithWsdlImports.wsdl");
+            WsdlXsdSchema wsdl = new WsdlXsdSchema(Resources.create(url));
+            wsdl.initialize();
 
-        Assert.assertEquals(wsdl.getTargetNamespace(), "http://www.citrusframework.org/SampleService/");
+            Assert.assertEquals(wsdl.getSchemaResources().size(), 3);
 
-        Assert.assertNotNull(wsdl.getSource());
+            Assert.assertEquals(wsdl.getTargetNamespace(), "http://www.citrusframework.org/SampleService/");
+
+            Assert.assertNotNull(wsdl.getSource());
+        }
     }
 
     @Test

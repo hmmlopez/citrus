@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@
 package org.citrusframework.config.xml;
 
 import org.citrusframework.DefaultTestCase;
-import org.citrusframework.TestCaseMetaInfo;
 
 /**
  * Bean definition parser for test case.
  *
- * @author Christoph Deppisch
  */
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class TestCaseParser extends BaseTestCaseParser<DefaultTestCase> {
@@ -30,6 +28,5 @@ public class TestCaseParser extends BaseTestCaseParser<DefaultTestCase> {
     public TestCaseParser() {
         super(DefaultTestCase.class);
     }
-
 
 }

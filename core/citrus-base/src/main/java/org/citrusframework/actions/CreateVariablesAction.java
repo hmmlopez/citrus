@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
  * Action creating new test variables during a test. Existing test variables are overwritten
  * by new values.
  *
- * @author Christoph Deppisch
  * @since 2006
  */
 public class CreateVariablesAction extends AbstractTestAction {
@@ -106,5 +105,4 @@ public class CreateVariablesAction extends AbstractTestAction {
             return new CreateVariablesAction(this);
         }
     }
-
 }

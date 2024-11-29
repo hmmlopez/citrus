@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,14 +41,12 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.lang.NonNullApi;
 import org.springframework.util.CollectionUtils;
 
 /**
  * Factory bean implementation taking care of {@link FunctionRegistry} and {@link GlobalVariables}. Enriches a test context factory delegate with
  * components coming from Spring application context. In addition to that adds application context reference to the test context when building new instances.
  *
- * @author Christoph Deppisch
  */
 public class TestContextFactoryBean extends TestContextFactory implements FactoryBean<TestContext>, InitializingBean, ApplicationContextAware {
 
@@ -358,5 +356,4 @@ public class TestContextFactoryBean extends TestContextFactory implements Factor
     public SegmentVariableExtractorRegistry getSegmentVariableExtractorRegistry() {
         return delegate.getSegmentVariableExtractorRegistry();
     }
-
 }

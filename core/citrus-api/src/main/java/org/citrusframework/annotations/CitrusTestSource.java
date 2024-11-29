@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import java.lang.annotation.Target;
  * Citrus test case annotation used for Groovy test case definition inside a unit test class.
  * Each method annotated with this annotation will result in a separate test execution.
  *
- * @author Christoph Deppisch
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,11 @@ import org.citrusframework.testng.spring.TestNGCitrusSpringSupport;
 import org.testng.annotations.Test;
 
 /**
- * @author Christoph Deppisch
  * @since 2008
  */
 public class HttpServerJmsIT extends TestNGCitrusSpringSupport {
     @Test
     @CitrusTestSource(type = TestLoader.SPRING, name = "HttpServerJmsIT")
     public void serverJmsIT() {}
-
 
 }

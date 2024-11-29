@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,6 @@ import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
 
 import static org.citrusframework.actions.EchoAction.Builder.echo;
 
-/**
- * @author Christoph Deppisch
- */
 @ExtendWith({CitrusExtension.class, FailJUnit5IT.ShouldFailExtension.class})
 public class FailJUnit5IT {
 

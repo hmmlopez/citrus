@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,12 @@ package org.citrusframework.vertx.message;
 
 import org.citrusframework.context.TestContext;
 import org.citrusframework.message.*;
-import org.citrusframework.message.Message;
 import org.citrusframework.vertx.endpoint.VertxEndpointConfiguration;
 
 /**
  * Message converter implementation converts inbound Vert.x messages to internal message representation. Outbound message conversion is not supported
  * as the Vert.x message transport encapsulates message conversion by default.
  *
- * @author Christoph Deppisch
  * @since 1.4.1
  */
 public class VertxMessageConverter implements MessageConverter<io.vertx.core.eventbus.Message, io.vertx.core.eventbus.Message, VertxEndpointConfiguration> {

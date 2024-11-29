@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * @author Christoph Deppisch
  * @since 2.5
  */
 public class HttpClientBuilder extends AbstractEndpointBuilder<HttpClient> {
@@ -144,6 +143,16 @@ public class HttpClientBuilder extends AbstractEndpointBuilder<HttpClient> {
      */
     public HttpClientBuilder handleCookies(boolean flag) {
         endpoint.getEndpointConfiguration().setHandleCookies(flag);
+        return this;
+    }
+
+    /**
+     * Sets the disabled redirect handling property.
+     * @param flag
+     * @return
+     */
+    public HttpClientBuilder disableRedirectHandling(boolean flag) {
+        endpoint.getEndpointConfiguration().setDisableRedirectHandling(flag);
         return this;
     }
 

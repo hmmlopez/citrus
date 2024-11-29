@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class SimpleMappingStrategyTest {
@@ -35,10 +34,10 @@ public class SimpleMappingStrategyTest {
     private EndpointAdapter barEndpointAdapter = Mockito.mock(EndpointAdapter.class);
 
     @Test
-    public void testGetEndpointAdapter() throws Exception {
+    public void testGetEndpointAdapter() {
         SimpleMappingStrategy mappingStrategy = new SimpleMappingStrategy();
 
-        Map<String, EndpointAdapter> mappings = new HashMap<String, EndpointAdapter>();
+        Map<String, EndpointAdapter> mappings = new HashMap<>();
         mappings.put("foo", fooEndpointAdapter);
         mappings.put("bar", barEndpointAdapter);
         mappingStrategy.setAdapterMappings(mappings);

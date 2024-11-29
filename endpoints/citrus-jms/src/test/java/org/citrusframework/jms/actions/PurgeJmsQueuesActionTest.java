@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class PurgeJmsQueuesActionTest extends AbstractTestNGUnitTest {
 
     private final ConnectionFactory connectionFactory = Mockito.mock(ConnectionFactory.class);
@@ -193,7 +190,7 @@ public class PurgeJmsQueuesActionTest extends AbstractTestNGUnitTest {
         List<String> queueNames = new ArrayList<>();
         queueNames.add("${variableQueueName}");
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         TextMessage jmsRequest = new TextMessageImpl("<TestRequest>Hello World!</TestRequest>", requestHeaders);
 
         reset(connectionFactory, connection, session, messageConsumer);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,6 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 
-/**
- * @author Christoph Deppisch
- */
 public class WebSocketClientParserTest extends AbstractBeanDefinitionParserTest {
 
     @Test
@@ -67,5 +64,4 @@ public class WebSocketClientParserTest extends AbstractBeanDefinitionParserTest 
             Assert.assertTrue(e.getMessage().contains("One of the properties 'url' or 'endpoint-resolver' is required"));
         }
     }
-
 }

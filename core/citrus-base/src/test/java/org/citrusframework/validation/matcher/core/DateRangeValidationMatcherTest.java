@@ -1,11 +1,11 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,6 @@ import java.util.List;
 import static org.testng.Assert.fail;
 
 /**
- * @author Martin Maher
  * @since 2.5
  */
 public class DateRangeValidationMatcherTest {
@@ -44,7 +43,7 @@ public class DateRangeValidationMatcherTest {
             if (expectedErrorMessage == null) {
                 fail("Was not expecting exception but got one", e);
             }
-            Assert.assertTrue(e.getMessage().indexOf(expectedErrorMessage) > -1, String.format("Expected error '%s' not found in '%s'", expectedErrorMessage, e.getMessage()));
+            Assert.assertTrue(e.getMessage().contains(expectedErrorMessage), String.format("Expected error '%s' not found in '%s'", expectedErrorMessage, e.getMessage()));
         }
     }
 

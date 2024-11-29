@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import java.util.Map;
  * Http request wrapper for later usage in converter. Optional RestDoc configuration is read from special request wrapper implementation
  * if present. Optional RestDoc configurer interceptor may have created this wrapper in prior to this interceptor execution.
  *
- * @author Christoph Deppisch
  * @since 2.6
  */
 public class RestDocClientInterceptor implements ClientHttpRequestInterceptor {

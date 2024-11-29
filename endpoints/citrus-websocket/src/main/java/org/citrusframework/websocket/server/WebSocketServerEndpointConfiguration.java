@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Web socket endpoint configuration for server side web socket communication.
- * @author Martin Maher
  * @since 2.3
  */
 public class WebSocketServerEndpointConfiguration extends AbstractWebSocketEndpointConfiguration {

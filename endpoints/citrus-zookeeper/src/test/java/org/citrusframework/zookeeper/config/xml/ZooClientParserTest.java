@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import java.util.Map;
 import static org.citrusframework.zookeeper.client.ZooClientConfig.ZooKeeperClientConfigBuilder.DEFAULT_TIMEOUT;
 import static org.citrusframework.zookeeper.client.ZooClientConfig.ZooKeeperClientConfigBuilder.DEFAULT_URL;
 
-/**
- * @author Martin Maher
- */
 public class ZooClientParserTest extends AbstractBeanDefinitionParserTest {
 
     @Test

@@ -1,14 +1,11 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,9 +40,6 @@ import org.citrusframework.yaml.actions.Message;
 import org.citrusframework.yaml.actions.Receive;
 import org.citrusframework.yaml.actions.Send;
 
-/**
- * @author Christoph Deppisch
- */
 public class Http implements TestActionBuilder<TestAction>, ReferenceResolverAware {
 
     private TestActionBuilder<?> builder;
@@ -279,7 +273,7 @@ public class Http implements TestActionBuilder<TestAction>, ReferenceResolverAwa
             receive.setTimeout(request.timeout);
         }
 
-        request.getValidates().forEach(receive.getValidate()::add);
+        request.getValidate().forEach(receive.getValidate()::add);
 
         if (request.extract != null) {
             receive.setExtract(request.extract);
@@ -509,7 +503,7 @@ public class Http implements TestActionBuilder<TestAction>, ReferenceResolverAwa
 
         protected Receive.Selector selector;
 
-        protected List<Receive.Validate> validates;
+        protected List<Receive.Validate> validate;
 
         protected Message.Extract extract;
 
@@ -633,12 +627,16 @@ public class Http implements TestActionBuilder<TestAction>, ReferenceResolverAwa
             this.selector = selector;
         }
 
-        public List<Receive.Validate> getValidates() {
-            if (validates == null) {
-                validates = new ArrayList<>();
+        public List<Receive.Validate> getValidate() {
+            if (validate == null) {
+                validate = new ArrayList<>();
             }
 
-            return validates;
+            return validate;
+        }
+
+        public void setValidate(List<Receive.Validate> validate) {
+            this.validate = validate;
         }
 
         public Message.Extract getExtract() {
@@ -758,6 +756,10 @@ public class Http implements TestActionBuilder<TestAction>, ReferenceResolverAwa
             }
 
             return validate;
+        }
+
+        public void setValidate(List<Receive.Validate> validate) {
+            this.validate = validate;
         }
 
         public Message.Extract getExtract() {
@@ -880,5 +882,4 @@ public class Http implements TestActionBuilder<TestAction>, ReferenceResolverAwa
             }
         }
     }
-
 }

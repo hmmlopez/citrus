@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
  * Access current alert dialog. In case no alert is opened action fails.
  * Action supports optional alert text validation.
  *
- * @author Tamer Erdogan, Christoph Deppisch
  * @since 2.7
  */
 public class AlertAction extends AbstractSeleniumAction {
@@ -76,7 +75,7 @@ public class AlertAction extends AbstractSeleniumAction {
                 }
 
             }
-            logger.info("Alert text validation successful - All values Ok");
+            logger.debug("Alert text validation successful - All values Ok");
         }
 
         context.setVariable(SeleniumHeaders.SELENIUM_ALERT_TEXT, alert.getText());

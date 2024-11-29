@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,6 @@ import static org.citrusframework.dsl.MessageSupport.MessageHeaderSupport.fromHe
 import static org.citrusframework.dsl.XmlSupport.xml;
 import static org.citrusframework.ws.actions.SoapActionBuilder.soap;
 
-/**
- * @author Christoph Deppisch
- */
 @Test
 public class SoapForkModeJavaIT extends TestNGCitrusSpringSupport {
 

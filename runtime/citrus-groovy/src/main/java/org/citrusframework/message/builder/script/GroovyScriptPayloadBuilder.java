@@ -1,14 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,9 +26,8 @@ import org.citrusframework.spi.Resources;
 import org.citrusframework.validation.script.TemplateBasedScriptBuilder;
 import org.codehaus.groovy.control.CompilationFailedException;
 
-/**
- * @author Christoph Deppisch
- */
+import java.io.IOException;
+
 public class GroovyScriptPayloadBuilder implements ScriptPayloadBuilder {
 
     /** Default path to script template */
@@ -79,10 +75,8 @@ public class GroovyScriptPayloadBuilder implements ScriptPayloadBuilder {
      * @return
      */
     protected String buildMarkupBuilderScript(String scriptData) {
-        try {
-            ClassLoader parent = GroovyScriptPayloadBuilder.class.getClassLoader();
-            GroovyClassLoader loader = new GroovyClassLoader(parent);
-
+        ClassLoader parent = GroovyScriptPayloadBuilder.class.getClassLoader();
+        try (GroovyClassLoader loader = new GroovyClassLoader(parent))  {
             Class<?> groovyClass = loader.parseClass(TemplateBasedScriptBuilder.fromTemplateResource(scriptTemplateResource)
                     .withCode(scriptData)
                     .build());
@@ -93,7 +87,7 @@ public class GroovyScriptPayloadBuilder implements ScriptPayloadBuilder {
 
             GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance();
             return (String) groovyObject.invokeMethod("run", new Object[] {});
-        } catch (CompilationFailedException | InstantiationException | IllegalAccessException e) {
+        } catch (CompilationFailedException | IllegalAccessException | InstantiationException | IOException e) {
             throw new CitrusRuntimeException(e);
         }
     }

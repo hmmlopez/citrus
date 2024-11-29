@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Test generator creates one to many test cases based on operations defined in a XML schema XSD.
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 public class WsdlJavaTestGenerator extends MessagingJavaTestGenerator<WsdlJavaTestGenerator> implements WsdlTestGenerator<WsdlJavaTestGenerator> {
@@ -209,7 +208,7 @@ public class WsdlJavaTestGenerator extends MessagingJavaTestGenerator<WsdlJavaTe
             throw new CitrusRuntimeException("Failed to parse XSD schema", e);
         }
 
-        SchemaTypeSystem schemaTypeSystem = null;
+        SchemaTypeSystem schemaTypeSystem;
         try {
             schemaTypeSystem = XmlBeans.compileXsd(xsd, XmlBeans.getContextTypeLoader(), new XmlOptions());
         } catch (XmlException e) {

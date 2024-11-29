@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.citrusframework.main.AbstractTestEngine;
 import org.citrusframework.main.TestRunConfiguration;
 import org.citrusframework.main.scan.ClassPathTestScanner;
 import org.citrusframework.main.scan.JarFileTestScanner;
+import org.citrusframework.report.TestReporterSettings;
 import org.citrusframework.testng.main.TestNGCitrusTest;
 import org.citrusframework.util.StringUtils;
 import org.slf4j.Logger;
@@ -45,7 +46,6 @@ import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 public class TestNGEngine extends AbstractTestEngine {
@@ -65,6 +65,7 @@ public class TestNGEngine extends AbstractTestEngine {
 
     public void run() {
         TestNG testng = new TestNG();
+        testng.setOutputDirectory(TestReporterSettings.getReportDirectory() + "/" + TestNG.DEFAULT_OUTPUTDIR);
 
         for (ITestNGListener listener : listeners) {
             testng.addListener(listener);
@@ -85,7 +86,7 @@ public class TestNGEngine extends AbstractTestEngine {
 
     private void addTestSources(XmlSuite suite, TestRunConfiguration configuration) {
         List<TestSource> testSources = configuration.getTestSources().stream()
-                .filter(source -> !"java".equals(source.getType()))
+                .filter(source -> !"java".equals(source.getType()) || !TestClass.isKnownToClasspath(source.getName()))
                 .toList();
 
         for (TestSource source : testSources) {
@@ -157,6 +158,7 @@ public class TestNGEngine extends AbstractTestEngine {
         List<TestClass> testClasses = configuration.getTestSources().stream()
                 .filter(source -> "java".equals(source.getType()))
                 .map(TestSource::getName)
+                .filter(TestClass::isKnownToClasspath)
                 .map(TestClass::fromString)
                 .toList();
 

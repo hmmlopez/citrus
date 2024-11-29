@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.citrusframework.validation.context.ValidationContext;
  * Basic script validation context providing the validation code either from file resource or
  * from direct script string.
  *
- * @author Christoph Deppisch
  */
 public class ScriptValidationContext extends DefaultValidationContext {
 
@@ -214,5 +213,4 @@ public class ScriptValidationContext extends DefaultValidationContext {
     public String getValidationScriptResourceCharset() {
         return validationScriptResourceCharset;
     }
-
 }

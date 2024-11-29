@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.citrusframework.context.TestContext;
  * working before closing the test case. Asynchronous test action execution may implement this interface in order to publish the completed state of
  * forked processes.
  *
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 public interface Completable {

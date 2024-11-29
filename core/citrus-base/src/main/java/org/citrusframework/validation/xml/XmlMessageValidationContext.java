@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.citrusframework.validation.context.ValidationContext;
  * XML validation context holding validation specific information needed for XML
  * message validation.
  *
- * @author Christoph Deppisch
  */
 public class XmlMessageValidationContext extends DefaultValidationContext implements SchemaValidationContext {
 
@@ -276,5 +275,4 @@ public class XmlMessageValidationContext extends DefaultValidationContext implem
     public String getSchema() {
         return schema;
     }
-
 }

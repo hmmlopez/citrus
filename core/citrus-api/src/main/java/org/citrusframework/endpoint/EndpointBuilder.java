@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
  * Endpoint builder interface. All endpoint builder implementations do implement this interface
  * in order to build endpoints using a fluent Java API.
  *
- * @author Christoph Deppisch
  * @since 2.5
  */
 public interface EndpointBuilder<T extends Endpoint> {

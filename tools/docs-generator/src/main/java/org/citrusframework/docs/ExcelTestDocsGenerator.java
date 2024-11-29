@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.xml.sax.SAXException;
 /**
  * Class to automatically generate a list of all available tests in MS Excel.
  *
- * @author Christoph Deppisch
  * @since 2007
  */
 public class ExcelTestDocsGenerator extends AbstractTestDocsGenerator {

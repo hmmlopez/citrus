@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,7 @@ import java.util.*;
 
 import static org.mockito.Mockito.*;
 
-
 /**
- * @author Christoph Deppisch
  * @since 1.4.1
  */
 public class DelegatingEndpointInterceptorTest {
@@ -62,13 +60,13 @@ public class DelegatingEndpointInterceptorTest {
     }
 
     @Test
-    public void testShouldIntercept() throws Exception {
+    public void testShouldIntercept() {
         Assert.assertTrue(delegatingEndpointInterceptor.shouldIntercept(messageContext, webServiceEndpoint));
     }
 
     @Test
     public void testIntercept() throws Exception {
-        List<EndpointInterceptor> interceptors = new ArrayList<EndpointInterceptor>();
+        List<EndpointInterceptor> interceptors = new ArrayList<>();
         interceptors.add(endpointInterceptorMock);
         interceptors.add(smartEndpointInterceptorMock);
 
@@ -97,7 +95,7 @@ public class DelegatingEndpointInterceptorTest {
     public void testInterceptSoapMustUnderstand() throws Exception {
         QName soapHeader = new QName("http://citrusframework.org", "soapMustUnderstand", "citrus");
 
-        List<EndpointInterceptor> interceptors = new ArrayList<EndpointInterceptor>();
+        List<EndpointInterceptor> interceptors = new ArrayList<>();
         interceptors.add(endpointInterceptorMock);
         interceptors.add(smartEndpointInterceptorMock);
         interceptors.add(soapEndpointInterceptorMock);

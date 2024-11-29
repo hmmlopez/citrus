@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
 public class GroovyXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
     private final GroovyXmlMessageValidator validator = new GroovyXmlMessageValidator();
@@ -53,10 +50,11 @@ public class GroovyXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
     @Test
     public void testGroovyScriptValidation() throws ValidationException {
-        String validationScript = "assert root.children().size() == 3 \n" +
-                        "assert root.CorrelationId.text() == 'Kx1R123456789' \n" +
-                        "assert root.BookingId.text() == 'Bx1G987654321' \n" +
-                        "assert root.Text.text() == 'Hello TestFramework'";
+        String validationScript = """
+                assert root.children().size() == 3\s
+                assert root.CorrelationId.text() == 'Kx1R123456789'\s
+                assert root.BookingId.text() == 'Bx1G987654321'\s
+                assert root.Text.text() == 'Hello TestFramework'""";
 
         ScriptValidationContext validationContext = new ScriptValidationContext.Builder()
                 .scriptType(ScriptTypes.GROOVY)
@@ -71,10 +69,11 @@ public class GroovyXmlMessageValidatorTest extends AbstractTestNGUnitTest {
         context.setVariable("user", "TestFramework");
         context.setVariable("correlationId", "Kx1R123456789");
 
-        String validationScript = "assert root.children().size() == 3 \n" +
-                        "assert root.CorrelationId.text() == '${correlationId}' \n" +
-                        "assert root.BookingId.text() == 'Bx1G987654321' \n" +
-                        "assert root.Text.text() == 'Hello ' + context.getVariable(\"user\")";
+        String validationScript = """
+                assert root.children().size() == 3\s
+                assert root.CorrelationId.text() == '${correlationId}'\s
+                assert root.BookingId.text() == 'Bx1G987654321'\s
+                assert root.Text.text() == 'Hello ' + context.getVariable("user")""";
 
         ScriptValidationContext validationContext = new ScriptValidationContext.Builder()
                 .scriptType(ScriptTypes.GROOVY)
@@ -86,10 +85,11 @@ public class GroovyXmlMessageValidatorTest extends AbstractTestNGUnitTest {
 
     @Test
     public void testGroovyScriptValidationFailed() {
-        String validationScript = "assert root.children().size() == 3 \n" +
-                        "assert root.CorrelationId.text() == 'Kx1R123456789' \n" +
-                        "assert root.BookingId.text() == 'Bx1G987654321' \n" +
-                        "assert root.Text == 'Hello Citrus'"; //should fail
+        String validationScript = """
+                assert root.children().size() == 3\s
+                assert root.CorrelationId.text() == 'Kx1R123456789'\s
+                assert root.BookingId.text() == 'Bx1G987654321'\s
+                assert root.Text == 'Hello Citrus'"""; //should fail
 
         ScriptValidationContext validationContext = new ScriptValidationContext.Builder()
                 .scriptType(ScriptTypes.GROOVY)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,11 @@ import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.InvalidFunctionUsageException;
 import org.citrusframework.variable.VariableUtils;
 
+import static java.util.Objects.requireNonNullElse;
+
 /**
  * Utility class for functions.
  *
- * @author Christoph Deppisch
  */
 public final class FunctionUtils {
 
@@ -57,12 +58,12 @@ public final class FunctionUtils {
         }
 
         String newString = stringValue;
-        StringBuffer strBuffer = new StringBuffer();
+        var strBuffer = new StringBuilder();
 
-        boolean isVarComplete = false;
-        StringBuffer variableNameBuf = new StringBuffer();
+        boolean isVarComplete;
+        var variableNameBuf = new StringBuilder();
 
-        int startIndex = 0;
+        int startIndex;
         int curIndex;
         int searchIndex;
 
@@ -94,7 +95,7 @@ public final class FunctionUtils {
 
                 final String value = resolveFunction(variableNameBuf.toString(), context);
 
-                strBuffer.append(newString.substring(startIndex, searchIndex));
+                strBuffer.append(newString, startIndex, searchIndex);
 
                 if (enableQuoting) {
                     strBuffer.append("'" + value + "'");
@@ -104,14 +105,13 @@ public final class FunctionUtils {
 
                 startIndex = curIndex;
 
-                variableNameBuf = new StringBuffer();
-                isVarComplete = false;
+                variableNameBuf = new StringBuilder();
             }
 
             strBuffer.append(newString.substring(startIndex));
             newString = strBuffer.toString();
 
-            strBuffer = new StringBuffer();
+            strBuffer = new StringBuilder();
         }
 
         return newString;
@@ -141,10 +141,6 @@ public final class FunctionUtils {
 
         String value = library.getFunction(function).execute(FunctionParameterHelper.getParameterList(parameterString), context);
 
-        if (value == null) {
-            return "";
-        } else {
-            return value;
-        }
+        return requireNonNullElse(value, "");
     }
 }

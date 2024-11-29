@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 /**
- * @author Christoph Deppisch
  * @since 2.3
  */
 public class CitrusWebSocketDispatcherServletTest extends AbstractTestNGUnitTest {
@@ -122,7 +121,6 @@ public class CitrusWebSocketDispatcherServletTest extends AbstractTestNGUnitTest
         assertEquals(handlerInterceptor.getInterceptors().size(), 0L);
         assertEquals(httpMessageController.getEndpointAdapter().getClass(), TimeoutProducingEndpointAdapter.class);
         assertNotNull(httpMessageController.getEndpointConfiguration().getMessageConverter());
-
 
     }
 

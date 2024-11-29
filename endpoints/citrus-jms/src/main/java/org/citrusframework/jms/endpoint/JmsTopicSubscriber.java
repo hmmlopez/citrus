@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,6 @@
  */
 
 package org.citrusframework.jms.endpoint;
-
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import jakarta.jms.ConnectionFactory;
 import jakarta.jms.JMSException;
@@ -43,8 +35,16 @@ import org.citrusframework.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+
 /**
- * @author Christoph Deppisch
  * @since 2.7.6
  */
 public class JmsTopicSubscriber extends JmsConsumer implements Runnable {
@@ -61,7 +61,7 @@ public class JmsTopicSubscriber extends JmsConsumer implements Runnable {
     /** Delegate in-memory message queue caching all inbound messages */
     private DirectEndpoint messageQueue;
 
-    private Executor subscription = Executors.newSingleThreadExecutor();
+    private Executor subscription = newSingleThreadExecutor();
     private CompletableFuture<Boolean> stopped = new CompletableFuture<>();
     private CompletableFuture<Boolean> started = new CompletableFuture<>();
 

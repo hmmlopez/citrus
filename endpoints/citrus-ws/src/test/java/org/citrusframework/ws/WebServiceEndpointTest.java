@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import jakarta.activation.DataHandler;
 import jakarta.xml.soap.MimeHeaders;
 import jakarta.xml.soap.SOAPMessage;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.ws.context.MessageContext;
 import org.springframework.ws.mime.Attachment;
@@ -60,9 +59,6 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.*;
 
-/**
- * @author Christoph Deppisch
- */
 public class WebServiceEndpointTest {
 
     private MessageContext messageContext = Mockito.mock(MessageContext.class);
@@ -126,7 +122,6 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getPayloadResult()).thenReturn(soapResponsePayload);
 
-
         endpoint.invoke(messageContext);
 
         Assert.assertEquals(soapResponsePayload.toString(), responseMessage.getPayload());
@@ -137,7 +132,7 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithSoapAction() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
@@ -183,7 +178,6 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getPayloadResult()).thenReturn(soapResponsePayload);
 
-
         endpoint.invoke(messageContext);
 
         Assert.assertEquals(soapResponsePayload.toString(), responseMessage.getPayload());
@@ -194,7 +188,7 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithSoapRequestHeaders() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         requestHeaders.put("Operation", "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
@@ -214,7 +208,7 @@ public class WebServiceEndpointTest {
             }
         });
 
-        Set<SoapHeaderElement> soapRequestHeaders = new HashSet<SoapHeaderElement>();
+        Set<SoapHeaderElement> soapRequestHeaders = new HashSet<>();
         soapRequestHeaders.add(soapRequestHeaderEntry);
 
         StringResult soapResponsePayload = new StringResult();
@@ -342,11 +336,11 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithSoapResponseHeaders() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         responseHeaders.put("{http://citrusframework.org/citrus}citrus:Operation", "sayHello");
         final Message responseMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestResponse><Message>Hello World!</Message></TestResponse>", responseHeaders);
 
@@ -392,16 +386,13 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapHeader()).thenReturn(soapResponseHeader);
 
-        doAnswer(new Answer<SoapHeaderElement>() {
-            @Override
-            public SoapHeaderElement answer(InvocationOnMock invocation) throws Throwable {
-                QName headerQName = (QName)invocation.getArguments()[0];
+        doAnswer((Answer<SoapHeaderElement>) invocation -> {
+            QName headerQName = (QName)invocation.getArguments()[0];
 
-                Assert.assertEquals(headerQName.getLocalPart(), "Operation");
-                Assert.assertEquals(headerQName.getPrefix(), "citrus");
-                Assert.assertEquals(headerQName.getNamespaceURI(), "http://citrusframework.org/citrus");
-                return soapRequestHeaderEntry;
-            }
+            Assert.assertEquals(headerQName.getLocalPart(), "Operation");
+            Assert.assertEquals(headerQName.getPrefix(), "citrus");
+            Assert.assertEquals(headerQName.getNamespaceURI(), "http://citrusframework.org/citrus");
+            return soapRequestHeaderEntry;
         }).when(soapResponseHeader).addHeaderElement((QName)any());
 
         endpoint.invoke(messageContext);
@@ -415,11 +406,11 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithDefaultHeaderQName() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         responseHeaders.put("Operation", "sayHello");
         final Message responseMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestResponse><Message>Hello World!</Message></TestResponse>", responseHeaders);
 
@@ -467,16 +458,13 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapHeader()).thenReturn(soapResponseHeader);
 
-        doAnswer(new Answer<SoapHeaderElement>() {
-            @Override
-            public SoapHeaderElement answer(InvocationOnMock invocation) throws Throwable {
-                QName headerQName = (QName)invocation.getArguments()[0];
+        doAnswer((Answer<SoapHeaderElement>) invocation -> {
+            QName headerQName = (QName)invocation.getArguments()[0];
 
-                Assert.assertEquals(headerQName.getLocalPart(), "Operation");
-                Assert.assertEquals(headerQName.getPrefix(), "citrus");
-                Assert.assertEquals(headerQName.getNamespaceURI(), "http://citrusframework.org/citrus");
-                return soapRequestHeaderEntry;
-            }
+            Assert.assertEquals(headerQName.getLocalPart(), "Operation");
+            Assert.assertEquals(headerQName.getPrefix(), "citrus");
+            Assert.assertEquals(headerQName.getNamespaceURI(), "http://citrusframework.org/citrus");
+            return soapRequestHeaderEntry;
         }).when(soapResponseHeader).addHeaderElement((QName)any());
 
         endpoint.invoke(messageContext);
@@ -490,11 +478,11 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithDefaultHeaderQNameNoPrefix() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         responseHeaders.put("Operation", "sayHello");
         final Message responseMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestResponse><Message>Hello World!</Message></TestResponse>", responseHeaders);
 
@@ -542,16 +530,13 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapHeader()).thenReturn(soapResponseHeader);
 
-        doAnswer(new Answer<SoapHeaderElement>() {
-            @Override
-            public SoapHeaderElement answer(InvocationOnMock invocation) throws Throwable {
-                QName headerQName = (QName)invocation.getArguments()[0];
+        doAnswer((Answer<SoapHeaderElement>) invocation -> {
+            QName headerQName = (QName)invocation.getArguments()[0];
 
-                Assert.assertEquals(headerQName.getLocalPart(), "Operation");
-                Assert.assertEquals(headerQName.getPrefix(), "");
-                Assert.assertEquals(headerQName.getNamespaceURI(), "http://citrusframework.org/citrus");
-                return soapRequestHeaderEntry;
-            }
+            Assert.assertEquals(headerQName.getLocalPart(), "Operation");
+            Assert.assertEquals(headerQName.getPrefix(), "");
+            Assert.assertEquals(headerQName.getNamespaceURI(), "http://citrusframework.org/citrus");
+            return soapRequestHeaderEntry;
         }).when(soapResponseHeader).addHeaderElement((QName)any());
 
         endpoint.invoke(messageContext);
@@ -565,11 +550,11 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingMissingNamespaceUri() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         responseHeaders.put("Operation", "sayHello");
         final Message responseMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestResponse><Message>Hello World!</Message></TestResponse>", responseHeaders);
 
@@ -615,16 +600,13 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapHeader()).thenReturn(soapResponseHeader);
 
-        doAnswer(new Answer<SoapHeaderElement>() {
-            @Override
-            public SoapHeaderElement answer(InvocationOnMock invocation) throws Throwable {
-                QName headerQName = (QName)invocation.getArguments()[0];
+        doAnswer((Answer<SoapHeaderElement>) invocation -> {
+            QName headerQName = (QName)invocation.getArguments()[0];
 
-                Assert.assertEquals(headerQName.getLocalPart(), "Operation");
-                Assert.assertEquals(headerQName.getPrefix(), "");
-                Assert.assertEquals(headerQName.getNamespaceURI(), "");
-                return soapRequestHeaderEntry;
-            }
+            Assert.assertEquals(headerQName.getLocalPart(), "Operation");
+            Assert.assertEquals(headerQName.getPrefix(), "");
+            Assert.assertEquals(headerQName.getNamespaceURI(), "");
+            return soapRequestHeaderEntry;
         }).when(soapResponseHeader).addHeaderElement((QName)any());
 
         endpoint.invoke(messageContext);
@@ -664,10 +646,9 @@ public class WebServiceEndpointTest {
             }
         });
 
-
         StringResult soapResponsePayload = new StringResult();
 
-        Set<Attachment> attachments = new HashSet<Attachment>();
+        Set<Attachment> attachments = new HashSet<>();
         Attachment attachment = Mockito.mock(Attachment.class);
         attachments.add(attachment);
 
@@ -721,7 +702,7 @@ public class WebServiceEndpointTest {
 
         StringResult soapResponsePayload = new StringResult();
 
-        Set<Attachment> attachments = new HashSet<Attachment>();
+        Set<Attachment> attachments = new HashSet<>();
         Attachment attachment = Mockito.mock(Attachment.class);
         attachments.add(attachment);
 
@@ -767,7 +748,7 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithServerSoapFaultInResponse() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
@@ -817,15 +798,11 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapBody()).thenReturn(soapBody);
 
-        doAnswer(new Answer<org.springframework.ws.soap.SoapFault>() {
-            @Override
-            public org.springframework.ws.soap.SoapFault answer(InvocationOnMock invocation) throws Throwable {
-                Assert.assertEquals(invocation.getArguments()[0], "Invalid request, because of unknown error");
+        doAnswer((Answer<org.springframework.ws.soap.SoapFault>) invocation -> {
+            Assert.assertEquals(invocation.getArguments()[0], "Invalid request, because of unknown error");
 
-                return soapFault;
-            }
+            return soapFault;
         }).when(soapBody).addServerOrReceiverFault((String)any(), (Locale)any());
-
 
         endpoint.invoke(messageContext);
 
@@ -837,7 +814,7 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithClientSoapFaultInResponse() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
@@ -887,14 +864,10 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapBody()).thenReturn(soapBody);
 
-        doAnswer(new Answer<org.springframework.ws.soap.SoapFault>() {
-            @Override
-            public org.springframework.ws.soap.SoapFault answer(InvocationOnMock invocation) throws Throwable {
-                Assert.assertEquals(invocation.getArguments()[0], "Invalid request");
-                return soapFault;
-            }
+        doAnswer((Answer<org.springframework.ws.soap.SoapFault>) invocation -> {
+            Assert.assertEquals(invocation.getArguments()[0], "Invalid request");
+            return soapFault;
         }).when(soapBody).addClientOrSenderFault((String)any(), (Locale)any());
-
 
         endpoint.invoke(messageContext);
 
@@ -906,7 +879,7 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithSoapFaultDetail() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
@@ -958,19 +931,15 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapBody()).thenReturn(soapBody);
 
-        doAnswer(new Answer<org.springframework.ws.soap.SoapFault>() {
-            @Override
-            public org.springframework.ws.soap.SoapFault answer(InvocationOnMock invocation) throws Throwable {
-                Assert.assertEquals(invocation.getArguments()[0], "Invalid request");
+        doAnswer((Answer<org.springframework.ws.soap.SoapFault>) invocation -> {
+            Assert.assertEquals(invocation.getArguments()[0], "Invalid request");
 
-                return soapFault;
-            }
+            return soapFault;
         }).when(soapBody).addServerOrReceiverFault((String)any(), (Locale)any());
 
         when(soapFault.addFaultDetail()).thenReturn(soapFaultDetail);
 
         when(soapFaultDetail.getResult()).thenReturn(soapFaultResult);
-
 
         endpoint.invoke(messageContext);
 
@@ -982,7 +951,7 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithMultipleSoapFaultDetails() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
@@ -1035,19 +1004,15 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapBody()).thenReturn(soapBody);
 
-        doAnswer(new Answer<org.springframework.ws.soap.SoapFault>() {
-            @Override
-            public org.springframework.ws.soap.SoapFault answer(InvocationOnMock invocation) throws Throwable {
-                Assert.assertEquals(invocation.getArguments()[0], "Invalid request");
+        doAnswer((Answer<org.springframework.ws.soap.SoapFault>) invocation -> {
+            Assert.assertEquals(invocation.getArguments()[0], "Invalid request");
 
-                return soapFault;
-            }
+            return soapFault;
         }).when(soapBody).addServerOrReceiverFault((String)any(), (Locale)any());
 
         when(soapFault.addFaultDetail()).thenReturn(soapFaultDetail);
 
         when(soapFaultDetail.getResult()).thenReturn(soapFaultResult);
-
 
         endpoint.invoke(messageContext);
 
@@ -1059,11 +1024,11 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithSoapActionInResponse() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         responseHeaders.put(SoapMessageHeaders.SOAP_ACTION, "answerHello");
         final Message responseMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestResponse><Message>Hello World!</Message></TestResponse>", responseHeaders);
 
@@ -1079,7 +1044,6 @@ public class WebServiceEndpointTest {
                 return responseMessage;
             }
         });
-
 
         StringResult soapResponsePayload = new StringResult();
 
@@ -1119,7 +1083,7 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithSoap11FaultInResponse() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
@@ -1172,20 +1136,16 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapBody()).thenReturn(soapResponseBody);
 
-        doAnswer(new Answer<org.springframework.ws.soap.SoapFault>() {
-            @Override
-            public org.springframework.ws.soap.SoapFault answer(InvocationOnMock invocation) throws Throwable {
-                QName faultQName = (QName)invocation.getArguments()[0];
+        doAnswer((Answer<org.springframework.ws.soap.SoapFault>) invocation -> {
+            QName faultQName = (QName)invocation.getArguments()[0];
 
-                Assert.assertEquals(faultQName.getLocalPart(), "TEC-1000");
-                Assert.assertEquals(faultQName.getPrefix(), "citrus");
-                Assert.assertEquals(faultQName.getNamespaceURI(), "http://citrusframework.org/citrus");
-                Assert.assertEquals(invocation.getArguments()[1], "Invalid request");
+            Assert.assertEquals(faultQName.getLocalPart(), "TEC-1000");
+            Assert.assertEquals(faultQName.getPrefix(), "citrus");
+            Assert.assertEquals(faultQName.getNamespaceURI(), "http://citrusframework.org/citrus");
+            Assert.assertEquals(invocation.getArguments()[1], "Invalid request");
 
-                return soapFault;
-            }
+            return soapFault;
         }).when(soapResponseBody).addFault((QName)any(), (String)any(), (Locale)any());
-
 
         endpoint.invoke(messageContext);
 
@@ -1197,7 +1157,7 @@ public class WebServiceEndpointTest {
     public void testMessageProcessingWithSoap12FaultInResponse() throws Exception {
         WebServiceEndpoint endpoint = new WebServiceEndpoint();
 
-        Map<String, Object> requestHeaders = new HashMap<String, Object>();
+        Map<String, Object> requestHeaders = new HashMap<>();
         requestHeaders.put(SoapMessageHeaders.SOAP_ACTION, "sayHello");
         final Message requestMessage = new DefaultMessage("<?xml version=\"1.0\" encoding=\"UTF-8\"?><TestRequest><Message>Hello World!</Message></TestRequest>", requestHeaders);
 
@@ -1250,24 +1210,18 @@ public class WebServiceEndpointTest {
 
         when(soapResponse.getSoapBody()).thenReturn(soapResponseBody);
 
-        doAnswer(new Answer<Soap12Fault>() {
-            @Override
-            public Soap12Fault answer(InvocationOnMock invocation) throws Throwable {
-                Assert.assertEquals(invocation.getArguments()[0], "Invalid request");
-                return soapFault;
-            }
+        doAnswer((Answer<Soap12Fault>) invocation -> {
+            Assert.assertEquals(invocation.getArguments()[0], "Invalid request");
+            return soapFault;
         }).when(soapResponseBody).addServerOrReceiverFault((String)any(), (Locale)any());
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                QName faultQName = (QName)invocation.getArguments()[0];
+        doAnswer(invocation -> {
+            QName faultQName = (QName)invocation.getArguments()[0];
 
-                Assert.assertEquals(faultQName.getLocalPart(), "TEC-1000");
-                Assert.assertEquals(faultQName.getPrefix(), "citrus");
-                Assert.assertEquals(faultQName.getNamespaceURI(), "http://citrusframework.org/citrus");
-                return null;
-            }
+            Assert.assertEquals(faultQName.getLocalPart(), "TEC-1000");
+            Assert.assertEquals(faultQName.getPrefix(), "citrus");
+            Assert.assertEquals(faultQName.getNamespaceURI(), "http://citrusframework.org/citrus");
+            return null;
         }).when(soapFault).addFaultSubcode((QName)any());
 
         endpoint.invoke(messageContext);
@@ -1291,7 +1245,6 @@ public class WebServiceEndpointTest {
                 return responseMessage;
             }
         });
-
 
         StringResult soapResponsePayload = new StringResult();
 

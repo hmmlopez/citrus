@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package org.citrusframework.config.xml;
 
-import java.util.Arrays;
-import java.util.Map;
-
 import org.citrusframework.testng.AbstractBeanDefinitionParserTest;
 import org.citrusframework.validation.matcher.CustomValidationMatcher;
 import org.citrusframework.validation.matcher.ValidationMatcherLibrary;
@@ -29,8 +26,11 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Map;
+
+import static java.util.Collections.singletonList;
+
 /**
- * @author Christoph Deppisch
  * @since 2.0
  */
 public class ValidationMatcherLibraryParserTest extends AbstractBeanDefinitionParserTest {
@@ -55,7 +55,7 @@ public class ValidationMatcherLibraryParserTest extends AbstractBeanDefinitionPa
         Assert.assertEquals(matcherLibraryBean.getMembers().get("end").getClass(), EndsWithValidationMatcher.class);
         Assert.assertEquals(matcherLibraryBean.getMembers().get("custom").getClass(), CustomValidationMatcher.class);
 
-        matcherLibraryBean.getMembers().get("custom").validate("field", "Hello Citrus!", Arrays.asList("Hello Citrus!"), context);
+        matcherLibraryBean.getMembers().get("custom").validate("field", "Hello Citrus!", singletonList("Hello Citrus!"), context);
 
         matcherLibraryBean = matcherLibraries.get("matcherLib2");
         Assert.assertEquals(matcherLibraryBean.getName(), "matcherLib2");
@@ -64,6 +64,6 @@ public class ValidationMatcherLibraryParserTest extends AbstractBeanDefinitionPa
         Assert.assertEquals(matcherLibraryBean.getMembers().get("isNumber").getClass(), IsNumberValidationMatcher.class);
         Assert.assertEquals(matcherLibraryBean.getMembers().get("custom").getClass(), CustomValidationMatcher.class);
 
-        matcherLibraryBean.getMembers().get("custom").validate("field", "Hello Citrus!", Arrays.asList("Hello Citrus!"), context);
+        matcherLibraryBean.getMembers().get("custom").validate("field", "Hello Citrus!", singletonList("Hello Citrus!"), context);
     }
 }

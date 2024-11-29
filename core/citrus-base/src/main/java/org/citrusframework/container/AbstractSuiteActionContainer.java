@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
  * Abstract suit container actions executed before and after test suite run. Container decides
  * weather to execute according to given suite name and included test groups if any.
  *
- * @author Christoph Deppisch
  * @since 2.0
  */
 public abstract class AbstractSuiteActionContainer extends AbstractActionContainer {

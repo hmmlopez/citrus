@@ -1,33 +1,35 @@
+/*
+ * Copyright the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.citrusframework.camel.actions;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.ModelCamelContext;
-import org.citrusframework.TestActionBuilder;
 import org.citrusframework.camel.message.CamelRouteProcessor;
+import org.citrusframework.spi.AbstractReferenceResolverAwareTestActionBuilder;
 import org.citrusframework.spi.ReferenceResolver;
-import org.citrusframework.spi.ReferenceResolverAware;
 import org.citrusframework.util.ObjectHelper;
 
 /**
  * Action builder.
  */
-public class CamelRouteActionBuilder implements TestActionBuilder.DelegatingTestActionBuilder<AbstractCamelRouteAction>, ReferenceResolverAware {
-
-    /** Bean reference resolver */
-    private ReferenceResolver referenceResolver;
+public class CamelRouteActionBuilder extends AbstractReferenceResolverAwareTestActionBuilder<AbstractCamelRouteAction> {
 
     private CamelContext camelContext;
-
-    private TestActionBuilder<? extends AbstractCamelRouteAction> delegate;
-
-    /**
-     * Fluent API action building entry method used in Java DSL.
-     * @return
-     */
-    public static CamelRouteActionBuilder camel() {
-        return new CamelRouteActionBuilder();
-    }
 
     /**
      * Processor calling given Camel route as part of the message processing.
@@ -78,14 +80,14 @@ public class CamelRouteActionBuilder implements TestActionBuilder.DelegatingTest
     }
 
     /**
-     * Creates new Camel routes from route context XML.
-     * @param routeContext
+     * Creates new Camel routes from route specification using one of the supported languages.
+     * @param routeSpec
      * @return
      */
-    public CreateCamelRouteAction.Builder create(String routeContext) {
+    public CreateCamelRouteAction.Builder create(String routeSpec) {
         CreateCamelRouteAction.Builder builder = new CreateCamelRouteAction.Builder()
                 .context(camelContext)
-                .routeContext(routeContext);
+                .route(routeSpec);
 
         this.delegate = builder;
         return builder;
@@ -152,25 +154,5 @@ public class CamelRouteActionBuilder implements TestActionBuilder.DelegatingTest
     public AbstractCamelRouteAction build() {
         ObjectHelper.assertNotNull(delegate, "Missing delegate action to build");
         return delegate.build();
-    }
-
-    @Override
-    public TestActionBuilder<?> getDelegate() {
-        return delegate;
-    }
-
-    /**
-     * Specifies the referenceResolver.
-     * @param referenceResolver
-     */
-    @Override
-    public void setReferenceResolver(ReferenceResolver referenceResolver) {
-        if (referenceResolver == null) {
-            this.referenceResolver = referenceResolver;
-
-            if (delegate instanceof ReferenceResolverAware) {
-                ((ReferenceResolverAware) delegate).setReferenceResolver(referenceResolver);
-            }
-        }
     }
 }

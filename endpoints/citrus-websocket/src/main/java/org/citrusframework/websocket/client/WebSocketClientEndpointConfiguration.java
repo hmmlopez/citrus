@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 
 /**
  * Web socket endpoint configuration for client side web socket communication.
- * @author Martin Maher
  * @since 2.3
  */
 public class WebSocketClientEndpointConfiguration extends AbstractWebSocketEndpointConfiguration {

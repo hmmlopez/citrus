@@ -1,14 +1,11 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,29 +16,21 @@
 
 package org.citrusframework.camel.actions;
 
+import jakarta.annotation.Nullable;
 import org.apache.camel.CamelContext;
 import org.citrusframework.TestAction;
 import org.citrusframework.TestActionBuilder;
+import org.citrusframework.actions.ReceiveMessageAction;
+import org.citrusframework.actions.SendMessageAction;
 import org.citrusframework.spi.ReferenceResolver;
 import org.citrusframework.spi.ReferenceResolverAware;
 import org.citrusframework.util.ObjectHelper;
 
-/**
- * @author Christoph Deppisch
- */
 public class CamelActionBuilder implements TestActionBuilder.DelegatingTestActionBuilder<TestAction>, ReferenceResolverAware {
 
     private CamelContext camelContext;
 
     private TestActionBuilder<?> delegate;
-
-    /**
-     * Static entrance method for the Camel action builder.
-     * @return
-     */
-    public static CamelActionBuilder camel() {
-        return new CamelActionBuilder();
-    }
 
     /**
      * Static entrance for all Camel related Java DSL functionalities.
@@ -50,6 +39,59 @@ public class CamelActionBuilder implements TestActionBuilder.DelegatingTestActio
     public CamelActionBuilder camelContext(CamelContext camelContext) {
         this.camelContext = camelContext;
         return this;
+    }
+
+    /**
+     * Static entrance for all Camel related Java DSL functionalities.
+     * @return
+     */
+    public CamelContextActionBuilder camelContext() {
+        CamelContextActionBuilder builder = new CamelContextActionBuilder();
+        this.delegate = builder;
+        return builder;
+    }
+
+    /**
+     * Sends message using Camel endpointUri and components.
+     * @return
+     */
+    public CamelExchangeActionBuilder<SendMessageAction.Builder> send() {
+        CamelExchangeActionBuilder<SendMessageAction.Builder> builder = CamelExchangeActionBuilder.send();
+        this.delegate = builder;
+        return builder;
+    }
+
+    /**
+     * Receive messages using Camel endpointUri and components.
+     * @return
+     */
+    public CamelExchangeActionBuilder<ReceiveMessageAction.Builder> receive() {
+        CamelExchangeActionBuilder<ReceiveMessageAction.Builder> builder = CamelExchangeActionBuilder.receive();
+        this.delegate = builder;
+        return builder;
+    }
+
+    /**
+     * Binds given component to the Camel context.
+     * @return
+     */
+    public CreateCamelComponentAction.Builder bind(String name, Object component) {
+        CreateCamelComponentAction.Builder builder = CreateCamelComponentAction.Builder.bind()
+                .context(camelContext)
+                .component(name, component);
+        this.delegate = builder;
+        return builder;
+    }
+
+    /**
+     * Binds a component to the Camel context.
+     * @return
+     */
+    public CreateCamelComponentAction.Builder bind() {
+        CreateCamelComponentAction.Builder builder = CreateCamelComponentAction.Builder.bind()
+                .context(camelContext);
+        this.delegate = builder;
+        return builder;
     }
 
     /**
@@ -70,6 +112,16 @@ public class CamelActionBuilder implements TestActionBuilder.DelegatingTestActio
     public CamelRouteActionBuilder route() {
         CamelRouteActionBuilder builder = new CamelRouteActionBuilder()
                 .context(camelContext);
+        this.delegate = builder;
+        return builder;
+    }
+
+    /**
+     * Perform actions with Camel JBang.
+     * @return
+     */
+    public CamelJBangActionBuilder jbang() {
+        CamelJBangActionBuilder builder = new CamelJBangActionBuilder();
         this.delegate = builder;
         return builder;
     }
@@ -96,14 +148,12 @@ public class CamelActionBuilder implements TestActionBuilder.DelegatingTestActio
 
     /**
      * Specifies the referenceResolver.
-     * @param referenceResolver
      */
     @Override
-    public void setReferenceResolver(ReferenceResolver referenceResolver) {
-        if (referenceResolver == null) {
-            if (delegate instanceof ReferenceResolverAware) {
-                ((ReferenceResolverAware) delegate).setReferenceResolver(referenceResolver);
-            }
+    public void setReferenceResolver(@Nullable ReferenceResolver referenceResolver) {
+        if (referenceResolver != null
+                && delegate instanceof ReferenceResolverAware referenceResolverAware) {
+            referenceResolverAware.setReferenceResolver(referenceResolver);
         }
     }
 }

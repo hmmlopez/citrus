@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.citrusframework.functions.Function;
 /**
  * Function to sum up all numeric arguments.
  *
- * @author Christoph Deppisch
  */
 public class SumFunction implements Function {
 
@@ -41,10 +40,9 @@ public class SumFunction implements Function {
         double result = 0.0;
 
         for (String token : parameterList) {
-            result += Double.valueOf(token);
+            result += Double.parseDouble(token);
         }
 
         return Double.valueOf(result).toString();
     }
-
 }

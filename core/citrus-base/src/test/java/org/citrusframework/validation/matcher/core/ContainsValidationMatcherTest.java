@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
 
 package org.citrusframework.validation.matcher.core;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.citrusframework.UnitTestSupport;
 import org.citrusframework.exceptions.ValidationException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.List;
+
+import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNullElse;
 
 public class ContainsValidationMatcherTest extends UnitTestSupport {
 
@@ -30,17 +32,17 @@ public class ContainsValidationMatcherTest extends UnitTestSupport {
 
     @Test
     public void testValidateSuccess() {
-        matcher.validate("field", "This is a test", Arrays.asList("is a"), context);
-        matcher.validate("field", "This is a test", Arrays.asList("This"), context);
-        matcher.validate("field", "This is a test", Arrays.asList("test"), context);
-        matcher.validate("field", "This is a 0815test", Arrays.asList("0815"), context);
-        matcher.validate("field", "This is a test", Arrays.asList(" "), context);
+        matcher.validate("field", "This is a test", singletonList("is a"), context);
+        matcher.validate("field", "This is a test", singletonList("This"), context);
+        matcher.validate("field", "This is a test", singletonList("test"), context);
+        matcher.validate("field", "This is a 0815test", singletonList("0815"), context);
+        matcher.validate("field", "This is a test", singletonList(" "), context);
     }
 
     @Test
     public void testValidateError() {
-    	assertException("field", "This is a test", Arrays.asList("0815"));
-    	assertException("field", null, Arrays.asList("control"));
+    	assertException("field", "This is a test", singletonList("0815"));
+    	assertException("field", null, singletonList("control"));
     }
 
     private void assertException(String fieldName, String value, List<String> control) {
@@ -51,11 +53,7 @@ public class ContainsValidationMatcherTest extends UnitTestSupport {
 			Assert.assertTrue(e.getMessage().contains(fieldName));
 			Assert.assertTrue(e.getMessage().contains(control.get(0)));
 
-            if (value != null) {
-			    Assert.assertTrue(e.getMessage().contains(value));
-            } else {
-                Assert.assertTrue(e.getMessage().contains("null"));
-            }
+            Assert.assertTrue(e.getMessage().contains(requireNonNullElse(value, "null")));
 		}
     }
 }

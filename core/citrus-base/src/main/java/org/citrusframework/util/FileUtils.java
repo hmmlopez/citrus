@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
  * Class to provide general file utilities, such as listing all XML files in a directory,
  * or finding certain tests in a directory.
  *
- * @author Christoph Deppisch
  * @since 2007
  */
 public abstract class FileUtils {
@@ -137,7 +136,7 @@ public abstract class FileUtils {
      */
     public static String readToString(InputStream inputStream, Charset charset) throws IOException {
         if (inputStream == null) {
-            throw new CitrusRuntimeException("Failed to read resource %s - input stream is empty");
+            throw new CitrusRuntimeException("Failed to read resource from input stream - input stream is empty");
         }
 
         return new String(inputStream.readAllBytes(), charset);

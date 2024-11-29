@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.citrusframework.endpoint.direct;
 
-import java.util.concurrent.Executors;
-
 import org.citrusframework.context.TestContext;
 import org.citrusframework.context.TestContextFactory;
 import org.citrusframework.message.DefaultMessage;
@@ -30,9 +28,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+
 public class DirectEndpointAdapterTest {
 
     private MessageQueue queue = new DefaultMessageQueue("testQueue");
@@ -62,13 +59,18 @@ public class DirectEndpointAdapterTest {
     public void testEndpointAdapter() {
         final Message request = new DefaultMessage("<TestMessage><text>Hi!</text></TestMessage>");
 
-        Executors.newSingleThreadExecutor().execute(() -> {
-            Message receivedMessage = endpointAdapter.getEndpoint().createConsumer().receive(context, endpointConfiguration.getTimeout());
-            Assert.assertNotNull(receivedMessage);
-            Assert.assertEquals(receivedMessage.getPayload(), request.getPayload());
+        var executorService = newSingleThreadExecutor();
+        try {
+            executorService.execute(() -> {
+                Message receivedMessage = endpointAdapter.getEndpoint().createConsumer().receive(context, endpointConfiguration.getTimeout());
+                Assert.assertNotNull(receivedMessage);
+                Assert.assertEquals(receivedMessage.getPayload(), request.getPayload());
 
-            endpointAdapter.getEndpoint().createProducer().send(new DefaultMessage("OK"), context);
-        });
+                endpointAdapter.getEndpoint().createProducer().send(new DefaultMessage("OK"), context);
+            });
+        } finally {
+            executorService.shutdownNow();
+        }
 
         Message response = endpointAdapter.handleMessage(request);
         Assert.assertNotNull(response);

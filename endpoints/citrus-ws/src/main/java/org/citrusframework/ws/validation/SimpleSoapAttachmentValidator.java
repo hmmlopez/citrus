@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
  * Simple implementation of a {@link AbstractSoapAttachmentValidator}.
  * Attachment content body is validated through simple string equals assertion.
  *
- * @author Christoph Deppisch
  */
 public class SimpleSoapAttachmentValidator extends AbstractSoapAttachmentValidator {
 

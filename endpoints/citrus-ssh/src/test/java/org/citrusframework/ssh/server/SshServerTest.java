@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
-/**
- * @author Roland Huss
- */
 public class SshServerTest {
 
     private SshServer server;
@@ -140,12 +137,8 @@ public class SshServerTest {
     @Test(expectedExceptions = CitrusRuntimeException.class,expectedExceptionsMessageRegExp = ".*Address already in use.*")
     public void doubleStart() throws IOException {
         prepareServer(true);
-        ServerSocket s = null;
-        try {
-            s = new ServerSocket(port);
+        try (var ignored = new ServerSocket(port)) {
             server.start();
-        } finally {
-            if (s != null) s.close();
         }
     }
 
@@ -176,5 +169,4 @@ public class SshServerTest {
 
         throw new IllegalStateException("No free port between 2234 and 3000 found");
     }
-
 }

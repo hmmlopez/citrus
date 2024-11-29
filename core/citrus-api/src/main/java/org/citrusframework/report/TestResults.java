@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +16,41 @@
 
 package org.citrusframework.report;
 
+import org.citrusframework.TestResult;
+
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.citrusframework.TestResult;
+import static java.util.Collections.synchronizedSet;
+import static java.util.Objects.nonNull;
 
 /**
  * Multiple {@link org.citrusframework.TestResult} instances combined to a {@link TestResults}.
  *
- * @author Christoph Deppisch
  */
 public class TestResults {
 
-    private static final long serialVersionUID = 1L;
-
-    /** Common decimal format for percentage calculation in report **/
-    private static final DecimalFormat decFormat = new DecimalFormat("0.0");
+    /**
+     * Common decimal format for percentage calculation in report
+     **/
+    //private static final DecimalFormat decFormat = ;
     private static final String ZERO_PERCENTAGE = "0.0";
 
-    /** Collected test results */
-    private final Set<TestResult> results = Collections.synchronizedSet(new LinkedHashSet<>());
+    /**
+     * Collected test results
+     */
+    private final Set<TestResult> results = synchronizedSet(new LinkedHashSet<>());
+
+    private final AtomicLong totalDurationMillis = new AtomicLong(0);
 
     /**
      * Provides access to results as list generated from synchronized result list.
-     * @return
      */
     public List<TestResult> asList() {
         List<TestResult> results = new ArrayList<>();
@@ -52,24 +58,19 @@ public class TestResults {
         return results;
     }
 
-    static {
-        DecimalFormatSymbols symbol = new DecimalFormatSymbols();
-        symbol.setDecimalSeparator('.');
-        decFormat.setDecimalFormatSymbols(symbol);
-    }
-
     /**
      * Adds a test result to the result list.
-     * @param result
-     * @return
      */
     public boolean addResult(TestResult result) {
+        if (nonNull(result.getDuration())) {
+            totalDurationMillis.accumulateAndGet(result.getDuration().toMillis(), Long::sum);
+        }
+
         return results.add(result);
     }
 
     /**
      * Provides synchronized access to all test results in iteration.
-     * @param callback
      */
     public void doWithResults(ResultCallback callback) {
         synchronized (results) {
@@ -81,7 +82,6 @@ public class TestResults {
 
     /**
      * Get number of tests in success.
-     * @return
      */
     public int getSuccess() {
         int count = 0;
@@ -99,15 +99,20 @@ public class TestResults {
 
     /**
      * Calculates percentage of success tests.
-     * @return
+     *
+     * @deprecated will return {@code double} value in the future!
      */
+    @Deprecated
     public String getSuccessPercentage() {
-        return results.size() > 0 ? decFormat.format((double)getSuccess() / (getFailed() + getSuccess())*100) : ZERO_PERCENTAGE;
+        return getSuccessPercentageFormatted();
+    }
+
+    public String getSuccessPercentageFormatted() {
+        return results.isEmpty() || getSuccess() == 0 ? ZERO_PERCENTAGE : getNewDecimalFormat().format((double) getSuccess() / (getFailed() + getSuccess()) * 100);
     }
 
     /**
      * Get number of tests failed.
-     * @return
      */
     public int getFailed() {
         int count = 0;
@@ -125,15 +130,20 @@ public class TestResults {
 
     /**
      * Calculates percentage of failed tests.
-     * @return
+     *
+     * @deprecated will return {@code double} value in the future!
      */
+    @Deprecated
     public String getFailedPercentage() {
-        return results.size() > 0 ? decFormat.format((double)getFailed() / (getFailed() + getSuccess())*100) : ZERO_PERCENTAGE;
+        return getFailedPercentageFormatted();
+    }
+
+    public String getFailedPercentageFormatted() {
+        return results.isEmpty() || getFailed() == 0 ? ZERO_PERCENTAGE : getNewDecimalFormat().format((double) getFailed() / (getFailed() + getSuccess()) * 100);
     }
 
     /**
      * Get number of skipped tests.
-     * @return
      */
     public int getSkipped() {
         int count = 0;
@@ -151,28 +161,48 @@ public class TestResults {
 
     /**
      * Calculates percentage of skipped tests.
-     * @return
+     *
+     * @deprecated will return {@code double} value in the future!
      */
+    @Deprecated
     public String getSkippedPercentage() {
-        return results.size() > 0 ? decFormat.format((double)getSkipped() / (results.size())*100) : ZERO_PERCENTAGE;
+        return getSkippedPercentageFormatted();
+    }
+
+    public String getSkippedPercentageFormatted() {
+        return results.isEmpty() ? ZERO_PERCENTAGE : getNewDecimalFormat().format((double) getSkipped() / (results.size()) * 100);
     }
 
     /**
      * Callback interface for synchronized access to test results in iteration.
      */
     public interface ResultCallback {
+
         /**
          * Do something with the result.
-         * @param result
          */
         void doWithResult(TestResult result);
     }
 
     /**
      * Gets the total amount of test results.
-     * @return
      */
     public int getSize() {
         return results.size();
+    }
+
+    /**
+     * Gets the total duration of all tests.
+     */
+    public Duration getTotalDuration() {
+        return Duration.ofMillis(totalDurationMillis.get());
+    }
+
+    private DecimalFormat getNewDecimalFormat() {
+        var symbol = new DecimalFormatSymbols();
+        symbol.setDecimalSeparator('.');
+        var decimalFormat = new DecimalFormat("0.0");
+        decimalFormat.setDecimalFormatSymbols(symbol);
+        return decimalFormat;
     }
 }

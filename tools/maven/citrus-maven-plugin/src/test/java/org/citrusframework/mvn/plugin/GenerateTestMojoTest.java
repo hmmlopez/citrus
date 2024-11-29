@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,6 @@ import java.util.Collections;
 
 import static org.mockito.Mockito.*;
 
-/**
- * @author Christoph Deppisch
- */
 public class GenerateTestMojoTest {
 
     private XmlTestGenerator xmlTestGenerator = Mockito.mock(XmlTestGenerator.class);
@@ -47,7 +44,7 @@ public class GenerateTestMojoTest {
     private SwaggerJavaTestGenerator swaggerJavaTestGenerator = Mockito.mock(SwaggerJavaTestGenerator.class);
 
     private GenerateTestMojo mojo;
-    
+
     @BeforeMethod
     public void setup() {
         mojo = new GenerateTestMojo(xmlTestGenerator,
@@ -61,7 +58,7 @@ public class GenerateTestMojoTest {
 
         mojo.setType("xml");
     }
-    
+
     @Test
     public void testCreate() throws PrompterException, MojoExecutionException, MojoFailureException {
         reset(xmlTestGenerator);
@@ -159,7 +156,7 @@ public class GenerateTestMojoTest {
         verify(wsdlXmlTestGenerator).withWsdl("classpath:wsdl/BookStore.wsdl");
         verify(wsdlXmlTestGenerator).withNameSuffix("_Test");
     }
-    
+
     @Test
     public void testSuiteFromSwagger() throws MojoExecutionException, PrompterException, MojoFailureException {
         reset(swaggerXmlTestGenerator);

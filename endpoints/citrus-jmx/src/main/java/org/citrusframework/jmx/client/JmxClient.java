@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,6 @@
  */
 
 package org.citrusframework.jmx.client;
-
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.util.Collections;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import javax.management.Attribute;
-import javax.management.InstanceNotFoundException;
-import javax.management.JMException;
-import javax.management.MBeanServerConnection;
-import javax.management.MalformedObjectNameException;
-import javax.management.Notification;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
-import javax.management.openmbean.CompositeData;
-import javax.management.remote.JMXConnectionNotification;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 
 import org.citrusframework.context.TestContext;
 import org.citrusframework.endpoint.AbstractEndpoint;
@@ -54,8 +34,27 @@ import org.citrusframework.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.Attribute;
+import javax.management.InstanceNotFoundException;
+import javax.management.JMException;
+import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
+import javax.management.Notification;
+import javax.management.NotificationListener;
+import javax.management.ObjectName;
+import javax.management.openmbean.CompositeData;
+import javax.management.remote.JMXConnectionNotification;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.util.Collections;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 /**
- * @author Christoph Deppisch
  * @since 2.5
  */
 public class JmxClient extends AbstractEndpoint implements Producer, ReplyConsumer, NotificationListener {
@@ -169,9 +168,7 @@ public class JmxClient extends AbstractEndpoint implements Producer, ReplyConsum
             } else {
                 addNotificationListener(objectName, correlationKey, serverConnection);
             }
-        } catch (JMException e) {
-            throw new CitrusRuntimeException("Failed to execute MBean operation", e);
-        } catch (IOException e) {
+        } catch (JMException | IOException e) {
             throw new CitrusRuntimeException("Failed to execute MBean operation", e);
         }
     }
@@ -184,11 +181,12 @@ public class JmxClient extends AbstractEndpoint implements Producer, ReplyConsum
         try {
             JMXServiceURL url = new JMXServiceURL(getEndpointConfiguration().getServerUrl());
             String[] creds = {getEndpointConfiguration().getUsername(), getEndpointConfiguration().getPassword()};
-            JMXConnector networkConnector = JMXConnectorFactory.connect(url, Collections.singletonMap(JMXConnector.CREDENTIALS, creds));
-            connectionId = networkConnector.getConnectionId();
+            try (var networkConnector = JMXConnectorFactory.connect(url, Collections.singletonMap(JMXConnector.CREDENTIALS, creds))) {
+                connectionId = networkConnector.getConnectionId();
 
-            networkConnector.addConnectionNotificationListener(this, null, null);
-            return networkConnector.getMBeanServerConnection();
+                networkConnector.addConnectionNotificationListener(this, null, null);
+                return networkConnector.getMBeanServerConnection();
+            }
         } catch (IOException e) {
             throw new CitrusRuntimeException("Failed to connect to network MBean server '" + getEndpointConfiguration().getServerUrl() + "'", e);
         }
@@ -248,18 +246,15 @@ public class JmxClient extends AbstractEndpoint implements Producer, ReplyConsum
      * Schedules an attempt to re-initialize a lost connection after the reconnect delay
      */
     public void scheduleReconnect() {
-        Runnable startRunnable = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    MBeanServerConnection serverConnection = getNetworkConnection();
-                    if (notificationListener != null) {
-                        serverConnection.addNotificationListener(objectName, notificationListener, getEndpointConfiguration().getNotificationFilter(), getEndpointConfiguration().getNotificationHandback());
-                    }
-                } catch (Exception e) {
-                    logger.warn("Failed to reconnect to JMX MBean server. {}", e.getMessage());
-                    scheduleReconnect();
+        Runnable startRunnable = () -> {
+            try {
+                MBeanServerConnection serverConnection = getNetworkConnection();
+                if (notificationListener != null) {
+                    serverConnection.addNotificationListener(objectName, notificationListener, getEndpointConfiguration().getNotificationFilter(), getEndpointConfiguration().getNotificationHandback());
                 }
+            } catch (Exception e) {
+                logger.warn("Failed to reconnect to JMX MBean server. {}", e.getMessage());
+                scheduleReconnect();
             }
         };
         logger.info("Reconnecting to MBean server {} in {} milliseconds.", getEndpointConfiguration().getServerUrl(), getEndpointConfiguration().getDelayOnReconnect());
@@ -274,12 +269,7 @@ public class JmxClient extends AbstractEndpoint implements Producer, ReplyConsum
      */
     private void addNotificationListener(ObjectName objectName, final String correlationKey, MBeanServerConnection serverConnection) {
         try {
-            notificationListener = new NotificationListener() {
-                @Override
-                public void handleNotification(Notification notification, Object handback) {
-                    correlationManager.store(correlationKey, new DefaultMessage(notification.getMessage()));
-                }
-            };
+            notificationListener = (notification, handback) -> correlationManager.store(correlationKey, new DefaultMessage(notification.getMessage()));
 
             serverConnection.addNotificationListener(objectName, notificationListener, getEndpointConfiguration().getNotificationFilter(), getEndpointConfiguration().getNotificationHandback());
         } catch (InstanceNotFoundException e) {

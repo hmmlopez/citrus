@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,21 +20,17 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.List;
 
-import org.citrusframework.CitrusInstanceManager;
-import org.citrusframework.cucumber.CitrusLifecycleHooks;
-import org.citrusframework.cucumber.CitrusReporter;
 import io.cucumber.core.backend.Backend;
 import io.cucumber.core.backend.Container;
 import io.cucumber.core.backend.Glue;
 import io.cucumber.core.backend.Lookup;
 import io.cucumber.core.backend.Snippet;
 import io.cucumber.core.exception.CucumberException;
-import io.cucumber.core.resource.ClasspathSupport;
-import io.cucumber.java.After;
-import io.cucumber.java.Before;
+import org.citrusframework.CitrusInstanceManager;
+import org.citrusframework.cucumber.CitrusLifecycleHooks;
+import org.citrusframework.cucumber.CitrusReporter;
 
 /**
- * @author Christoph Deppisch
  * @since 2.6
  */
 public class CitrusBackend implements Backend {
@@ -58,27 +54,16 @@ public class CitrusBackend implements Backend {
     @Override
     public void loadGlue(Glue glue, List<URI> gluePaths) {
         try {
-            if (!gluePaths.contains(getLifecycleHooksGluePath()) && container.addClass(CitrusLifecycleHooks.class)) {
+            if (container.addClass(CitrusLifecycleHooks.class)) {
                 Method beforeMethod = CitrusLifecycleHooks.class.getMethod("before", Scenario.class);
-                Before beforeAnnotation = beforeMethod.getAnnotation(Before.class);
-                glue.addBeforeHook(new CitrusHookDefinition(beforeMethod, beforeAnnotation.value(), beforeAnnotation.order(), lookup));
+                glue.addBeforeHook(new CitrusHookDefinition(beforeMethod, "", 10000, lookup));
 
                 Method afterMethod = CitrusLifecycleHooks.class.getMethod("after", Scenario.class);
-                After afterAnnotation = afterMethod.getAnnotation(After.class);
-                glue.addAfterHook(new CitrusHookDefinition(afterMethod, afterAnnotation.value(), afterAnnotation.order(), lookup));
+                glue.addAfterHook(new CitrusHookDefinition(afterMethod, "", 10000, lookup));
             }
         } catch (NoSuchMethodException e) {
             throw new CucumberException("Unable to add Citrus lifecycle hooks");
         }
-    }
-
-    /**
-     * Helper to create proper URI pointing to {@link CitrusLifecycleHooks}.
-     * @return
-     */
-    private static URI getLifecycleHooksGluePath() {
-        return URI.create(ClasspathSupport.CLASSPATH_SCHEME_PREFIX +
-                ClasspathSupport.resourceNameOfPackageName(CitrusLifecycleHooks.class.getPackage().getName()));
     }
 
     @Override

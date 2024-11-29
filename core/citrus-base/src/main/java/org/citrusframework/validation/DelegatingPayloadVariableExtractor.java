@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
  * Generic extractor implementation delegating to JSONPath or XPath variable extractor based on given expression
  * type. Delegate extractor implementations are referenced through resource path lookup.
  *
- * @author Simon Hofmann
  * @since 2.7.3
  */
 public class DelegatingPayloadVariableExtractor implements VariableExtractor {
@@ -54,7 +53,6 @@ public class DelegatingPayloadVariableExtractor implements VariableExtractor {
         this.pathExpressions = builder.expressions;
         this.namespaces = builder.namespaces;
     }
-
 
     @Override
     public void extractVariables(Message message, TestContext context) {
@@ -194,5 +192,4 @@ public class DelegatingPayloadVariableExtractor implements VariableExtractor {
     public void setNamespaces(Map<String, String> namespaces) {
         this.namespaces = namespaces;
     }
-
 }

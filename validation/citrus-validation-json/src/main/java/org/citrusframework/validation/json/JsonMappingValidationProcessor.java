@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public abstract class JsonMappingValidationProcessor<T> extends AbstractValidationProcessor<T> {
@@ -68,7 +67,7 @@ public abstract class JsonMappingValidationProcessor<T> extends AbstractValidati
 
         validate(readJson(message), message.getHeaders(), context);
 
-        logger.info("JSON object validation successful: All values OK");
+        logger.debug("JSON object validation successful: All values OK");
     }
 
     private T readJson(Message message) {
@@ -137,7 +136,7 @@ public abstract class JsonMappingValidationProcessor<T> extends AbstractValidati
                         "please add proper validation logic");
             }
 
-            return new JsonMappingValidationProcessor<T>(resultType, mapper) {
+            return new JsonMappingValidationProcessor<>(resultType, mapper) {
                 @Override
                 public void validate(T payload, Map<String, Object> headers, TestContext context) {
                     validationProcessor.validate(payload, headers, context);

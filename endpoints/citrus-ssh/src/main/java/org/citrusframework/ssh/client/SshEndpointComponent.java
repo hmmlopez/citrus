@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@ import org.citrusframework.context.TestContext;
 import org.citrusframework.endpoint.AbstractEndpointComponent;
 import org.citrusframework.endpoint.Endpoint;
 
+import static java.lang.Integer.parseInt;
+
 /**
  * Component creates proper ssh client from endpoint uri resource and parameters.
  *
- * @author Christoph Deppisch
  * @since 1.4.1
  */
 public class SshEndpointComponent extends AbstractEndpointComponent {
@@ -48,7 +49,7 @@ public class SshEndpointComponent extends AbstractEndpointComponent {
             client.getEndpointConfiguration().setHost(tok.nextToken());
 
             if (tok.hasMoreTokens()) {
-                client.getEndpointConfiguration().setPort(Integer.valueOf(tok.nextToken()));
+                client.getEndpointConfiguration().setPort(parseInt(tok.nextToken()));
             }
         } else {
             client.getEndpointConfiguration().setHost(resourcePath);

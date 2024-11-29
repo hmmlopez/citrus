@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
  *
  * Build logging output is forwarded to test run logger.
  *
- * @author Christoph Deppisch
  * @since 1.3
  */
 public class AntRunAction extends AbstractTestAction {
@@ -149,7 +148,7 @@ public class AntRunAction extends AbstractTestAction {
      * @return
      */
     private Stack<String> parseTargets() {
-        Stack<String> stack = new Stack<String>();
+        Stack<String> stack = new Stack<>();
         String[] targetTokens = targets.split(",");
 
         for (String targetToken : targetTokens) {
@@ -348,5 +347,4 @@ public class AntRunAction extends AbstractTestAction {
             return new AntRunAction(this);
         }
     }
-
 }

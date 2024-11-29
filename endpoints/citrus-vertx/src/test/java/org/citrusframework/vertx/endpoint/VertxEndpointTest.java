@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.citrusframework.testng.AbstractTestNGUnitTest;
 import org.citrusframework.vertx.factory.SingleVertxInstanceFactory;
 import org.citrusframework.vertx.message.CitrusVertxMessageHeaders;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -36,7 +35,6 @@ import io.vertx.core.eventbus.MessageConsumer;
 import static org.mockito.Mockito.*;
 
 /**
- * @author Christoph Deppisch
  * @since 1.4.1
  */
 public class VertxEndpointTest extends AbstractTestNGUnitTest {
@@ -111,14 +109,11 @@ public class VertxEndpointTest extends AbstractTestNGUnitTest {
         when(messageMock.replyAddress()).thenReturn("replyAddress");
 
         when(vertx.eventBus()).thenReturn(eventBus);
-        doAnswer(new Answer<MessageConsumer>() {
-            @Override
-            public MessageConsumer answer(InvocationOnMock invocation) throws Throwable {
-                Handler handler = (Handler) invocation.getArguments()[1];
-                handler.handle(messageMock);
+        doAnswer((Answer<MessageConsumer>) invocation -> {
+            Handler handler = (Handler) invocation.getArguments()[1];
+            handler.handle(messageMock);
 
-                return messageConsumer;
-            }
+            return messageConsumer;
         }).when(eventBus).consumer(eq(eventBusAddress), any(Handler.class));
 
         Message receivedMessage = vertxEndpoint.createConsumer().receive(context, endpointConfiguration.getTimeout());

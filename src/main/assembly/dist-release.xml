@@ -49,7 +49,10 @@
         <include>org.citrusframework:citrus-docker</include>
         <include>org.citrusframework:citrus-selenium</include>
         <include>org.citrusframework:citrus-kubernetes</include>
+        <include>org.citrusframework:citrus-knative</include>
+        <include>org.citrusframework:citrus-testcontainers</include>
         <include>org.citrusframework:citrus-sql</include>
+        <include>org.citrusframework:citrus-jbang-connector</include>
 
         <include>org.citrusframework:citrus-restdocs</include>
         <include>org.citrusframework:citrus-maven-plugin</include>
@@ -315,7 +318,28 @@
       </includes>
     </fileSet>
     <fileSet>
+      <directory>connectors/citrus-knative/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>connectors/citrus-testcontainers/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
       <directory>connectors/citrus-sql/target</directory>
+      <outputDirectory>src</outputDirectory>
+      <includes>
+        <include>*sources.jar</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>connectors/citrus-jbang-connector/target</directory>
       <outputDirectory>src</outputDirectory>
       <includes>
         <include>*sources.jar</include>

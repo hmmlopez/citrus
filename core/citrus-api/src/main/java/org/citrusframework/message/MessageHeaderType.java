@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.citrusframework.exceptions.CitrusRuntimeException;
  * Enumeration for supported message header types. Header values are able to define a type. In this case they
  * are typed header values. Message sender/receiver will try to set typed header values according to this.
  *
- * @author Christoph Deppisch
  */
 public enum MessageHeaderType {
     INTEGER("integer", Integer.class),
@@ -132,5 +131,4 @@ public enum MessageHeaderType {
     public Class<?> getHeaderClass() {
         return clazz;
     }
-
 }

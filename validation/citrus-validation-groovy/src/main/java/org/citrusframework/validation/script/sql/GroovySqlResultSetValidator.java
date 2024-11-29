@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,6 @@
  */
 
 package org.citrusframework.validation.script.sql;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.Map;
 
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
@@ -36,10 +32,14 @@ import org.codehaus.groovy.control.CompilationFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Groovy script validator capable of validating SQL result sets.
  *
- * @author Christoph Deppisch
  */
 public class GroovySqlResultSetValidator implements SqlResultSetScriptValidator {
 
@@ -77,19 +77,22 @@ public class GroovySqlResultSetValidator implements SqlResultSetScriptValidator 
                 if (StringUtils.hasText(validationScript)) {
                     logger.debug("Start groovy SQL result set validation");
 
-                    GroovyClassLoader loader = new GroovyClassLoader(GroovyScriptMessageValidator.class.getClassLoader());
-                    Class<?> groovyClass = loader.parseClass(TemplateBasedScriptBuilder.fromTemplateResource(scriptTemplateResource)
-                                                                .withCode(validationScript)
-                                                                .build());
+                    try (var loader = new GroovyClassLoader(GroovyScriptMessageValidator.class.getClassLoader())) {
+                        Class<?> groovyClass = loader.parseClass(TemplateBasedScriptBuilder.fromTemplateResource(scriptTemplateResource)
+                                .withCode(validationScript)
+                                .build());
 
-                    if (groovyClass == null) {
-                        throw new CitrusRuntimeException("Failed to load groovy validation script resource");
+                        if (groovyClass == null) {
+                            throw new CitrusRuntimeException("Failed to load groovy validation script resource");
+                        }
+
+                        GroovyObject groovyObject = (GroovyObject) groovyClass.getDeclaredConstructor().newInstance();
+                        ((SqlResultSetScriptExecutor) groovyObject).validate(resultSet, context);
+                    } catch (IOException e) {
+                        throw new CitrusRuntimeException("Failed to load groovy validation script resource", e);
                     }
 
-                    GroovyObject groovyObject = (GroovyObject) groovyClass.getDeclaredConstructor().newInstance();
-                    ((SqlResultSetScriptExecutor) groovyObject).validate(resultSet, context);
-
-                    logger.info("Groovy SQL result set validation successful: All values OK");
+                    logger.debug("Groovy SQL result set validation successful: All values OK");
                 }
             } catch (CompilationFailedException | InstantiationException | InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
                 throw new CitrusRuntimeException(e);

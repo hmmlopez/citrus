@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.citrusframework.functions.Function;
 /**
  * Encodes a character sequence to base64 binary using given charset.
  *
- * @author Christoph Deppisch
  */
 public class EncodeBase64Function implements Function {
 
@@ -49,5 +48,4 @@ public class EncodeBase64Function implements Function {
             throw new CitrusRuntimeException("Unsupported character encoding", e);
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import static org.citrusframework.actions.PurgeEndpointAction.Builder.purgeEndpo
 import static org.mockito.Mockito.*;
 
 /**
- * @author Christoph Deppisch
  * @since 2.3
  */
 public class PurgeEndpointTestActionBuilderTest extends UnitTestSupport {

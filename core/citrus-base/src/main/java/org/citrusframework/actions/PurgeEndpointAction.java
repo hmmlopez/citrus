@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,6 @@
 
 package org.citrusframework.actions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.citrusframework.AbstractTestActionBuilder;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.endpoint.Endpoint;
@@ -34,13 +28,19 @@ import org.citrusframework.spi.ReferenceResolver;
 import org.citrusframework.spi.ReferenceResolverAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.citrusframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.citrusframework.util.StringUtils.hasText;
 
 /**
  * Action purges all messages from a message endpoint. Action receives
  * a list of endpoint objects or a list of endpoint names that are resolved dynamically at runtime.
  *
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class PurgeEndpointAction extends AbstractTestAction {
@@ -118,8 +118,8 @@ public class PurgeEndpointAction extends AbstractTestAction {
         do {
             try {
                 String selector = MessageSelectorBuilder.build(messageSelector, messageSelectorMap, context);
-                if (StringUtils.hasText(selector) && messageConsumer instanceof SelectiveConsumer) {
-                    message = (receiveTimeout >= 0) ? ((SelectiveConsumer) messageConsumer).receive(selector, context, receiveTimeout) : ((SelectiveConsumer) messageConsumer).receive(selector, context);
+                if (hasText(selector) && messageConsumer instanceof SelectiveConsumer selectiveConsumer) {
+                    message = (receiveTimeout >= 0) ? selectiveConsumer.receive(selector, context, receiveTimeout) : selectiveConsumer.receive(selector, context);
                 } else {
                     message = (receiveTimeout >= 0) ? messageConsumer.receive(context, receiveTimeout) : messageConsumer.receive(context);
                 }

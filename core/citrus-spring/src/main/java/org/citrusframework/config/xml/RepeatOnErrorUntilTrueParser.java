@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.w3c.dom.Element;
 /**
  * Bean definition parser for repeat-on-error-until-true container in test case.
  *
- * @author Christoph Deppisch
  */
 public class RepeatOnErrorUntilTrueParser extends AbstractIterationTestActionParser {
 
@@ -47,7 +46,7 @@ public class RepeatOnErrorUntilTrueParser extends AbstractIterationTestActionPar
 
         /**
          * Setter for auto sleep time (in milliseconds).
-         * @param autoSleep
+         * @param autoSleep the auto sleep time in between repeats in milliseconds
          */
         public void setAutoSleep(Long autoSleep) {
             this.builder.autoSleep(autoSleep);

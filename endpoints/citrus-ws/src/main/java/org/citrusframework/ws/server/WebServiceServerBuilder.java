@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author Christoph Deppisch
  * @since 2.5
  */
 public class WebServiceServerBuilder extends AbstractServerBuilder<WebServiceServer, WebServiceServerBuilder> {
@@ -93,7 +92,7 @@ public class WebServiceServerBuilder extends AbstractServerBuilder<WebServiceSer
      * @return
      */
     public WebServiceServerBuilder connectors(List<Connector> connectors) {
-        endpoint.setConnectors(connectors.toArray(new Connector[connectors.size()]));
+        endpoint.setConnectors(connectors.toArray(new Connector[0]));
         return this;
     }
 

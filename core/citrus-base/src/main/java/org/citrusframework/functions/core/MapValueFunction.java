@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ import org.citrusframework.functions.Function;
  * </pre>
  * </code>
  *
- * @author Dimo Velev (dimo.velev@gmail.com)
  *
  */
 public class MapValueFunction implements Function, InitializingPhase {

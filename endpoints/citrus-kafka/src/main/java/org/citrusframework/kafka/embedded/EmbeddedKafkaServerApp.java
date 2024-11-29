@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@
 package org.citrusframework.kafka.embedded;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.PropertySource;
 
 /**
  * Standalone application provides a main cli entry for running an embedded Kafka server with embedded Zookeeper.
  * Kafka server properties can be set via property file or system properties.
  *
- * @author Christoph Deppisch
  * @since 2.8
  */
 @PropertySource(value = "classpath:${citrus.kafka.server.properties.file:citrus-kafka-server.properties}", ignoreResourceNotFound = true)

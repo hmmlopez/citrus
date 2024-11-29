@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * @author Christoph Deppisch
  * @since 2.6
  */
 public class StepTemplateParserTest extends AbstractBeanDefinitionParserTest {
@@ -68,5 +67,4 @@ public class StepTemplateParserTest extends AbstractBeanDefinitionParserTest {
         Assert.assertEquals(template.getActions().size(), 1L);
         Assert.assertEquals(((EchoAction)template.getActions().get(0)).getMessage(), "You just said: ${body}");
     }
-
 }

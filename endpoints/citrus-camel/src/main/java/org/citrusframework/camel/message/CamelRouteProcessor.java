@@ -1,14 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,25 +16,24 @@
 
 package org.citrusframework.camel.message;
 
-import java.util.UUID;
-
-import org.citrusframework.camel.dsl.CamelContextAware;
-import org.citrusframework.exceptions.CitrusRuntimeException;
-import org.citrusframework.message.MessageProcessor;
-import org.citrusframework.spi.ReferenceResolver;
-import org.citrusframework.spi.ReferenceResolverAware;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.OutputDefinition;
 import org.apache.camel.model.RouteDefinition;
+import org.citrusframework.camel.dsl.CamelContextAware;
+import org.citrusframework.exceptions.CitrusRuntimeException;
+import org.citrusframework.message.MessageProcessor;
+import org.citrusframework.spi.ReferenceResolver;
+import org.citrusframework.spi.ReferenceResolverAware;
+
+import java.util.UUID;
 
 /**
  * Message processor builds new route from given processor definition and delegates to the Apache Camel route.
  * Sets the message header and body from the processed Camel exchange.
  *
- * @author Christoph Deppisch
  */
 public class CamelRouteProcessor extends CamelMessageProcessor {
 
@@ -139,9 +135,8 @@ public class CamelRouteProcessor extends CamelMessageProcessor {
 
         @Override
         public void process(Exchange exchange) throws Exception {
-            try {
-                routeBuilder.getContext().createProducerTemplate()
-                        .send("direct:" + routeId, exchange);
+            try (var producerTemplate = routeBuilder.getContext().createProducerTemplate()) {
+                producerTemplate.send("direct:" + routeId, exchange);
             } finally {
                 routeBuilder.getContext().removeRoute(routeId);
             }

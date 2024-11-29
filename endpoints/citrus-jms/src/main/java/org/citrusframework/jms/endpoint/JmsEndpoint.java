@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.citrusframework.spi.ReferenceResolverAware;
  * Jms message endpoint capable of sending/receiving messages from Jms message destination. Either uses a Jms connection factory or
  * a Spring Jms template to connect with Jms destinations.
  *
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class JmsEndpoint extends AbstractEndpoint implements InitializingPhase, ShutdownPhase, ReferenceResolverAware {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.InvalidFunctionUsageException;
 import org.citrusframework.functions.Function;
 
+import static java.lang.Double.parseDouble;
+
 /**
  * Function returns the maximum numeric value in a set of numeric arguments.
  *
- * @author Christoph Deppisch
  */
 public class MaxFunction implements Function {
 
@@ -41,13 +42,12 @@ public class MaxFunction implements Function {
         double result = 0.0;
 
         for (int i = 0; i < parameterList.size(); i++) {
-            String token = (String) parameterList.get(i);
-            if (i==0 || Double.valueOf(token) > result) {
-                result = Double.valueOf(token);
+            String token = parameterList.get(i);
+            if (i==0 || parseDouble(token) > result) {
+                result = parseDouble(token);
             }
         }
 
         return Double.valueOf(result).toString();
     }
-
 }

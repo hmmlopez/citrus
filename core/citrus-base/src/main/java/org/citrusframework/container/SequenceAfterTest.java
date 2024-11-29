@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
  * Sequence of test actions executed after a test case. Container execution can be restricted according to test name ,
  * package and test groups.
  *
- * @author Christoph Deppisch
  */
 public class SequenceAfterTest extends AbstractTestBoundaryActionContainer implements AfterTest {
 

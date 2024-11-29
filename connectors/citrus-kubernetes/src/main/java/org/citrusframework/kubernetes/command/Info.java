@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,9 @@ import org.citrusframework.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.Version;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
-public class Info extends AbstractKubernetesCommand<InfoResult, Info> {
+public class Info extends AbstractKubernetesCommand<InfoResult, InfoResult, Info> {
 
     /**
      * Default constructor initializing the command name.

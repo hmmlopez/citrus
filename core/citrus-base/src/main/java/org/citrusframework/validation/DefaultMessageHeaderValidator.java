@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
  * Basic header message validator provides message header validation. Subclasses only have to add
  * specific logic for message payload validation. This validator is based on a control message.
  *
- * @author Christoph Deppisch
  */
 public class DefaultMessageHeaderValidator extends AbstractMessageValidator<HeaderValidationContext> {
 
@@ -91,7 +90,7 @@ public class DefaultMessageHeaderValidator extends AbstractMessageValidator<Head
                                     try {
                                         return context.getReferenceResolver().resolve(beanName, HeaderValidator.class);
                                     } catch (CitrusRuntimeException e) {
-                                        logger.warn("Failed to resolve header validator for name: " + beanName);
+                                        logger.warn("Failed to resolve header validator for name: {}", beanName);
                                         return null;
                                     }
                                 })
@@ -107,7 +106,7 @@ public class DefaultMessageHeaderValidator extends AbstractMessageValidator<Head
                     ).validateHeader(headerName, receivedHeaders.get(headerName), controlValue, context, validationContext);
         }
 
-        logger.info("Message header validation successful: All values OK");
+        logger.debug("Message header validation successful: All values OK");
     }
 
     /**
@@ -151,7 +150,7 @@ public class DefaultMessageHeaderValidator extends AbstractMessageValidator<Head
                 validationContext.isHeaderNameIgnoreCase()) {
             String key = headerName;
 
-            logger.debug(String.format("Finding case insensitive header for key '%s'", key));
+            logger.debug("Finding case insensitive header for key '{}'", key);
 
             headerName = receivedHeaders
                     .entrySet()
@@ -161,7 +160,7 @@ public class DefaultMessageHeaderValidator extends AbstractMessageValidator<Head
                     .findFirst()
                     .orElseThrow(() -> new ValidationException("Validation failed: No matching header for key '" + key + "'"));
 
-            logger.info(String.format("Found matching case insensitive header name: %s", headerName));
+            logger.trace("Found matching case insensitive header name: {}", headerName);
         }
 
         return headerName;

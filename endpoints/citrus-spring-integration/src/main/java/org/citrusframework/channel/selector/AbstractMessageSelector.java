@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.springframework.integration.core.MessageSelector;
 import org.springframework.messaging.Message;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7.5
  */
 public abstract class AbstractMessageSelector implements MessageSelector {

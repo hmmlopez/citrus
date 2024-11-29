@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.citrusframework.validation.context.ValidationContext;
  * Base abstract implementation for message validators. Calls method to finds a proper validation context
  * in the list of available validation contexts and performs validation.
  *
- * @author Christoph Deppisch
  */
 public abstract class AbstractMessageValidator<T extends ValidationContext> implements MessageValidator<T> {
 

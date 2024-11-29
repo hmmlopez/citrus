@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.citrusframework.util.StringUtils;
 import org.citrusframework.util.TypeConverter;
 
 /**
- * @author Christoph Deppisch
  * @since 2.5
  */
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -420,7 +419,7 @@ public class ManagedBeanInvocation {
                 }
             }
 
-            return types.toArray(new String[types.size()]);
+            return types.toArray(new String[0]);
         }
 
         /**
@@ -472,7 +471,7 @@ public class ManagedBeanInvocation {
                 throw new CitrusRuntimeException("Failed to construct method arg objects", e);
             }
 
-            return argValues.toArray(new Object[argValues.size()]);
+            return argValues.toArray(new Object[0]);
         }
 
         /**
@@ -553,7 +552,7 @@ public class ManagedBeanInvocation {
 
         public List<OperationParam> getParameter() {
             if (parameter == null) {
-                parameter = new ArrayList<OperationParam>();
+                parameter = new ArrayList<>();
             }
             return this.parameter;
         }

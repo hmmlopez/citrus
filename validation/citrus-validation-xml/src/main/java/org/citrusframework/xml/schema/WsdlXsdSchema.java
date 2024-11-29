@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ import org.xml.sax.InputSource;
  * xsd schema instances for schema repository. WSDL may contain several schema types which get
  * exposed under a single target namespace (defined on WSDL level).
  *
- * @author Christoph Deppisch
  * @since 1.3
  */
 public class WsdlXsdSchema extends AbstractSchemaCollection {
@@ -109,8 +108,7 @@ public class WsdlXsdSchema extends AbstractSchemaCollection {
         if (types != null) {
             List<?> schemaTypes = types.getExtensibilityElements();
             for (Object schemaObject : schemaTypes) {
-                if (schemaObject instanceof SchemaImpl) {
-                    SchemaImpl schema = (SchemaImpl) schemaObject;
+                if (schemaObject instanceof SchemaImpl schema) {
                     inheritNamespaces(schema, definition);
 
                     addImportedSchemas(schema);
@@ -227,5 +225,4 @@ public class WsdlXsdSchema extends AbstractSchemaCollection {
     public void setWsdl(Resource wsdl) {
         this.wsdl = wsdl;
     }
-
 }

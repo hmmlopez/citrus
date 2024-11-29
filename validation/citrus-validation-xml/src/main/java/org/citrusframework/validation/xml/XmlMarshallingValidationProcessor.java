@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.w3c.dom.Document;
  * Validation callback automatically unmarshalling message payload so we work with
  * Java objects for validation.
  *
- * @author Christoph Deppisch
  */
 public abstract class XmlMarshallingValidationProcessor<T> extends AbstractValidationProcessor<T> {
 
@@ -151,7 +150,7 @@ public abstract class XmlMarshallingValidationProcessor<T> extends AbstractValid
                         "please add proper validation logic");
             }
 
-            return new XmlMarshallingValidationProcessor<>() {
+            return new XmlMarshallingValidationProcessor<>(unmarshaller) {
                 @Override
                 public void validate(T payload, Map<String, Object> headers, TestContext context) {
                     validationProcessor.validate(payload, headers, context);

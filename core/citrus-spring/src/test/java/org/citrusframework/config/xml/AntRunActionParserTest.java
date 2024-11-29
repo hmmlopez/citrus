@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +23,13 @@ import org.testng.annotations.Test;
 import org.citrusframework.actions.AntRunAction;
 import org.citrusframework.testng.AbstractActionParserTest;
 
-/**
- * @author Christoph Deppisch
- */
 public class AntRunActionParserTest extends AbstractActionParserTest<AntRunAction> {
 
     @Test
     public void testAntRunActionParser() {
         assertActionCount(4);
         assertActionClassAndName(AntRunAction.class, "antrun");
-        
+
         AntRunAction action = getNextTestActionFromTest();
         Assert.assertEquals(action.getBuildFilePath(), "classpath:org/citrusframework/actions/build.xml");
         Assert.assertEquals(action.getTarget(), "sayHello");
@@ -40,7 +37,7 @@ public class AntRunActionParserTest extends AbstractActionParserTest<AntRunActio
         Assert.assertEquals(action.getProperties().size(), 0L);
         Assert.assertNull(action.getPropertyFilePath());
         Assert.assertNull(action.getBuildListener());
-        
+
         action = getNextTestActionFromTest();
         Assert.assertEquals(action.getBuildFilePath(), "classpath:org/citrusframework/actions/build.xml");
         Assert.assertNull(action.getTarget());
@@ -48,7 +45,7 @@ public class AntRunActionParserTest extends AbstractActionParserTest<AntRunActio
         Assert.assertEquals(action.getProperties().size(), 0L);
         Assert.assertNull(action.getPropertyFilePath());
         Assert.assertNull(action.getBuildListener());
-        
+
         action = getNextTestActionFromTest();
         Assert.assertEquals(action.getBuildFilePath(), "classpath:org/citrusframework/actions/build.xml");
         Assert.assertEquals(action.getTarget(), "sayHello");
@@ -58,7 +55,7 @@ public class AntRunActionParserTest extends AbstractActionParserTest<AntRunActio
         Assert.assertEquals(action.getProperties().get("goodbyeText"), "Goodbye!");
         Assert.assertNull(action.getPropertyFilePath());
         Assert.assertNull(action.getBuildListener());
-        
+
         action = getNextTestActionFromTest();
         Assert.assertEquals(action.getBuildFilePath(), "classpath:org/citrusframework/actions/build.xml");
         Assert.assertEquals(action.getTarget(), "sayHello");

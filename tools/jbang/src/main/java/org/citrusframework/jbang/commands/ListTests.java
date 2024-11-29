@@ -1,12 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright the original author or authors.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.citrusframework.jbang.commands;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+package org.citrusframework.jbang.commands;
 
 import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
@@ -29,6 +24,14 @@ import main.CitrusJBang;
 import org.citrusframework.jbang.CitrusJBangMain;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static java.lang.Long.compare;
+import static java.lang.Long.parseLong;
 
 @Command(name = "ls", description = "List running Citrus tests")
 public class ListTests extends CitrusCommand {
@@ -127,16 +130,13 @@ public class ListTests extends CitrusCommand {
             s = s.substring(1);
             negate = -1;
         }
-        switch (s) {
-            case "pid":
-                return Long.compare(Long.parseLong(o1.pid), Long.parseLong(o2.pid)) * negate;
-            case "name":
-                return o1.name.compareToIgnoreCase(o2.name) * negate;
-            case "age":
-                return Long.compare(o1.uptime, o2.uptime) * negate;
-            default:
-                return 0;
-        }
+
+        return switch (s) {
+            case "pid" -> compare(parseLong(o1.pid), parseLong(o2.pid)) * negate;
+            case "name" -> o1.name.compareToIgnoreCase(o2.name) * negate;
+            case "age" -> compare(o1.uptime, o2.uptime) * negate;
+            default -> 0;
+        };
     }
 
     protected static long extractSince(ProcessHandle ph) {
@@ -154,5 +154,4 @@ public class ListTests extends CitrusCommand {
         String ago;
         long uptime;
     }
-
 }

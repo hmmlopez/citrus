@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.citrusframework.generate;
 import java.util.Map;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 public interface SwaggerTestGenerator<T extends SwaggerTestGenerator> extends TestGenerator<T> {

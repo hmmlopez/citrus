@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,8 @@ import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-/**
- * @author Christoph Deppisch
- */
 public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
 
     @Mock
@@ -75,9 +71,10 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
     @SuppressWarnings({ "unchecked" })
     public void testReceiveMessageWithMessageBuilderScriptData() {
         DefaultMessageBuilder controlMessageBuilder = new DefaultMessageBuilder();
-        String markup = "markupBuilder.TestRequest(){\n" +
-                "Message('Hello World!')\n" +
-                "}";
+        String markup = """
+                markupBuilder.TestRequest(){
+                    Message('Hello World!')
+                }""";
         controlMessageBuilder.setPayloadBuilder(new GroovyScriptPayloadBuilder(markup));
 
         Message controlMessage = new DefaultMessage("<TestRequest>" + System.lineSeparator() +
@@ -116,9 +113,10 @@ public class ReceiveMessageActionTest extends AbstractTestNGUnitTest {
         context.setVariable("text", "Hello World!");
 
         DefaultMessageBuilder controlMessageBuilder = new DefaultMessageBuilder();
-        String markup = "markupBuilder.TestRequest(){\n" +
-                "Message('${text}')\n" +
-                "}";
+        String markup = """
+                markupBuilder.TestRequest(){
+                    Message('${text}')
+                }""";
         controlMessageBuilder.setPayloadBuilder(new GroovyScriptPayloadBuilder(markup));
 
         Message controlMessage = new DefaultMessage("<TestRequest>" + System.lineSeparator() +

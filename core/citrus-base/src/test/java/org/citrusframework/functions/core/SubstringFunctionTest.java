@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.citrusframework.functions.core;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.citrusframework.UnitTestSupport;
@@ -25,15 +24,15 @@ import org.citrusframework.exceptions.InvalidFunctionUsageException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
 public class SubstringFunctionTest extends UnitTestSupport {
     SubstringFunction function = new SubstringFunction();
 
     @Test
     public void testFunction() {
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add("Hallo,TestFramework");
         params.add("6");
         Assert.assertEquals(function.execute(params, context), "TestFramework");
@@ -46,7 +45,7 @@ public class SubstringFunctionTest extends UnitTestSupport {
 
     @Test
     public void testEndIndex() {
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add("Hallo,TestFramework");
         params.add("6");
         params.add("10");
@@ -61,7 +60,7 @@ public class SubstringFunctionTest extends UnitTestSupport {
 
     @Test(expectedExceptions = {StringIndexOutOfBoundsException.class})
     public void testIndexOutOfBounds() {
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add("Test");
         params.add("-1");
         function.execute(params, context);
@@ -69,12 +68,12 @@ public class SubstringFunctionTest extends UnitTestSupport {
 
     @Test(expectedExceptions = {InvalidFunctionUsageException.class})
     public void testMissingBeginIndex() {
-        function.execute(Collections.singletonList("This is a test"), context);
+        function.execute(singletonList("This is a test"), context);
     }
 
     @Test(expectedExceptions = {NumberFormatException.class})
     public void testNotANumber() {
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add("Hallo,TestFramework");
         params.add("one");
         function.execute(params, context);
@@ -82,6 +81,6 @@ public class SubstringFunctionTest extends UnitTestSupport {
 
     @Test(expectedExceptions = {InvalidFunctionUsageException.class})
     public void testNoParameters() {
-        function.execute(Collections.<String>emptyList(), context);
+        function.execute(emptyList(), context);
     }
 }

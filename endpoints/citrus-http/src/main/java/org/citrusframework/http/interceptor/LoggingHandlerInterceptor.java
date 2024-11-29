@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import static java.lang.System.lineSeparator;
+
 /**
  * Logging interceptor called by Spring MVC for each controller handling a RESTful Http request
  * as a server.
@@ -40,13 +42,12 @@ import org.springframework.web.servlet.ModelAndView;
  * Interceptor is capable of informing message tracing test listener on the request and response
  * messages arriving and leaving Citrus.
  *
- * @author Christoph Deppisch
  * @since 1.2
  */
 public class LoggingHandlerInterceptor implements HandlerInterceptor {
 
     /** New line characters in logger files */
-    private static final String NEWLINE = System.getProperty("line.separator");
+    private static final String NEWLINE = lineSeparator();
 
     /** Logger */
     private static final Logger logger = LoggerFactory.getLogger(LoggingHandlerInterceptor.class);
@@ -56,21 +57,18 @@ public class LoggingHandlerInterceptor implements HandlerInterceptor {
     private final TestContextFactory contextFactory = TestContextFactory.newInstance();
 
     @Override
-    public boolean preHandle(HttpServletRequest request,
-            HttpServletResponse response, Object handler) throws Exception {
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         handleRequest(getRequestContent(request));
         return true;
     }
 
     @Override
-    public void postHandle(HttpServletRequest request,
-            HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) {
         handleResponse(getResponseContent(request, response, handler));
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request,
-            HttpServletResponse response, Object handler, Exception ex) throws Exception {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
     }
 
     /**
@@ -118,7 +116,7 @@ public class LoggingHandlerInterceptor implements HandlerInterceptor {
      * @throws IOException
      */
     private String getRequestContent(HttpServletRequest request) throws IOException {
-        StringBuilder builder = new StringBuilder();
+        var builder = new StringBuilder();
 
         builder.append(request.getProtocol());
         builder.append(" ");
@@ -165,14 +163,13 @@ public class LoggingHandlerInterceptor implements HandlerInterceptor {
      * @return the complete response data with headers and body content as String
      */
     private String getResponseContent(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        StringBuilder builder = new StringBuilder();
+        var builder = new StringBuilder();
 
         builder.append(response);
 
-        if (handler instanceof HandlerMethod) {
-            HandlerMethod handlerMethod = (HandlerMethod) handler;
-            if (handlerMethod.getBean() instanceof HttpMessageController) {
-                ResponseEntity<?> responseEntity = ((HttpMessageController) handlerMethod.getBean()).getResponseCache(request);
+        if (handler instanceof HandlerMethod handlerMethod) {
+            if (handlerMethod.getBean() instanceof HttpMessageController httpMessageController) {
+                ResponseEntity<?> responseEntity = httpMessageController.getResponseCache(request);
                 if (responseEntity != null) {
                     builder.append(NEWLINE);
                     builder.append(responseEntity.getBody());

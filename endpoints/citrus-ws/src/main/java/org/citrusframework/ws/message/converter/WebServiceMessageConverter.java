@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.springframework.ws.context.MessageContext;
  * Converter is abel to create proper WebService message from internal message representation and vice versa. Converter
  * is used both on client and server side to convert SOAP request and response messages to internal message representation.
  *
- * @author Christoph Deppisch
  * @since 2.0
  */
 public interface WebServiceMessageConverter extends MessageConverter<WebServiceMessage, WebServiceMessage, WebServiceEndpointConfiguration> {

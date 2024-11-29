@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
  * Default correlation manager implementation works on simple in memory map for storing objects.
  * Correlation key is the map key. Clients can access objects in the store using the correlation key.
  *
- * @author Christoph Deppisch
  * @since 2.0
  */
 public class DefaultCorrelationManager<T> implements CorrelationManager<T> {
@@ -34,7 +33,7 @@ public class DefaultCorrelationManager<T> implements CorrelationManager<T> {
     private static final Logger logger = LoggerFactory.getLogger(DefaultCorrelationManager.class);
 
     /** Map of managed objects */
-    private ObjectStore<T> objectStore = new DefaultObjectStore<T>();
+    private ObjectStore<T> objectStore = new DefaultObjectStore<>();
 
     @Override
     public void saveCorrelationKey(String correlationKeyName, String correlationKey, TestContext context) {
@@ -90,5 +89,4 @@ public class DefaultCorrelationManager<T> implements CorrelationManager<T> {
     public ObjectStore<T> getObjectStore() {
         return this.objectStore;
     }
-
 }

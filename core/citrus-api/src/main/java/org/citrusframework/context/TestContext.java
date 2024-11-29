@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,9 +74,7 @@ import org.slf4j.LoggerFactory;
  * for replacing dynamic content(variables and functions) in message payloads and headers.
  */
 public class TestContext implements ReferenceResolverAware, TestActionListenerAware {
-    /**
-     * Logger
-     */
+
     private static final Logger logger = LoggerFactory.getLogger(TestContext.class);
 
     /**
@@ -138,6 +136,12 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
      * List of actions to run after each test.
      */
     private List<AfterTest> afterTest = new ArrayList<>();
+
+    /**
+     * Further chain of test actions to be executed in any case (success, error)
+     * Usually used to clean up resources in any case of test result.
+     */
+    private final List<TestActionBuilder<?>> finalActions = new ArrayList<>();
 
     /**
      * List of message listeners to be informed on inbound and outbound message exchange
@@ -439,9 +443,13 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
         CitrusRuntimeException exception = new CitrusRuntimeException(message, cause);
 
         // inform test listeners with failed test
-        testListeners.onTestStart(dummyTest);
-        testListeners.onTestFailure(dummyTest, exception);
-        testListeners.onTestFinish(dummyTest);
+        try {
+            testListeners.onTestStart(dummyTest);
+            testListeners.onTestFailure(dummyTest, exception);
+            testListeners.onTestFinish(dummyTest);
+        } catch (Exception e) {
+            logger.warn("Executing error handler listener failed!", e);
+        }
 
         return exception;
     }
@@ -603,6 +611,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Obtains the testActionListeners.
+     *
      * @return
      */
     public TestActionListeners getTestActionListeners() {
@@ -611,6 +620,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Specifies the testActionListeners.
+     *
      * @param testActionListeners
      */
     public void setTestActionListeners(TestActionListeners testActionListeners) {
@@ -624,6 +634,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Obtains the beforeTest.
+     *
      * @return
      */
     public List<BeforeTest> getBeforeTest() {
@@ -632,6 +643,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Specifies the beforeTest.
+     *
      * @param beforeTest
      */
     public void setBeforeTest(List<BeforeTest> beforeTest) {
@@ -640,6 +652,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Obtains the afterTest.
+     *
      * @return
      */
     public List<AfterTest> getAfterTest() {
@@ -648,6 +661,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Specifies the afterTest.
+     *
      * @param afterTest
      */
     public void setAfterTest(List<AfterTest> afterTest) {
@@ -655,7 +669,16 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
     }
 
     /**
+     * Optains the final actions.
+     * @return
+     */
+    public List<TestActionBuilder<?>> getFinalActions() {
+        return finalActions;
+    }
+
+    /**
      * Obtains the segmentVariableExtractorRegistry
+     *
      * @return
      */
     public SegmentVariableExtractorRegistry getSegmentVariableExtractorRegistry() {
@@ -664,6 +687,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Specifies the segmentVariableExtractorRegistry
+     *
      * @param segmentVariableExtractorRegistry
      */
     public void setSegmentVariableExtractorRegistry(SegmentVariableExtractorRegistry segmentVariableExtractorRegistry) {
@@ -672,6 +696,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Gets the global message processors for given direction.
+     *
      * @return
      */
     public List<MessageProcessor> getMessageProcessors(MessageDirection direction) {
@@ -691,6 +716,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Gets the global message processors.
+     *
      * @return
      */
     public MessageProcessors getMessageProcessors() {
@@ -758,6 +784,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Obtains the typeConverter.
+     *
      * @return
      */
     public TypeConverter getTypeConverter() {
@@ -766,6 +793,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Specifies the typeConverter.
+     *
      * @param typeConverter
      */
     public void setTypeConverter(TypeConverter typeConverter) {
@@ -774,6 +802,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Gets the logModifier.
+     *
      * @return
      */
     public LogModifier getLogModifier() {
@@ -782,6 +811,7 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
 
     /**
      * Sets the logModifier.
+     *
      * @param logModifier
      */
     public void setLogModifier(LogModifier logModifier) {
@@ -900,10 +930,15 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
                         .orElse(false);
     }
 
+    public void doFinally(TestActionBuilder<?> action) {
+        this.finalActions.add(action);
+    }
+
     /**
      * Empty test case implementation used as test result when tests fail before execution.
      */
-    private static class EmptyTestCase implements TestCase {
+    static class EmptyTestCase implements TestCase {
+
         private final String testName;
         private final String packageName;
 
@@ -1071,6 +1106,10 @@ public class TestContext implements ReferenceResolverAware, TestActionListenerAw
         public Class<?> getTestClass() {
             return this.getClass();
         }
-    }
 
+        @Override
+        public void fail(Throwable throwable) {
+            // do nothing
+        }
+    }
 }

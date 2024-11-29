@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2019 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import static java.lang.Integer.parseInt;
+
 /**
- * @author Christoph Deppisch
  * @since 2.0
  */
 public class HttpMessage extends DefaultMessage {
@@ -71,7 +72,17 @@ public class HttpMessage extends DefaultMessage {
      * @param message The base message for the copy operation
      */
     public HttpMessage(final Message message) {
-        super(message);
+        this(message, false);
+    }
+
+    /**
+     * Constructs a new HTTP message based on the provided Message object, with an option to force Citrus header update.
+     *
+     * @param message the Message object to copy
+     * @param forceCitrusHeaderUpdate flag indicating whether to force Citrus header update
+     */
+    public HttpMessage(final Message message, boolean forceCitrusHeaderUpdate) {
+        super(message, forceCitrusHeaderUpdate);
         copyCookies(message);
     }
 
@@ -100,8 +111,8 @@ public class HttpMessage extends DefaultMessage {
      * @param message the message to extract the cookies from
      */
     private void copyCookies(final Message message) {
-        if (message instanceof HttpMessage) {
-            this.cookies.putAll(((HttpMessage) message).getCookiesMap());
+        if (message instanceof HttpMessage httpMessage) {
+            this.cookies.putAll(httpMessage.getCookiesMap());
         }
     }
 
@@ -135,8 +146,9 @@ public class HttpMessage extends DefaultMessage {
      */
     public HttpMessage status(final HttpStatusCode statusCode) {
         setHeader(HttpMessageHeaders.HTTP_STATUS_CODE, statusCode.value());
-        if (HttpStatus.resolve(statusCode.value()) != null) {
-            setHeader(HttpMessageHeaders.HTTP_REASON_PHRASE, HttpStatus.resolve(statusCode.value()).name());
+        HttpStatus status = HttpStatus.resolve(statusCode.value());
+        if (status != null) {
+            setHeader(HttpMessageHeaders.HTTP_REASON_PHRASE, status.name());
         }
         return this;
     }
@@ -256,8 +268,6 @@ public class HttpMessage extends DefaultMessage {
 
         return this;
     }
-
-
 
     /**
      * Sets request path that is dynamically added to base uri.
@@ -394,12 +404,12 @@ public class HttpMessage extends DefaultMessage {
         final Object statusCode = getHeader(HttpMessageHeaders.HTTP_STATUS_CODE);
 
         if (statusCode != null) {
-            if (statusCode instanceof HttpStatusCode) {
-                return (HttpStatusCode) statusCode;
-            } else if (statusCode instanceof Integer) {
-                return HttpStatusCode.valueOf((Integer) statusCode);
+            if (statusCode instanceof HttpStatusCode httpStatusCode) {
+                return httpStatusCode;
+            } else if (statusCode instanceof Integer integer) {
+                return HttpStatusCode.valueOf(integer);
             } else {
-                return HttpStatusCode.valueOf(Integer.valueOf(statusCode.toString()));
+                return HttpStatusCode.valueOf(parseInt(statusCode.toString()));
             }
         }
         return null;
@@ -501,9 +511,12 @@ public class HttpMessage extends DefaultMessage {
     /**
      * Reads request from complete request dump.
      *
+     * <p>Note that this method is called from YAKS.
+     *
      * @param requestData The request dump to parse
      * @return The parsed dump as HttpMessage
      */
+    @SuppressWarnings("unused")
     public static HttpMessage fromRequestData(final String requestData) {
         try (final BufferedReader reader = new BufferedReader(new StringReader(requestData))) {
             final HttpMessage request = new HttpMessage();
@@ -530,9 +543,12 @@ public class HttpMessage extends DefaultMessage {
     /**
      * Reads response from complete response dump.
      *
+     * <p>Note that this method is called from YAKS.
+     *
      * @param responseData The response dump to parse
      * @return The parsed dump as HttpMessage
      */
+    @SuppressWarnings("unused")
     public static HttpMessage fromResponseData(final String responseData) {
         try (final BufferedReader reader = new BufferedReader(new StringReader(responseData))) {
             final HttpMessage response = new HttpMessage();
@@ -543,7 +559,7 @@ public class HttpMessage extends DefaultMessage {
             }
 
             if (statusLine.length > 1) {
-                response.status(HttpStatusCode.valueOf(Integer.valueOf(statusLine[1])));
+                response.status(HttpStatusCode.valueOf(parseInt(statusLine[1])));
             }
 
             return parseHttpMessage(reader, response);
@@ -553,10 +569,7 @@ public class HttpMessage extends DefaultMessage {
     }
 
     private void addQueryParam(final String name, final String value) {
-        if (!this.queryParams.containsKey(name)) {
-            this.queryParams.put(name, new LinkedList<>());
-        }
-        this.queryParams.get(name).add(value);
+        this.queryParams.computeIfAbsent(name, k -> new LinkedList<>()).add(value);
     }
 
     private String outputQueryParam(final Map.Entry<String, Collection<String>> entry) {

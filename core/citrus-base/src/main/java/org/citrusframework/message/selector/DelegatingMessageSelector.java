@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.citrusframework.message.MessageSelectorBuilder;
  * Message selector delegates incoming messages to several other selector implementations
  * according to selector names.
  *
- * @author Christoph Deppisch
  * @since 3.0
  */
 public class DelegatingMessageSelector implements MessageSelector {
@@ -83,5 +82,4 @@ public class DelegatingMessageSelector implements MessageSelector {
     public void addMessageSelectorFactory(MessageSelectorFactory factory) {
         this.factories.add(factory);
     }
-
 }

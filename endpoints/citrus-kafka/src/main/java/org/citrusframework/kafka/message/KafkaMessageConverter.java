@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package org.citrusframework.kafka.message;
 
-import java.io.IOException;
-import java.util.Optional;
-
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.citrusframework.context.TestContext;
@@ -29,12 +26,14 @@ import org.citrusframework.message.MessageConverter;
 import org.citrusframework.spi.Resource;
 import org.citrusframework.util.FileUtils;
 
+import java.io.IOException;
+import java.util.Optional;
+
 /**
  * Basic message converter for converting Spring Integration message implementations to Kafka
  * messages and vice versa. Converter combines message converting logic and header mapping.
  * Usually the message's payload is extracted to the Kafka message payload and default Kafka headers are mapped.
  *
- * @author Christoph Deppisch
  * @since 2.8
  */
 public class KafkaMessageConverter implements MessageConverter<ConsumerRecord<Object, Object>, ProducerRecord<Object, Object>, KafkaEndpointConfiguration> {

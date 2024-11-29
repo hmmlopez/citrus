@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,17 @@ import java.util.stream.Stream;
 
 import org.citrusframework.actions.NoopTestAction;
 import org.citrusframework.container.TestActionContainer;
+import org.citrusframework.spi.ReferenceResolver;
+import org.citrusframework.spi.ReferenceResolverAware;
 
 /**
  * Abstract container builder takes care on calling the container runner when actions are placed in the container.
- * @author Christoph Deppisch
  */
-public abstract class AbstractTestContainerBuilder<T extends TestActionContainer, S extends TestActionContainerBuilder<T, S>> extends AbstractTestActionBuilder<T, S> implements TestActionContainerBuilder<T, S> {
+public abstract class AbstractTestContainerBuilder<T extends TestActionContainer, S extends TestActionContainerBuilder<T, S>> extends AbstractTestActionBuilder<T, S> implements TestActionContainerBuilder<T, S>, ReferenceResolverAware {
 
     protected final List<TestActionBuilder<?>> actions = new ArrayList<>();
+
+    protected ReferenceResolver referenceResolver;
 
     @Override
     public S actions(TestAction... actions) {
@@ -46,8 +49,12 @@ public abstract class AbstractTestContainerBuilder<T extends TestActionContainer
         for (int i = 0; i < actions.length; i++) {
             TestActionBuilder<?> current = actions[i];
 
-            if (current.build() instanceof NoopTestAction) {
-                continue;
+            try {
+                if (current.build() instanceof NoopTestAction) {
+                    continue;
+                }
+            } catch (Exception exception) {
+                // do nothing - possible that the action build is not able to perform build at this state
             }
 
             if (this.actions.size() == i) {
@@ -75,6 +82,14 @@ public abstract class AbstractTestContainerBuilder<T extends TestActionContainer
     public T build() {
         T container = doBuild();
 
+        if (referenceResolver != null) {
+            for (TestActionBuilder<?> builder : actions) {
+                if (builder instanceof ReferenceResolverAware referenceResolverAware) {
+                    referenceResolverAware.setReferenceResolver(referenceResolver);
+                }
+            }
+        }
+
         container.setActions(actions.stream()
                 .map(TestActionBuilder::build)
                 .filter(action -> !(action instanceof NoopTestAction))
@@ -93,6 +108,11 @@ public abstract class AbstractTestContainerBuilder<T extends TestActionContainer
         return actions;
     }
 
+    @Override
+    public void setReferenceResolver(ReferenceResolver referenceResolver) {
+        this.referenceResolver = referenceResolver;
+    }
+
     /**
      * Static Java DSL container builder using generics.
      * @param container
@@ -101,7 +121,7 @@ public abstract class AbstractTestContainerBuilder<T extends TestActionContainer
      * @return
      */
     public static <T extends TestActionContainer, B extends TestActionContainerBuilder<T, B>> TestActionContainerBuilder<T, B> container(T container)  {
-        return new AbstractTestContainerBuilder<T, B>() {
+        return new AbstractTestContainerBuilder<>() {
             @Override
             public T doBuild() {
                 return container;

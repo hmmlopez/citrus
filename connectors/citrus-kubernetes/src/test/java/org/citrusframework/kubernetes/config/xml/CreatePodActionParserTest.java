@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class CreatePodActionParserTest extends AbstractActionParserTest<Kubernet
         Assert.assertEquals(action.getCommand().getClass(), CreatePod.class);
         Assert.assertEquals(action.getKubernetesClient().getClass(), KubernetesClient.class);
         Assert.assertEquals(action.getCommand().getParameters().size(), 0);
-        Assert.assertEquals(((CreatePod) action.getCommand()).getTemplate(), "classpath:templates/hello-jetty.yml");
+        Assert.assertEquals(((CreatePod) action.getCommand()).getTemplate(), "classpath:templates/hello-netty.yml");
 
         action = getNextTestActionFromTest();
         Assert.assertNotNull(action.getCommand());

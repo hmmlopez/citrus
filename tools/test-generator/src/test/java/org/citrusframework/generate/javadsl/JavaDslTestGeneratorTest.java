@@ -1,3 +1,19 @@
+/*
+ * Copyright the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.citrusframework.generate.javadsl;
 
 import java.io.File;
@@ -27,13 +43,11 @@ public class JavaDslTestGeneratorTest {
     @Test
     public void create_should_pass_with_junit5() throws IOException {
 
-
         //GIVEN
         generatorUnderTest.withName("FooTest")
                 .withDisabled(false)
                 .withFramework(UnitFramework.JUNIT5)
                 .usePackage("org.citrusframework");
-
 
         //WHEN
         generatorUnderTest.create();
@@ -64,7 +78,6 @@ public class JavaDslTestGeneratorTest {
         checkMethodParameter(javaContent, "@CitrusResource TestCaseRunner runner");
         assertContains(javaContent, "runner.run(echo(\"TODO: Code the test FooTest\"));");
     }
-
 
 
     @Test

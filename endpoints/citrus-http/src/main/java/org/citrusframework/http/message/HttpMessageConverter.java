@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import jakarta.servlet.http.Cookie;
 import org.citrusframework.context.TestContext;
@@ -36,6 +35,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMethod;
+
+import static java.util.stream.Collectors.joining;
 
 /**
  * Message converter implementation able to convert HTTP request and response entities to internal message
@@ -118,8 +119,6 @@ public class HttpMessageConverter implements MessageConverter<HttpEntity<?>, Htt
         throw new UnsupportedOperationException("HttpMessageConverter does not support predefined HttpEntity objects");
     }
 
-
-
     /**
      * Message headers consist of standard HTTP message headers and custom headers.
      * This method assumes that all header entries that were not initially mapped
@@ -151,9 +150,8 @@ public class HttpMessageConverter implements MessageConverter<HttpEntity<?>, Htt
         Map<String, Object> convertedHeaders = new HashMap<>();
 
         for (Map.Entry<String, Object> header : headers.entrySet()) {
-            if (header.getValue() instanceof Collection<?>) {
-                Collection<?> value = (Collection<?>)header.getValue();
-                convertedHeaders.put(header.getKey(), value.stream().map(String::valueOf).collect(Collectors.joining(",")));
+            if (header.getValue() instanceof Collection<?> value) {
+                convertedHeaders.put(header.getKey(), value.stream().map(String::valueOf).collect(joining(",")));
             } else if (header.getValue() instanceof MediaType) {
                 convertedHeaders.put(header.getKey(), header.getValue().toString());
             } else {

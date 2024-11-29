@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.citrusframework.util.MessageUtils;
  * Extended groovy message validator providing specific Json slurper support.
  * With Json slurper the tester can validate the message payload with closures for instance.
  *
- * @author DanielP
  * @since 1.2
  */
 public class GroovyJsonMessageValidator extends GroovyScriptMessageValidator {

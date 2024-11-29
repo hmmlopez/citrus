@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,6 @@ import org.testng.annotations.Test;
 
 import java.util.Map;
 
-/**
- * @author Christoph Deppisch
- */
 public class WebSocketEndpointParserTest extends AbstractBeanDefinitionParserTest {
 
     @Test
@@ -61,5 +58,4 @@ public class WebSocketEndpointParserTest extends AbstractBeanDefinitionParserTes
         Assert.assertEquals(webSocketEndpoint.getEndpointConfiguration().getTimeout(), 10000L);
 
     }
-
 }

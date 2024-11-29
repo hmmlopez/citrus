@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.springframework.transaction.support.TransactionTemplate;
  * Class executes PLSQL statements either declared inline as PLSQL statements or given by an
  * external file resource.
  *
- * @author Christoph Deppisch
  * @since 2008
  */
 public class ExecutePLSQLAction extends AbstractDatabaseConnectingTestAction {
@@ -227,7 +226,7 @@ public class ExecutePLSQLAction extends AbstractDatabaseConnectingTestAction {
         }
 
         @Override
-        public ExecutePLSQLAction build() {
+        public ExecutePLSQLAction doBuild() {
             return new ExecutePLSQLAction(this);
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.citrusframework.container.AbstractTestBoundaryActionContainer;
 
 /**
  * Abstract container builder takes care on calling the container runner when actions are placed in the container.
- * @author Christoph Deppisch
  */
 public abstract class AbstractTestBoundaryContainerBuilder<T extends AbstractTestBoundaryActionContainer, S extends AbstractTestBoundaryContainerBuilder<T, S>> extends AbstractTestContainerBuilder<T, S> {
 
@@ -89,7 +88,6 @@ public abstract class AbstractTestBoundaryContainerBuilder<T extends AbstractTes
         this.systemProperties.putAll(systemProperties);
         return self;
     }
-
 
     /**
      * Condition on environment variable with value. The before test logic will only run when this condition matches.

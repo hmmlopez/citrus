@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,6 @@ import org.springframework.integration.core.MessagingTemplate;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
 public class ChannelSyncEndpointParserTest extends AbstractBeanDefinitionParserTest {
 
     @Test
@@ -69,6 +66,5 @@ public class ChannelSyncEndpointParserTest extends AbstractBeanDefinitionParserT
         Assert.assertNotNull(channelSyncEndpoint.getActor());
         Assert.assertEquals(channelSyncEndpoint.getActor(), beanDefinitionContext.getBean("testActor", TestActor.class));
     }
-
 
 }

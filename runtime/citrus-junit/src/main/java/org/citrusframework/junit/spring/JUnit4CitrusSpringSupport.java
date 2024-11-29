@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
  * Base test implementation for test cases that use JUnit testing framework. Class also provides
  * test listener support and loads the Spring root application context files for Citrus.
  *
- * @author Christoph Deppisch
  */
 @RunWith(CitrusSpringJUnit4Runner.class)
 @ContextConfiguration(classes = CitrusSpringConfig.class)

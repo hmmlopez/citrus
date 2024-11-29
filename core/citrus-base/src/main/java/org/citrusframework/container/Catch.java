@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Action catches possible exceptions in nested test actions.
  *
- * @author Christoph Deppisch
  */
 public class Catch extends AbstractActionContainer {
     /** Exception type caught */

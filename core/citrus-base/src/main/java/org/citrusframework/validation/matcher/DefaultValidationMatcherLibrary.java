@@ -1,3 +1,19 @@
+/*
+ * Copyright the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.citrusframework.validation.matcher;
 
 import org.citrusframework.validation.matcher.core.ContainsIgnoreCaseValidationMatcher;
@@ -21,16 +37,16 @@ import org.citrusframework.validation.matcher.core.StartsWithValidationMatcher;
 import org.citrusframework.validation.matcher.core.StringLengthValidationMatcher;
 import org.citrusframework.validation.matcher.core.TrimAllWhitespacesValidationMatcher;
 import org.citrusframework.validation.matcher.core.TrimValidationMatcher;
+import org.citrusframework.validation.matcher.core.UuidV4ValidationMatcher;
 import org.citrusframework.validation.matcher.core.WeekdayValidationMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * @author Christoph Deppisch
- */
 public class DefaultValidationMatcherLibrary extends ValidationMatcherLibrary {
 
-    /** Logger */
+    /**
+     * Logger
+     */
     private static final Logger logger = LoggerFactory.getLogger(DefaultValidationMatcherLibrary.class);
 
     /**
@@ -61,6 +77,7 @@ public class DefaultValidationMatcherLibrary extends ValidationMatcherLibrary {
         getMembers().put("notNull", new NotNullValidationMatcher());
         getMembers().put("ignore", new IgnoreValidationMatcher());
         getMembers().put("hasLength", new StringLengthValidationMatcher());
+        getMembers().put("isUUIDv4", new UuidV4ValidationMatcher());
 
         lookupValidationMatchers();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,9 @@ import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.dsl.*;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
-public class ListNodes extends AbstractListCommand<NodeList, ListNodes> {
+public class ListNodes extends AbstractListCommand<Node, NodeList, Resource<Node>, ListNodes> {
 
     /**
      * Default constructor initializing the command name.
@@ -35,7 +34,12 @@ public class ListNodes extends AbstractListCommand<NodeList, ListNodes> {
     }
 
     @Override
-    protected ClientNonNamespaceOperation operation(KubernetesClient kubernetesClient, TestContext context) {
-        return kubernetesClient.getClient().nodes();
+    protected MixedOperation<Node, NodeList, Resource<Node>> operation(KubernetesClient kubernetesClient, TestContext context) {
+        return (MixedOperation<Node, NodeList, Resource<Node>>) kubernetesClient.getClient().nodes();
+    }
+
+    @Override
+    protected boolean isNamespaceOperation() {
+        return false;
     }
 }

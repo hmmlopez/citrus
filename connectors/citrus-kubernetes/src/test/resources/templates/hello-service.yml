@@ -1,0 +1,16 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: hello-netty
+  labels:
+    service: hello-netty
+spec:
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 31citrus:randomNumber(3)
+  selector:
+    server: hello-netty
+  type: NodePort
+  sessionAffinity: None

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class ExecuteSQLQueryActionTest extends UnitTestSupport {
 
     private static final String DB_STMT_1 = "select ORDERTYPE, STATUS from orders where ID = 5";
@@ -485,7 +482,7 @@ public class ExecuteSQLQueryActionTest extends UnitTestSupport {
 
         when(jdbcTemplate.queryForList(sql2)).thenReturn(Collections.singletonList(resultMap2));
 
-        List<String> statements = new ArrayList<String>();
+        List<String> statements = new ArrayList<>();
         statements.add(sql1);
         statements.add(sql2);
 
@@ -557,9 +554,10 @@ public class ExecuteSQLQueryActionTest extends UnitTestSupport {
 
         executeSQLQueryAction.statements(Collections.singletonList(sql));
 
-        String validationScript = "assert rows.size() == 1\n" +
-                "assert rows[0].ORDERTYPE == 'small'\n" +
-                "assert rows[0] == [ORDERTYPE:'small', STATUS:'in_progress']";
+        String validationScript = """
+                assert rows.size() == 1
+                assert rows[0].ORDERTYPE == 'small'
+                assert rows[0] == [ORDERTYPE:'small', STATUS:'in_progress']""";
         executeSQLQueryAction.validateScript(validationScript, ScriptTypes.GROOVY);
         executeSQLQueryAction.build().execute(context);
 
@@ -588,16 +586,18 @@ public class ExecuteSQLQueryActionTest extends UnitTestSupport {
         when(jdbcTemplate.queryForList(sql1)).thenReturn(Collections.singletonList(resultMap));
         when(jdbcTemplate.queryForList(sql2)).thenReturn(results);
 
-        List<String> statements = new ArrayList<String>();
+        List<String> statements = new ArrayList<>();
         statements.add(sql1);
         statements.add(sql2);
         executeSQLQueryAction.statements(statements);
 
-        String validationScript = "assert rows.size() == 4\n" +
-                "assert rows[0].ORDERTYPE == 'small'\n" +
-                "assert rows[0] == [ORDERTYPE:'small', STATUS:'in_progress']\n" +
-                "assert rows[1].ID == '1'\n" +
-                "assert rows[3].NAME == 'error3'\n";
+        String validationScript = """
+                assert rows.size() == 4
+                assert rows[0].ORDERTYPE == 'small'
+                assert rows[0] == [ORDERTYPE:'small', STATUS:'in_progress']
+                assert rows[1].ID == '1'
+                assert rows[3].NAME == 'error3'
+                """;
         executeSQLQueryAction.validateScript(validationScript, ScriptTypes.GROOVY);
         executeSQLQueryAction.build().execute(context);
 
@@ -649,9 +649,10 @@ public class ExecuteSQLQueryActionTest extends UnitTestSupport {
         executeSQLQueryAction.validate("ORDERTYPE", "small");
         executeSQLQueryAction.validate("STATUS", "in_progress");
 
-        String validationScript = "assert rows.size() == 1\n" +
-                "assert rows[0].ORDERTYPE == 'small'\n" +
-                "assert rows[0] == [ORDERTYPE:'small', STATUS:'in_progress']";
+        String validationScript = """
+                assert rows.size() == 1
+                assert rows[0].ORDERTYPE == 'small'
+                assert rows[0] == [ORDERTYPE:'small', STATUS:'in_progress']""";
         executeSQLQueryAction.validateScript(validationScript, ScriptTypes.GROOVY);
         executeSQLQueryAction.build().execute(context);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,6 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.*;
 
-/**
- * @author Christoph Deppisch
- */
 public class JmsEndpointProducerTest extends AbstractTestNGUnitTest {
 
     private final ConnectionFactory connectionFactory = Mockito.mock(ConnectionFactory.class);
@@ -84,7 +81,7 @@ public class JmsEndpointProducerTest extends AbstractTestNGUnitTest {
         when(session.createProducer(destination)).thenReturn(messageProducer);
 
         when(session.createTextMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")).thenReturn(
-                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<String, Object>()));
+                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<>()));
 
         when(session.getTransacted()).thenReturn(false);
 
@@ -110,7 +107,7 @@ public class JmsEndpointProducerTest extends AbstractTestNGUnitTest {
         when(session.createProducer(destinationQueue)).thenReturn(messageProducer);
 
         when(session.createTextMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")).thenReturn(
-                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<String, Object>()));
+                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<>()));
 
         when(session.getTransacted()).thenReturn(false);
 
@@ -122,12 +119,11 @@ public class JmsEndpointProducerTest extends AbstractTestNGUnitTest {
     }
 
     @Test(expectedExceptions = CitrusRuntimeException.class, expectedExceptionsMessageRegExp = "Message is empty - unable to send empty message")
-    public void testSendEmptyMessage() throws JMSException {
+    public void testSendEmptyMessage() {
         JmsEndpoint endpoint = new JmsEndpoint();
         endpoint.getEndpointConfiguration().setConnectionFactory(connectionFactory);
 
         endpoint.getEndpointConfiguration().setDestination(destination);
         endpoint.createProducer().send(null, context);
     }
-
 }

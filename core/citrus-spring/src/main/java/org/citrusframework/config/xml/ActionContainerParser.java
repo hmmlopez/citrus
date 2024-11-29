@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.w3c.dom.Element;
  * Abstract parser implementation that is aware of several embedded test actions of a container. Bean definitions that use
  * this parser component must have an 'actions' property of type {@link List} in order to receive the list of embedded test actions.
  *
- * @author Christoph Deppisch
  */
 public abstract class ActionContainerParser implements BeanDefinitionParser {
 

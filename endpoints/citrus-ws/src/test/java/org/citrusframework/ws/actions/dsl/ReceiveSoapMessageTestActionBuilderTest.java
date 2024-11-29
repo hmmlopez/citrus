@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,9 +54,6 @@ import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class ReceiveSoapMessageTestActionBuilderTest extends UnitTestSupport {
 
     private final Consumer messageConsumer = Mockito.mock(Consumer.class);
@@ -358,5 +355,4 @@ public class ReceiveSoapMessageTestActionBuilderTest extends UnitTestSupport {
         Assert.assertEquals(action.getEndpointUri(), "fooMessageEndpoint");
         Assert.assertEquals(action.getMessageType(), MessageType.XML.name());
     }
-
 }

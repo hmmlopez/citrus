@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.citrusframework.endpoint.EndpointConfiguration;
 import org.citrusframework.message.Message;
 
 /**
- * @author Christoph Deppisch
  * @since 1.4
  */
 public abstract class AbstractMessageConsumer implements Consumer {
@@ -34,8 +33,6 @@ public abstract class AbstractMessageConsumer implements Consumer {
 
     /**
      * Default constructor using receive timeout setting.
-     * @param name
-     * @param endpointConfiguration
      */
     public AbstractMessageConsumer(String name, EndpointConfiguration endpointConfiguration) {
         this.name = name;
@@ -47,7 +44,12 @@ public abstract class AbstractMessageConsumer implements Consumer {
         return name;
     }
 
+    @Override
     public Message receive(TestContext context) {
         return receive(context, endpointConfiguration.getTimeout());
+    }
+
+    protected EndpointConfiguration getEndpointConfiguration() {
+        return endpointConfiguration;
     }
 }

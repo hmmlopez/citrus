@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
  * Soap fault validator implementation that delegates soap fault detail validation to default XML message validator
  * in order to support XML fault detail content validation.
  *
- * @author Christoph Deppisch
  */
 public class XmlSoapFaultValidator extends AbstractFaultDetailValidator {
 

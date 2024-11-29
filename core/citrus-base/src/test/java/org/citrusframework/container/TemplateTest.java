@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,6 @@ import org.testng.annotations.Test;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
-
-/**
- * @author Christoph Deppisch
- */
 public class TemplateTest extends UnitTestSupport {
 
     private final TestAction action = Mockito.mock(TestAction.class);
@@ -56,7 +52,7 @@ public class TemplateTest extends UnitTestSupport {
 
         EchoAction echo = new EchoAction.Builder().message("${myText}").build();
 
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("param", "Parameter was set");
         parameters.put("myText", "${text}");
 

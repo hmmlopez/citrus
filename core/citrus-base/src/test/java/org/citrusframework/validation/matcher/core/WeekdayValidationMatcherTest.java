@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,18 @@
 
 package org.citrusframework.validation.matcher.core;
 
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
-
 import org.citrusframework.UnitTestSupport;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
+
 public class WeekdayValidationMatcherTest extends UnitTestSupport {
 
     private WeekdayValidationMatcher matcher = new WeekdayValidationMatcher();
@@ -38,16 +36,16 @@ public class WeekdayValidationMatcherTest extends UnitTestSupport {
 
     @Test
     public void testValidationMatcher() {
-        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.MONDAY).getTime()), Arrays.asList("MONDAY"), context);
-        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.TUESDAY).getTime()), Arrays.asList("TUESDAY"), context);
-        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.WEDNESDAY).getTime()), Arrays.asList("WEDNESDAY"), context);
-        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.THURSDAY).getTime()), Arrays.asList("THURSDAY"), context);
-        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.FRIDAY).getTime()), Arrays.asList("FRIDAY"), context);
-        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.SATURDAY).getTime()), Arrays.asList("SATURDAY"), context);
-        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.SUNDAY).getTime()), Arrays.asList("SUNDAY"), context);
+        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.MONDAY).getTime()), singletonList("MONDAY"), context);
+        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.TUESDAY).getTime()), singletonList("TUESDAY"), context);
+        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.WEDNESDAY).getTime()), singletonList("WEDNESDAY"), context);
+        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.THURSDAY).getTime()), singletonList("THURSDAY"), context);
+        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.FRIDAY).getTime()), singletonList("FRIDAY"), context);
+        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.SATURDAY).getTime()), singletonList("SATURDAY"), context);
+        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.SUNDAY).getTime()), singletonList("SUNDAY"), context);
 
         try {
-            matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.MONDAY).getTime()), Arrays.asList("SUNDAY"), context);
+            matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.MONDAY).getTime()), singletonList("SUNDAY"), context);
             Assert.fail("Missing validation matcher failed exception");
         } catch (CitrusRuntimeException e) {
             Assert.assertTrue(e.getMessage().endsWith("expected date to be a 'SUNDAY'"));
@@ -58,16 +56,16 @@ public class WeekdayValidationMatcherTest extends UnitTestSupport {
     public void testCustomDateFormat() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.MONDAY).getTime()), Arrays.asList("MONDAY", "yyyy-MM-dd"), context);
-        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.TUESDAY).getTime()), Arrays.asList("TUESDAY", "yyyy-MM-dd"), context);
-        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.WEDNESDAY).getTime()), Arrays.asList("WEDNESDAY", "yyyy-MM-dd"), context);
-        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.THURSDAY).getTime()), Arrays.asList("THURSDAY", "yyyy-MM-dd"), context);
-        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.FRIDAY).getTime()), Arrays.asList("FRIDAY", "yyyy-MM-dd"), context);
-        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.SATURDAY).getTime()), Arrays.asList("SATURDAY", "yyyy-MM-dd"), context);
-        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.SUNDAY).getTime()), Arrays.asList("SUNDAY", "yyyy-MM-dd"), context);
+        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.MONDAY).getTime()), List.of("MONDAY", "yyyy-MM-dd"), context);
+        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.TUESDAY).getTime()), List.of("TUESDAY", "yyyy-MM-dd"), context);
+        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.WEDNESDAY).getTime()), List.of("WEDNESDAY", "yyyy-MM-dd"), context);
+        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.THURSDAY).getTime()), List.of("THURSDAY", "yyyy-MM-dd"), context);
+        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.FRIDAY).getTime()), List.of("FRIDAY", "yyyy-MM-dd"), context);
+        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.SATURDAY).getTime()), List.of("SATURDAY", "yyyy-MM-dd"), context);
+        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.SUNDAY).getTime()), List.of("SUNDAY", "yyyy-MM-dd"), context);
 
         try {
-            matcher.validate("fieldName", dateFormat.format(getNext(Calendar.MONDAY).getTime()), Arrays.asList("SUNDAY", "yyyy-MM-dd"), context);
+            matcher.validate("fieldName", dateFormat.format(getNext(Calendar.MONDAY).getTime()), List.of("SUNDAY", "yyyy-MM-dd"), context);
             Assert.fail("Missing validation matcher failed exception");
         } catch (CitrusRuntimeException e) {
             Assert.assertTrue(e.getMessage().endsWith("expected date to be a 'SUNDAY'"));
@@ -77,24 +75,24 @@ public class WeekdayValidationMatcherTest extends UnitTestSupport {
     @Test(expectedExceptions = {CitrusRuntimeException.class})
     public void testInvalidDefaultDateFormat() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.MONDAY).getTime()), Arrays.asList("MONDAY"), context);
+        matcher.validate("fieldName", dateFormat.format(getNext(Calendar.MONDAY).getTime()), singletonList("MONDAY"), context);
     }
 
     @Test(expectedExceptions = {CitrusRuntimeException.class})
     public void testInvalidCustomDateFormat() {
-        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.MONDAY).getTime()), Arrays.asList("MONDAY", "dd-MM-yyyy"), context);
+        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.MONDAY).getTime()), List.of("MONDAY", "dd-MM-yyyy"), context);
     }
 
     @Test(expectedExceptions = {IllegalArgumentException.class})
     public void testInvalidDateFormatSyntax() {
-        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.MONDAY).getTime()), Arrays.asList("MONDAY","ABC"), context);
+        matcher.validate("fieldName", defaultDateFormat.format(getNext(Calendar.MONDAY).getTime()), List.of("MONDAY", "ABC"), context);
     }
 
     @DataProvider
     public Object[][] validParameters() {
         return new Object[][]{
-                {"MONDAY", Arrays.asList("MONDAY")},
-                {"MONDAY('yyyy-MM-dd')", Arrays.asList("MONDAY", "yyyy-MM-dd")},
+                {"MONDAY", singletonList("MONDAY")},
+                {"MONDAY('yyyy-MM-dd')", List.of("MONDAY", "yyyy-MM-dd")},
         };
     }
     @Test(dataProvider = "validParameters")

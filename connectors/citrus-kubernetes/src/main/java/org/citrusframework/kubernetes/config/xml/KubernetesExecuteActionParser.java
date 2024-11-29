@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,19 @@
 package org.citrusframework.kubernetes.config.xml;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.citrusframework.config.util.BeanDefinitionParserUtils;
 import org.citrusframework.config.xml.AbstractTestActionFactoryBean;
 import org.citrusframework.config.xml.DescriptionElementParser;
+import org.citrusframework.context.SpringBeanReferenceResolver;
 import org.citrusframework.kubernetes.actions.KubernetesExecuteAction;
 import org.citrusframework.kubernetes.client.KubernetesClient;
 import org.citrusframework.kubernetes.command.KubernetesCommand;
 import org.citrusframework.kubernetes.message.KubernetesMessageHeaders;
+import org.citrusframework.spi.ReferenceResolver;
+import org.citrusframework.spi.ReferenceResolverAware;
 import org.citrusframework.validation.MessageValidator;
 import org.citrusframework.validation.context.ValidationContext;
 import org.springframework.beans.factory.BeanCreationException;
@@ -37,6 +39,8 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -44,13 +48,12 @@ import org.w3c.dom.Node;
 /**
  * Bean definition parser for kubernetes client action in test case.
  *
- * @author Christoph Deppisch
  * @since 2.7
  */
-public class KubernetesExecuteActionParser<T extends KubernetesCommand> implements BeanDefinitionParser {
+public class KubernetesExecuteActionParser<T extends KubernetesCommand<?, ?>> implements BeanDefinitionParser {
 
     /** Kubernetes command to execute */
-    private Class<T> commandType;
+    private final Class<T> commandType;
 
     /**
      * Constructor using kubernetes command.
@@ -85,8 +88,8 @@ public class KubernetesExecuteActionParser<T extends KubernetesCommand> implemen
 
             Map<String, Object> pathExpressions = new HashMap<>();
             List<?> pathElements = DomUtils.getChildElementsByTagName(controlCmdResult, "element");
-            for (Iterator<?> iter = pathElements.iterator(); iter.hasNext();) {
-                Element messageValue = (Element) iter.next();
+            for (Object pathElement : pathElements) {
+                Element messageValue = (Element) pathElement;
                 pathExpressions.put(messageValue.getAttribute("path"), messageValue.getAttribute("value"));
             }
 
@@ -126,7 +129,8 @@ public class KubernetesExecuteActionParser<T extends KubernetesCommand> implemen
     /**
      * Test action factory bean.
      */
-    public static class KubernetesExecuteActionFactoryBean extends AbstractTestActionFactoryBean<KubernetesExecuteAction, KubernetesExecuteAction.Builder> {
+    public static class KubernetesExecuteActionFactoryBean extends AbstractTestActionFactoryBean<KubernetesExecuteAction, KubernetesExecuteAction.Builder>
+            implements ReferenceResolverAware, ApplicationContextAware {
 
         @Autowired(required = false)
         @Qualifier("k8sClient")
@@ -140,6 +144,10 @@ public class KubernetesExecuteActionParser<T extends KubernetesCommand> implemen
         @Qualifier("defaultJsonPathMessageValidator")
         private MessageValidator<? extends ValidationContext> jsonPathMessageValidator;
 
+        private ReferenceResolver referenceResolver;
+
+        private ApplicationContext applicationContext;
+
         private final KubernetesExecuteAction.Builder builder = new KubernetesExecuteAction.Builder();
 
         /**
@@ -147,7 +155,7 @@ public class KubernetesExecuteActionParser<T extends KubernetesCommand> implemen
          * @param command
          * @return
          */
-        public void setCommand(KubernetesCommand<?> command) {
+        public void setCommand(KubernetesCommand<?, ?> command) {
             builder.command(command);
         }
 
@@ -177,6 +185,16 @@ public class KubernetesExecuteActionParser<T extends KubernetesCommand> implemen
 
         @Override
         public KubernetesExecuteAction getObject() throws Exception {
+            if (referenceResolver != null) {
+                builder.withReferenceResolver(referenceResolver);
+            } else if (applicationContext != null && applicationContext.getBeansOfType(ReferenceResolver.class).size() == 1) {
+                builder.withReferenceResolver(applicationContext.getBean(ReferenceResolver.class));
+            } else if (applicationContext != null && applicationContext.getParent() != null && applicationContext.getParent().getBeansOfType(ReferenceResolver.class).size() == 1) {
+                builder.withReferenceResolver(applicationContext.getParent().getBean(ReferenceResolver.class));
+            } else {
+                builder.withReferenceResolver(new SpringBeanReferenceResolver(applicationContext));
+            }
+
             if (kubernetesClient != null) {
                 builder.client(kubernetesClient);
             }
@@ -204,6 +222,16 @@ public class KubernetesExecuteActionParser<T extends KubernetesCommand> implemen
         @Override
         public KubernetesExecuteAction.Builder getBuilder() {
             return builder;
+        }
+
+        @Override
+        public void setReferenceResolver(ReferenceResolver referenceResolver) {
+            this.referenceResolver = referenceResolver;
+        }
+
+        @Override
+        public void setApplicationContext(ApplicationContext applicationContext) {
+            this.applicationContext = applicationContext;
         }
     }
 }

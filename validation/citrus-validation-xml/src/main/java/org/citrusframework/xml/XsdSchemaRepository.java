@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import org.xml.sax.SAXException;
 /**
  * Schema repository holding a set of XML schema resources known in the test scope.
  *
- * @author Christoph Deppisch
  */
 @SuppressWarnings("unused")
 public class XsdSchemaRepository implements Named, InitializingPhase {
@@ -215,5 +214,4 @@ public class XsdSchemaRepository implements Named, InitializingPhase {
     public void setLocations(List<String> locations) {
         this.locations = locations;
     }
-
 }

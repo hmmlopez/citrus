@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
 import java.util.List;
 
+import static java.util.Collections.singletonList;
+
 /**
- * @author Christoph Deppisch
  * @since 2.5
  */
 public class DefaultControlExpressionParserTest {
@@ -47,17 +47,17 @@ public class DefaultControlExpressionParserTest {
     public Object[][] validControlExpressions() {
         return new Object[][]{
                 // {control-expression, expected-parameter-1, expected-parameter-2, ..}
-                {"'a'", Arrays.asList("a")},
-                {"'a',", Arrays.asList("a")},
-                {"'a','b'", Arrays.asList("a","b")},
-                {"'a','b',", Arrays.asList("a","b")},
-                {"'a,s','b',", Arrays.asList("a,s","b")},
-                {"'a)s','b',", Arrays.asList("a)s","b")},
-                {"'a's','b',", Arrays.asList("a's","b")},
-                {"''", Arrays.asList("")},
-                {"'',", Arrays.asList("")},
-                {"", Arrays.<String>asList()},
-                {null, Arrays.<String>asList()},
+                {"'a'", singletonList("a")},
+                {"'a',", singletonList("a")},
+                {"'a','b'", List.of("a","b")},
+                {"'a','b',", List.of("a","b")},
+                {"'a,s','b',", List.of("a,s","b")},
+                {"'a)s','b',", List.of("a)s","b")},
+                {"'a's','b',", List.of("a's","b")},
+                {"''", singletonList("")},
+                {"'',", singletonList("")},
+                {"", List.<String>of()},
+                {null, List.<String>of()},
         };
     }
 

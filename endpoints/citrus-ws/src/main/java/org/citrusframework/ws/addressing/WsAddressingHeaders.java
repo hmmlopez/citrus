@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.springframework.ws.soap.addressing.core.EndpointReference;
  * Value object holding ws addressing information which is translated into the message header.
  * Message id is optional - if not set here it is generated automatically.
  *
- * @author Christoph Deppisch
  */
 public class WsAddressingHeaders {
     /** Addressing headers version */

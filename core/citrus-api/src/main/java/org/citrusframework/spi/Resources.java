@@ -1,23 +1,23 @@
 /*
- *  Copyright 2023 the original author or authors.
+ * Copyright the original author or authors.
  *
- *  Licensed to the Apache Software Foundation (ASF) under one or more
- *  contributor license agreements. See the NOTICE file distributed with
- *  this work for additional information regarding copyright ownership.
- *  The ASF licenses this file to You under the Apache License, Version 2.0
- *  (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.citrusframework.spi;
+
+import org.citrusframework.exceptions.CitrusRuntimeException;
+import org.citrusframework.util.ReflectionHelper;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -33,8 +33,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Paths;
 
-import org.citrusframework.exceptions.CitrusRuntimeException;
-import org.citrusframework.util.ReflectionHelper;
+import static java.lang.String.format;
 
 /**
  * Helps with resources of type classpath or file system.
@@ -46,6 +45,10 @@ public class Resources {
 
     public static final String JAR_RESOURCE_PREFIX = "jar:";
     public static final String HTTP_RESOURCE_PREFIX = "http:";
+
+    private Resources() {
+        // static access only
+    }
 
     public static Resource create(String filePath) {
         if (filePath.startsWith(CLASSPATH_RESOURCE_PREFIX)) {
@@ -87,6 +90,7 @@ public class Resources {
     public static Resource fromClasspath(String filePath) {
         return new ClasspathResource(filePath);
     }
+
     public static Resource fromClasspath(String filePath, Class<?> contextClass) {
         return fromClasspath(contextClass.getPackageName().replace(".", "/") + "/" + filePath);
     }
@@ -96,7 +100,9 @@ public class Resources {
     }
 
     /**
-     * Removes leading resource type information from given file path for classpath and file system typed resources.
+     * Removes leading resource type information from given file path for classpath and file system
+     * typed resources.
+     *
      * @param filePath
      * @return
      */
@@ -141,18 +147,22 @@ public class Resources {
 
         @Override
         public InputStream getInputStream() {
-            return ReflectionHelper.class.getClassLoader().getResourceAsStream(location.replace("\\","/"));
+            return ReflectionHelper.class.getClassLoader()
+                .getResourceAsStream(location.replace("\\", "/"));
         }
 
         @Override
         public File getFile() {
             if (!exists()) {
-                throw new CitrusRuntimeException(String.format("Failed to load classpath resource %s - does not exist", getLocation()));
+                throw new CitrusRuntimeException(
+                    format("Failed to load classpath resource %s - does not exist", getLocation())
+                );
             }
 
             return Paths.get(getURI()).toFile();
         }
 
+        @Override
         public URI getURI() {
             URL url = ReflectionHelper.class.getClassLoader().getResource(location);
             try {
@@ -191,7 +201,8 @@ public class Resources {
 
         @Override
         public File getFile() {
-            throw new UnsupportedOperationException("ByteArrayResource does not provide access to a file");
+            throw new UnsupportedOperationException(
+                "ByteArrayResource does not provide access to a file");
         }
     }
 
@@ -263,11 +274,25 @@ public class Resources {
 
         @Override
         public boolean exists() {
+            if (url == null) {
+                return false;
+            }
+
+            if ("file".equals(url.getProtocol())) {
+                try {
+                    // If we have a protocol, it means that the url is
+                    // absolute and the file should be resolvable.
+                    return new File(url.toURI()).exists();
+                } catch (URISyntaxException e) {
+                    throw new CitrusRuntimeException("Unable to parse absolute file url: " + url);
+                }
+            }
+
             URLConnection connection = null;
             try {
                 connection = url.openConnection();
-                if (connection instanceof HttpURLConnection) {
-                    return ((HttpURLConnection) connection).getResponseCode() == HttpURLConnection.HTTP_OK;
+                if (connection instanceof HttpURLConnection httpURLConnection) {
+                    return httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK;
                 }
 
                 return connection.getContentLengthLong() > 0;
@@ -276,8 +301,8 @@ public class Resources {
             } finally {
                 // close the http connection to avoid
                 // leaking gaps in case of an exception
-                if (connection instanceof HttpURLConnection) {
-                    ((HttpURLConnection) connection).disconnect();
+                if (connection instanceof HttpURLConnection httpURLConnection) {
+                    httpURLConnection.disconnect();
                 }
             }
         }
@@ -294,8 +319,8 @@ public class Resources {
             } finally {
                 // close the http connection to avoid
                 // leaking gaps in case of an exception
-                if (connection instanceof HttpURLConnection) {
-                    ((HttpURLConnection) connection).disconnect();
+                if (connection instanceof HttpURLConnection httpURLConnection) {
+                    httpURLConnection.disconnect();
                 }
             }
         }
@@ -303,7 +328,9 @@ public class Resources {
         @Override
         public File getFile() {
             if (!"file".equals(url.getProtocol())) {
-                throw new CitrusRuntimeException("Failed to resolve to absolute file path because it does not reside in the file system: " + url);
+                throw new CitrusRuntimeException(
+                    format("Failed to resolve to absolute file path because it does not reside in the file system: %s", url)
+                );
             }
             try {
                 return new File(url.toURI().getSchemeSpecificPart());

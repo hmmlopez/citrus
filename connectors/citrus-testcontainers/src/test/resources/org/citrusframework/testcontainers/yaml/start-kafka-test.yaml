@@ -1,0 +1,15 @@
+name: "StartKafkaTest"
+author: "Christoph"
+status: "FINAL"
+description: Sample test in XML
+actions:
+  - testcontainers:
+      start:
+        kafka:
+          autoRemove: false
+          labels:
+            - name: app
+              value: citrus
+          env:
+            - name: APP
+              value: CITRUS

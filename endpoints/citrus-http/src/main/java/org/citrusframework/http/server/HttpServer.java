@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 
 import java.util.HashMap;
@@ -51,18 +50,20 @@ import java.util.Map;
 import static java.nio.file.Paths.get;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOf;
+import static java.util.Objects.nonNull;
 import static org.citrusframework.util.StringUtils.hasText;
 import static org.springframework.http.MediaType.valueOf;
 import static org.springframework.util.CollectionUtils.isEmpty;
+import static org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE;
 
 /**
  * Simple Http server implementation starting an embedded Jetty server instance with
  * Spring Application context support. Incoming requests are handled with Spring MVC.
  *
- * @author Christoph Deppisch
  * @since 2007
  */
 public class HttpServer extends AbstractServer {
+
     /**
      * Server port
      */
@@ -71,7 +72,7 @@ public class HttpServer extends AbstractServer {
     /**
      * Server resource base
      */
-    private String resourceBase = "src/main/resources";
+    private String resourceBase;
 
     /**
      * Application context location for request controllers
@@ -207,13 +208,17 @@ public class HttpServer extends AbstractServer {
 
             ServletContextHandler contextHandler = new ServletContextHandler();
             contextHandler.setContextPath(contextPath);
-            contextHandler.setBaseResourceAsPath(get(resourceBase));
 
-            //add the root application context as parent to the constructed WebApplicationContext
-            if (useRootContextAsParent && getReferenceResolver() instanceof SpringBeanReferenceResolver springBeanReferenceResolver) {
+            if (nonNull(resourceBase)) {
+                contextHandler.setBaseResourceAsPath(get(resourceBase));
+            }
+
+            // add the root application context as parent to the constructed WebApplicationContext
+            if (useRootContextAsParent
+                && getReferenceResolver() instanceof SpringBeanReferenceResolver springBeanReferenceResolver) {
                 contextHandler.setAttribute(
-                        WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE,
-                        new ParentDelegatingWebApplicationContext(springBeanReferenceResolver.getApplicationContext())
+                    ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE,
+                    new ParentDelegatingWebApplicationContext(springBeanReferenceResolver.getApplicationContext())
                 );
             }
 
@@ -226,7 +231,8 @@ public class HttpServer extends AbstractServer {
                 String filterMappingPathSpec = filterMappings.get(filterEntry.getKey());
                 FilterMapping filterMapping = new FilterMapping();
                 filterMapping.setFilterName(filterEntry.getKey());
-                filterMapping.setPathSpec(hasText(filterMappingPathSpec) ? filterMappingPathSpec : "/*");
+                filterMapping.setPathSpec(
+                    hasText(filterMappingPathSpec) ? filterMappingPathSpec : "/*");
 
                 FilterHolder filterHolder = new FilterHolder();
                 filterHolder.setName(filterEntry.getKey());
@@ -255,11 +261,15 @@ public class HttpServer extends AbstractServer {
 
             jettyServer.setHandler(handlers);
 
-            try {
-                jettyServer.start();
-            } catch (Exception e) {
-                throw new CitrusRuntimeException(e);
-            }
+            startJettyServerThrowingCitrusRuntimeException();
+        }
+    }
+
+    private void startJettyServerThrowingCitrusRuntimeException() throws CitrusRuntimeException {
+        try {
+            jettyServer.start();
+        } catch (Exception e) {
+            throw new CitrusRuntimeException(e);
         }
     }
 

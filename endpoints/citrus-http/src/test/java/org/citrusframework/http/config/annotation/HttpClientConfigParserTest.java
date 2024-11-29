@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,9 +55,6 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class HttpClientConfigParserTest extends AbstractTestNGUnitTest {
 
     @CitrusEndpoint(name = "httpClient1")
@@ -71,6 +68,7 @@ public class HttpClientConfigParserTest extends AbstractTestNGUnitTest {
             charset="ISO-8859-1",
             defaultAcceptHeader=false,
             handleCookies=true,
+            disableRedirectHandling = true,
             timeout=10000L,
             errorStrategy = ErrorHandlingStrategy.THROWS_EXCEPTION,
             errorHandler = "errorHandler",
@@ -164,6 +162,7 @@ public class HttpClientConfigParserTest extends AbstractTestNGUnitTest {
         Assert.assertEquals(httpClient2.getEndpointConfiguration().getTimeout(), 10000L);
         Assert.assertFalse(httpClient2.getEndpointConfiguration().isDefaultAcceptHeader());
         Assert.assertTrue(httpClient2.getEndpointConfiguration().isHandleCookies());
+        Assert.assertTrue(httpClient2.getEndpointConfiguration().isDisableRedirectHandling());
         Assert.assertEquals(httpClient2.getEndpointConfiguration().getErrorHandlingStrategy(), ErrorHandlingStrategy.THROWS_EXCEPTION);
         Assert.assertEquals(httpClient2.getEndpointConfiguration().getErrorHandler(), errorHandler);
         Assert.assertEquals(httpClient2.getEndpointConfiguration().getBinaryMediaTypes().size(), 2L);

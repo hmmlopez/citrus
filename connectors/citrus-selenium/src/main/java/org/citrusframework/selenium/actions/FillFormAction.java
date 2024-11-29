@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.openqa.selenium.json.Json;
  * Sets field values with set input action that supports both input and select form controls.
  * Supports to submit the form after all fields are set.
  *
- * @author Christoph Deppisch
  */
 public class FillFormAction extends AbstractSeleniumAction {
 
@@ -51,13 +50,11 @@ public class FillFormAction extends AbstractSeleniumAction {
 
     @Override
     public void execute(SeleniumBrowser browser, TestContext context) {
-        formFields.forEach((by, value) -> {
-            new SetInputAction.Builder()
-                    .element(by)
-                    .value(value)
-                    .build()
-                    .execute(browser, context);
-        });
+        formFields.forEach((by, value) -> new SetInputAction.Builder()
+                .element(by)
+                .value(value)
+                .build()
+                .execute(browser, context));
 
         if (submitButton != null) {
             new ClickAction.Builder()

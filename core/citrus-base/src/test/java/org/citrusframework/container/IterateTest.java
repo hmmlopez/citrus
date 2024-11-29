@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-/**
- * @author Christoph Deppisch
- */
 public class IterateTest extends UnitTestSupport {
 
     private TestAction action = Mockito.mock(TestAction.class);
@@ -153,5 +150,4 @@ public class IterateTest extends UnitTestSupport {
 
         verify(action, times(5)).execute(context);
     }
-
 }

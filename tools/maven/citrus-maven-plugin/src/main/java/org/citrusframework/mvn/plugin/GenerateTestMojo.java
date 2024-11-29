@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.citrusframework.mvn.plugin.config.tests.TestConfiguration;
 import org.citrusframework.util.StringUtils;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 @Mojo( name = "generate-tests", defaultPhase = LifecyclePhase.GENERATE_TEST_SOURCES)
@@ -180,7 +179,6 @@ public class GenerateTestMojo extends AbstractCitrusMojo {
                 generator.withMode(TestGenerator.GeneratorMode.valueOf(test.getSwagger().getMode()));
                 generator.withSpec(test.getSwagger().getFile());
                 generator.withOperation(test.getSwagger().getOperation());
-
 
                 if (test.getSwagger().getMappings() != null) {
                     generator.withInboundMappings(test.getSwagger().getMappings().getInbound());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.w3c.dom.Element;
 /**
  * Bean definition parser for selection container in test case.
  *
- * @author Matthias Beil
  * @since 1.2
  */
 public class ConditionalParser implements BeanDefinitionParser {
@@ -93,5 +92,4 @@ public class ConditionalParser implements BeanDefinitionParser {
             return builder;
         }
     }
-
 }

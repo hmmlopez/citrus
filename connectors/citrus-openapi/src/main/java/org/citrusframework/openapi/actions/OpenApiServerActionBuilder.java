@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +17,25 @@
 package org.citrusframework.openapi.actions;
 
 import org.citrusframework.TestAction;
-import org.citrusframework.TestActionBuilder;
 import org.citrusframework.endpoint.Endpoint;
 import org.citrusframework.openapi.OpenApiSpecification;
+import org.citrusframework.spi.AbstractReferenceResolverAwareTestActionBuilder;
 import org.citrusframework.spi.ReferenceResolver;
-import org.citrusframework.spi.ReferenceResolverAware;
 import org.citrusframework.util.ObjectHelper;
 import org.springframework.http.HttpStatus;
 
 /**
  * Action executes http server operations such as receiving requests and sending response messages.
  *
- * @author Christoph Deppisch
  * @since 4.1
  */
-public class OpenApiServerActionBuilder implements TestActionBuilder.DelegatingTestActionBuilder<TestAction>, ReferenceResolverAware {
+public class OpenApiServerActionBuilder extends AbstractReferenceResolverAwareTestActionBuilder<TestAction> {
 
     private final OpenApiSpecification specification;
-
-    /** Bean reference resolver */
-    private ReferenceResolver referenceResolver;
 
     /** Target http client instance */
     private Endpoint httpServer;
     private String httpServerUri;
-
-    private TestActionBuilder<?> delegate;
 
     /**
      * Default constructor.
@@ -124,25 +117,5 @@ public class OpenApiServerActionBuilder implements TestActionBuilder.DelegatingT
     public TestAction build() {
         ObjectHelper.assertNotNull(delegate, "Missing delegate action to build");
         return delegate.build();
-    }
-
-    @Override
-    public TestActionBuilder<?> getDelegate() {
-        return delegate;
-    }
-
-    /**
-     * Specifies the referenceResolver.
-     * @param referenceResolver
-     */
-    @Override
-    public void setReferenceResolver(ReferenceResolver referenceResolver) {
-        if (referenceResolver == null) {
-            this.referenceResolver = referenceResolver;
-
-            if (delegate instanceof ReferenceResolverAware) {
-                ((ReferenceResolverAware) delegate).setReferenceResolver(referenceResolver);
-            }
-        }
     }
 }

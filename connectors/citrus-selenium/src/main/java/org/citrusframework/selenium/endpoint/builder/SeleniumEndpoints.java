@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.citrusframework.selenium.endpoint.SeleniumBrowserBuilder;
 /**
  * Selenium browser endpoint builder wrapper.
  *
- * @author Christoph Deppisch
  * @since 2.7
  */
 public final class SeleniumEndpoints extends AbstractEndpointBuilder<SeleniumBrowserBuilder> {

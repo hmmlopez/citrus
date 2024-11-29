@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 public class MessagingJavaTestGenerator<T extends MessagingJavaTestGenerator<T>> extends JavaDslTestGenerator<T> {
@@ -205,5 +204,4 @@ public class MessagingJavaTestGenerator<T extends MessagingJavaTestGenerator<T>>
     public String getEndpoint() {
         return endpoint;
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,12 +165,12 @@ public class XmlSchemaValidation implements SchemaValidator<XmlMessageValidation
 
             SAXParseException[] results = validator.validate(new DOMSource(doc));
             if (results.length == 0) {
-                logger.info("XML schema validation successful: All values OK");
+                logger.debug("XML schema validation successful: All values OK");
             } else {
-                logger.error("XML schema validation failed for message:\n" + XMLUtils.prettyPrint(message.getPayload(String.class)));
+                logger.error("XML schema validation failed for message:\n{}", XMLUtils.prettyPrint(message.getPayload(String.class)));
 
                 // Report all parsing errors
-                logger.debug("Found " + results.length + " schema validation errors");
+                logger.debug("Found {} schema validation errors", results.length);
                 StringBuilder errors = new StringBuilder();
                 for (SAXParseException e : results) {
                     errors.append(e.toString());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  * for test case and a parent application context. At runtime this class loads the Spring application context and gets
  * test case bean instance from context.
  *
- * @author Christoph Deppisch
  * @since 2.1
  */
 public class SpringXmlTestLoader extends DefaultTestLoader implements TestSourceAware {
@@ -58,8 +57,7 @@ public class SpringXmlTestLoader extends DefaultTestLoader implements TestSource
             citrus.run(testCase, context);
             handler.forEach(handler -> handler.accept(testCase));
         } catch (NoSuchBeanDefinitionException e) {
-            throw citrusContext.getTestContextFactory().getObject()
-                    .handleError(testName, packageName, "Failed to load Spring XML test with name '" + testName + "'", e);
+            throw context.handleError(testName, packageName, "Failed to load Spring XML test with name '" + testName + "'", e);
         }
     }
 

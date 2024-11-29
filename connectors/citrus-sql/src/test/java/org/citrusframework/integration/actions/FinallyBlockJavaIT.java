@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,6 @@ import static org.citrusframework.actions.ExecuteSQLAction.Builder.sql;
 import static org.citrusframework.actions.ExecuteSQLQueryAction.Builder.query;
 import static org.citrusframework.container.FinallySequence.Builder.doFinally;
 
-/**
- * @author Christoph Deppisch
- */
 @Test
 public class FinallyBlockJavaIT extends TestNGCitrusSpringSupport {
 

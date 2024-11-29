@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,24 +37,21 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class CreateDocsMojoTest {
 
     private Prompter prompter = Mockito.mock(Prompter.class);
-    
+
     private ExcelTestDocsGenerator excelTestDocGenerator = Mockito.mock(ExcelTestDocsGenerator.class);
     private HtmlTestDocsGenerator htmlTestDocGenerator = Mockito.mock(HtmlTestDocsGenerator.class);
 
     private CreateDocsMojo mojo;
-    
+
     @BeforeMethod
     public void setup() {
         mojo = new CreateDocsMojo(excelTestDocGenerator, htmlTestDocGenerator);
         mojo.setPrompter(prompter);
     }
-    
+
     @Test
     public void testCreateXls() throws PrompterException, MojoExecutionException, MojoFailureException {
         reset(prompter, excelTestDocGenerator);
@@ -73,7 +70,7 @@ public class CreateDocsMojoTest {
         when(excelTestDocGenerator.withOutputFile("SampleTests.xls")).thenReturn(excelTestDocGenerator);
         when(excelTestDocGenerator.useSrcDirectory("src/test/")).thenReturn(excelTestDocGenerator);
         when(excelTestDocGenerator.withCustomHeaders("Id,Name,Description")).thenReturn(excelTestDocGenerator);
-        
+
         mojo.execute();
 
         verify(excelTestDocGenerator).generateDoc();

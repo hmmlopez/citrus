@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory;
  * Note: This class is not thread safe! Parallel test execution leads to behaviour that messages get mixed.
  * Proper correlation to test case is not possible here.
  *
- * @author Christoph Deppisch
  * @since 1.2
  */
 public class MessageTracingTestListener extends AbstractTestListener implements MessageListener {

@@ -1,0 +1,11 @@
+name: "CreateChannelTest"
+author: "Christoph"
+status: "FINAL"
+description: Sample test in XML
+actions:
+  - knative:
+      client: "knativeClient"
+      namespace: "test"
+      autoRemove: false
+      createChannel:
+        name: "my-channel"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,18 @@
 
 package org.citrusframework.kafka.message;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.citrusframework.context.TestContext;
-import org.citrusframework.message.MessageHeaders;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.citrusframework.context.TestContext;
+import org.citrusframework.message.MessageHeaders;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Citrus Kafka header mapper translates internal message headers to Spring integration message headers and
  * vice versa.
  *
- * @author Christoph Deppisch
  * @since 2.8
  */
 public class KafkaMessageHeaderMapper {

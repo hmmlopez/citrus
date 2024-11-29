@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2006-2019 the original author or authors.
+  ~ Copyright the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
   <groupId>org.citrusframework</groupId>
   <artifactId>citrus</artifactId>
   <packaging>pom</packaging>
-  <version>4.2.0-SNAPSHOT</version>
+  <version>4.5.0-SNAPSHOT</version>
   <name>Citrus</name>
   <description>Citrus Test Framework</description>
   <url>https://citrusframework.org</url>
@@ -54,8 +54,8 @@
     <module>utils</module>
     <module>runtime</module>
     <module>validation</module>
-    <module>endpoints</module>
     <module>connectors</module>
+    <module>endpoints</module>
     <module>tools</module>
     <module>catalog</module>
   </modules>
@@ -154,7 +154,7 @@
     <project.docs.version>${project.version}</project.docs.version>
     <java.version>17</java.version>
 
-    <maven.version>3.9.5</maven.version>
+    <maven.version>3.9.6</maven.version>
     <maven.compiler.version>3.11.0</maven.compiler.version>
     <maven.compiler.release>${java.version}</maven.compiler.release>
     <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -174,7 +174,7 @@
     <maven.javadoc.plugin.version>3.5.0</maven.javadoc.plugin.version>
     <maven.nexus-staging.plugin.version>1.6.13</maven.nexus-staging.plugin.version>
     <maven.plugin.plugin.version>3.9.0</maven.plugin.plugin.version>
-    <maven.plugin.annotations.version>3.11.0</maven.plugin.annotations.version>
+    <maven.plugin.annotations.version>3.13.1</maven.plugin.annotations.version>
     <maven.release.plugin.version>3.0.1</maven.release.plugin.version>
     <maven.resource.plugin.version>3.3.1</maven.resource.plugin.version>
     <maven.scm.plugin.version>1.11.2</maven.scm.plugin.version>
@@ -187,88 +187,92 @@
     <asciidoctor.maven.plugin.version>2.2.4</asciidoctor.maven.plugin.version>
     <jaxb.maven.plugin.version>3.1.0</jaxb.maven.plugin.version>
 
-    <activemq.artemis.version>2.31.2</activemq.artemis.version>
+    <activemq.artemis.version>2.38.0</activemq.artemis.version>
     <angus-mail.version>2.0.2</angus-mail.version>
-    <apache.ant.version>1.10.14</apache.ant.version>
-    <apache.camel.version>4.3.0</apache.camel.version>
+    <apache.ant.version>1.10.15</apache.ant.version>
+    <apache.camel.version>4.8.1</apache.camel.version>
     <apicurio.data-models.version>1.1.27</apicurio.data-models.version>
     <ascii-table-version>1.8.0</ascii-table-version>
-    <assertj.version>3.25.1</assertj.version>
-    <bouncycastle.version>1.77</bouncycastle.version>
-    <byte.buddy.version>1.14.11</byte.buddy.version>
-    <citrus.db.version>0.1.4</citrus.db.version>
-    <commons.dbcp2.version>2.11.0</commons.dbcp2.version>
-    <commons.cli.version>1.6.0</commons.cli.version>
-    <commons.codec.version>1.16.0</commons.codec.version>
-    <commons.io.version>2.15.1</commons.io.version>
-    <commons.lang.version>3.14.0</commons.lang.version>
-    <commons.logging.version>1.3.0</commons.logging.version>
-    <commons.net.version>3.10.0</commons.net.version>
-    <cucumber.version>7.15.0</cucumber.version>
-    <docker-java.version>3.3.4</docker-java.version>
-    <dropwizard.metrics.version>4.2.25</dropwizard.metrics.version>
+    <assertj.version>3.26.3</assertj.version>
+    <awaitility.version>4.2.2</awaitility.version>
+    <aws-java-sdk2.version>2.29.21</aws-java-sdk2.version>
+    <bouncycastle.version>1.79</bouncycastle.version>
+    <byte.buddy.version>1.15.10</byte.buddy.version>
+    <commons.dbcp2.version>2.12.0</commons.dbcp2.version>
+    <commons.cli.version>1.9.0</commons.cli.version>
+    <commons.codec.version>1.17.1</commons.codec.version>
+    <commons.io.version>2.18.0</commons.io.version>
+    <commons.lang.version>3.17.0</commons.lang.version>
+    <commons.logging.version>1.3.4</commons.logging.version>
+    <commons.net.version>3.11.1</commons.net.version>
+    <cucumber.version>7.20.1</cucumber.version>
+    <docker-java.version>3.4.0</docker-java.version>
+    <dropwizard.metrics.version>4.2.28</dropwizard.metrics.version>
     <ftpserver.version>1.2.0</ftpserver.version>
-    <groovy.version>3.0.20</groovy.version>
-    <greenmail.version>2.0.1</greenmail.version>
-    <hamcrest.version>2.2</hamcrest.version>
+    <groovy.version>3.0.23</groovy.version>
+    <greenmail.version>2.1.1</greenmail.version>
+    <hamcrest.version>3.0</hamcrest.version>
     <htmlunit.version>4.13.0</htmlunit.version>
-    <httpclient.version>5.3</httpclient.version>
-    <hsqldb.version>2.7.2</hsqldb.version>
-    <jackson.version>2.16.1</jackson.version>
-    <jakarta.activation.api.version>2.1.2</jakarta.activation.api.version>
+    <httpclient.version>5.4.1</httpclient.version>
+    <hsqldb.version>2.7.4</hsqldb.version>
+    <jackson.version>2.18.1</jackson.version>
+    <jakarta.activation.api.version>2.1.3</jakarta.activation.api.version>
     <jakarta.activation.version>2.0.1</jakarta.activation.version>
-    <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
+    <jakarta.annotation-api.version>3.0.0</jakarta.annotation-api.version>
     <jakarta.jms-api.version>3.1.0</jakarta.jms-api.version>
-    <jakarta.mail.version>2.0.2</jakarta.mail.version>
-    <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
-    <jakarta.validation.version>3.0.2</jakarta.validation.version>
-    <jakarta.websocket-api.version>2.1.1</jakarta.websocket-api.version>
-    <jakarta.xml.bind-api.version>4.0.1</jakarta.xml.bind-api.version>
-    <jakarta.xml.soap-api.version>3.0.1</jakarta.xml.soap-api.version>
+    <jakarta.mail.version>2.0.3</jakarta.mail.version>
+    <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
+    <jakarta.validation.version>3.1.0</jakarta.validation.version>
+    <jakarta.websocket-api.version>2.2.0</jakarta.websocket-api.version>
+    <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
+    <jakarta.xml.soap-api.version>3.0.2</jakarta.xml.soap-api.version>
     <jansi.version>2.4.1</jansi.version>
     <javapoet.version>1.13.0</javapoet.version>
-    <jaxb.version>4.0.4</jaxb.version>
-    <jetty.version>12.0.5</jetty.version>
+    <jaxb.version>4.0.5</jaxb.version>
+    <jetty.version>12.0.14</jetty.version>
     <jetty.websocket-api.version>2.0.0</jetty.websocket-api.version>
     <jsch.version>0.1.55</jsch.version>
     <json-path.version>2.9.0</json-path.version>
-    <json-schema-validator.version>1.2.0</json-schema-validator.version>
-    <json-smart.version>2.5.0</json-smart.version>
+    <json-schema-validator.version>1.5.4</json-schema-validator.version>
+    <json-smart.version>2.5.1</json-smart.version>
     <jtidy.version>r938</jtidy.version>
-    <junit.jupiter.version>5.10.1</junit.jupiter.version>
-    <junit.platform.version>1.10.1</junit.platform.version>
+    <junit.jupiter.version>5.11.3</junit.jupiter.version>
+    <junit.platform.version>1.11.3</junit.platform.version>
     <junit.version>4.13.2</junit.version>
-    <junixsocket.version>2.8.3</junixsocket.version>
-    <k8s.client.version>1.4.34</k8s.client.version>
-    <k8s.model.version>1.0.65</k8s.model.version>
-    <kafka.version>3.6.1</kafka.version>
+    <junixsocket.version>2.10.1</junixsocket.version>
+    <k8s.client.version>6.13.4</k8s.client.version>
+    <k8s.model.version>6.13.4</k8s.model.version>
+    <kafka.version>3.9.0</kafka.version>
+    <knative-client.version>6.13.4</knative-client.version>
     <log4j2.version>2.22.1</log4j2.version>
-    <mockito.version>5.10.0</mockito.version>
-    <mockftpserver.version>3.1.0</mockftpserver.version>
+    <mockito.version>5.14.2</mockito.version>
+    <mockftpserver.version>3.2.0</mockftpserver.version>
     <netty.version>4.1.105.Final</netty.version>
     <okhttp.version>4.12.0</okhttp.version>
-    <picoli-version>4.7.5</picoli-version>
-    <saaj.version>3.0.3</saaj.version>
-    <selenium.version>4.17.0</selenium.version>
+    <picoli-version>4.7.6</picoli-version>
+    <postgresql.version>42.7.4</postgresql.version>
+    <saaj.version>3.0.4</saaj.version>
+    <selenium.version>4.27.0</selenium.version>
     <slf4j.version>2.0.11</slf4j.version>
-    <snappy.version>1.1.10.5</snappy.version>
-    <snakeyaml.version>2.2</snakeyaml.version>
-    <spring.version>6.1.3</spring.version>
-    <spring.ws.version>4.0.10</spring.ws.version>
-    <spring.integration.version>6.2.1</spring.integration.version>
-    <spring.restdocs.version>3.0.1</spring.restdocs.version>
-    <sshd.version>2.12.0</sshd.version>
+    <snappy.version>1.1.10.7</snappy.version>
+    <snakeyaml.version>2.3</snakeyaml.version>
+    <spring.version>6.2.0</spring.version>
+    <spring.ws.version>4.0.11</spring.ws.version>
+    <spring.integration.version>6.4.0</spring.integration.version>
+    <spring.restdocs.version>3.0.3</spring.restdocs.version>
+    <sshd.version>2.14.0</sshd.version>
     <swagger.version>1.6.9</swagger.version>
-    <swagger.parser.version>2.1.19</swagger.parser.version>
-    <testng.version>7.9.0</testng.version>
-    <vertx.version>4.5.1</vertx.version>
+    <swagger.parser.version>2.1.22</swagger.parser.version>
+    <testcontainers.version>1.20.4</testcontainers.version>
+    <testng.version>7.10.2</testng.version>
+    <vertx.version>4.5.10</vertx.version>
     <wsdl4j.version>1.6.3</wsdl4j.version>
-    <xbean-spring.version>4.24</xbean-spring.version>
-    <xmlbeans.version>3.0.0</xmlbeans.version>
+    <xbean-spring.version>4.26</xbean-spring.version>
+    <xmlbeans.version>5.2.1</xmlbeans.version>
     <xmlbeans-xpath.version>2.6.0</xmlbeans-xpath.version>
     <xerces.version>2.12.2</xerces.version>
-    <xstream.version>1.4.20</xstream.version>
-    <zookeeper.version>3.9.1</zookeeper.version>
+    <xstream.version>1.4.21</xstream.version>
+    <zookeeper.version>3.9.3</zookeeper.version>
 
     <skip.integration.tests>false</skip.integration.tests>
     <skip.unit.tests>false</skip.unit.tests>
@@ -569,6 +573,57 @@
         <version>${junit.jupiter.version}</version>
       </dependency>
 
+      <!-- Testcontainers -->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers</artifactId>
+        <version>${testcontainers.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>mongodb</artifactId>
+        <version>${testcontainers.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${testcontainers.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>redpanda</artifactId>
+        <version>${testcontainers.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>kafka</artifactId>
+        <version>${testcontainers.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>${postgresql.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-dbcp2</artifactId>
+        <version>${commons.dbcp2.version}</version>
+      </dependency>
+
+      <!-- AWS -->
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>auth</artifactId>
+        <version>${aws-java-sdk2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>s3</artifactId>
+        <version>${aws-java-sdk2.version}</version>
+        <scope>test</scope>
+      </dependency>
+
       <!-- Citrus http dependencies -->
       <dependency>
         <groupId>org.apache.httpcomponents.client5</groupId>
@@ -580,6 +635,12 @@
         <groupId>io.apicurio</groupId>
         <artifactId>apicurio-data-models</artifactId>
         <version>${apicurio.data-models.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>${awaitility.version}</version>
       </dependency>
 
       <!-- Jetty -->
@@ -680,7 +741,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka-clients</artifactId>
+        <artifactId>kafka-group-coordinator</artifactId>
         <version>${kafka.version}</version>
       </dependency>
       <dependency>
@@ -690,7 +751,17 @@
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-server</artifactId>
+        <version>${kafka.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
         <artifactId>kafka-server-common</artifactId>
+        <version>${kafka.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-storage</artifactId>
         <version>${kafka.version}</version>
       </dependency>
 
@@ -708,7 +779,7 @@
       <dependency>
         <groupId>org.eclipse.angus</groupId>
         <artifactId>angus-activation</artifactId>
-        <version>${jakarta.activation.version}</version>
+        <version>${angus-mail.version}</version>
       </dependency>
 
       <!-- Citrus vert.x dependencies -->
@@ -965,6 +1036,12 @@
         <artifactId>okhttp</artifactId>
         <version>${okhttp.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.squareup.okhttp3</groupId>
+        <artifactId>mockwebserver</artifactId>
+        <version>${okhttp.version}</version>
+        <scope>test</scope>
+      </dependency>
 
       <dependency>
         <groupId>com.kohlschutter.junixsocket</groupId>
@@ -996,6 +1073,12 @@
       </dependency>
       <dependency>
         <groupId>io.fabric8</groupId>
+        <artifactId>kubernetes-server-mock</artifactId>
+        <version>${k8s.client.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.fabric8</groupId>
         <artifactId>kubernetes-model</artifactId>
         <version>${k8s.model.version}</version>
         <exclusions>
@@ -1009,6 +1092,12 @@
         <groupId>jakarta.validation</groupId>
         <artifactId>jakarta.validation-api</artifactId>
         <version>${jakarta.validation.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.fabric8</groupId>
+        <artifactId>knative-client</artifactId>
+        <version>${knative-client.version}</version>
       </dependency>
 
       <dependency>
@@ -1086,12 +1175,6 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-dbcp2</artifactId>
-        <version>${commons.dbcp2.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
@@ -1120,13 +1203,18 @@
 
   <!-- Global dependencies -->
   <dependencies>
-    <!-- Compile scope -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
 
     <!-- Test scoped dependencies -->
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>

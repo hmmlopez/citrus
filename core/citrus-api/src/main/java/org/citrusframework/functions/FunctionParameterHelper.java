@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,19 +22,18 @@ import java.util.StringTokenizer;
 
 /**
  * Helper class parsing a parameter string and converting the tokens to a parameter list.
- * 
- * @author Christoph Deppisch
+ *
  */
 public final class FunctionParameterHelper {
-    
+
     /**
      * Prevent class instantiation.
      */
     private FunctionParameterHelper() {}
-    
+
     /**
      * Convert a parameter string to a list of parameters.
-     * 
+     *
      * @param parameterString comma separated parameter string.
      * @return list of parameters.
      */
@@ -51,18 +50,18 @@ public final class FunctionParameterHelper {
         for (int i = 0; i < parameterList.size(); i++) {
             int next = i + 1;
 
-            String processed = parameterList.get(i);
+            StringBuilder processed = new StringBuilder(parameterList.get(i));
 
-            if (processed.startsWith("'") && !processed.endsWith("'")) {
+            if (processed.toString().startsWith("'") && !processed.toString().endsWith("'")) {
                 while (next < parameterList.size()) {
                     if (parameterString.contains(processed + ", " + parameterList.get(next))) {
-                        processed += ", " + parameterList.get(next);
+                        processed.append(", ").append(parameterList.get(next));
                     } else if (parameterString.contains(processed + "," + parameterList.get(next))) {
-                        processed += "," + parameterList.get(next);
+                        processed.append(",").append(parameterList.get(next));
                     } else if (parameterString.contains(processed + " , " + parameterList.get(next))) {
-                        processed += " , " + parameterList.get(next);
+                        processed.append(" , ").append(parameterList.get(next));
                     } else {
-                        processed += parameterList.get(next);
+                        processed.append(parameterList.get(next));
                     }
 
                     i++;
@@ -75,7 +74,7 @@ public final class FunctionParameterHelper {
 
             }
 
-            postProcessed.add(cutOffSingleQuotes(processed));
+            postProcessed.add(cutOffSingleQuotes(processed.toString()));
         }
 
         return postProcessed;

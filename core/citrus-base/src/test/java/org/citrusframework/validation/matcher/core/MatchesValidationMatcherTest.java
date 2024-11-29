@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +16,42 @@
 
 package org.citrusframework.validation.matcher.core;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.citrusframework.UnitTestSupport;
 import org.citrusframework.exceptions.ValidationException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
+import static java.util.Collections.singletonList;
+
 public class MatchesValidationMatcherTest extends UnitTestSupport {
 
-	private MatchesValidationMatcher matcher = new MatchesValidationMatcher();
+	private final MatchesValidationMatcher matcher = new MatchesValidationMatcher();
 
     @Test
     public void testValidateSuccess() {
-    	matcher.validate("field", "This is a test", Arrays.asList(".*"), context);
-        matcher.validate("field", "This is a test", Arrays.asList("Thi.*"), context);
-        matcher.validate("field", "This is a test", Arrays.asList(".*test"), context);
-        matcher.validate("field", "aaaab", Arrays.asList("a*b"), context);
+    	matcher.validate("field", "This is a test", List.of(".*"), context);
+        matcher.validate("field", "This is a test", List.of("Thi.*"), context);
+        matcher.validate("field", "This is a test", List.of(".*test"), context);
+        matcher.validate("field", "This is a number: 01234", List.of("This is a number: [0-9]+"), context);
+        matcher.validate("field", "This is a number: 01234/999", List.of("This is a number: [0-9]+/[0-9]{3}"), context);
+        matcher.validate("field", "https://localhost:12345/", List.of("https://localhost:[0-9]+/"), context);
+        matcher.validate("field", "aaaab", singletonList("a*b"), context);
     }
 
     @Test
     public void testValidateError() {
-    	assertException("field", "a", Arrays.asList("[^a]"));
-    	assertException("field", "aaaab", Arrays.asList("aaab*"));
+    	assertException("a", List.of("[^a]"));
+    	assertException("aaaab", List.of("aaab*"));
     }
 
-    private void assertException(String fieldName, String value, List<String> control) {
+    private void assertException(String value, List<String> control) {
     	try {
-    		matcher.validate(fieldName, value, control, context);
+    		matcher.validate("field", value, control, context);
     		Assert.fail("Expected exception not thrown!");
     	} catch (ValidationException e) {
-			Assert.assertTrue(e.getMessage().contains(fieldName));
+			Assert.assertTrue(e.getMessage().contains("field"));
 			Assert.assertTrue(e.getMessage().contains(value));
 			Assert.assertTrue(e.getMessage().contains(control.get(0)));
 		}

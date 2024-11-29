@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,24 @@
 package org.citrusframework.http.actions;
 
 import org.citrusframework.TestAction;
-import org.citrusframework.TestActionBuilder;
 import org.citrusframework.endpoint.Endpoint;
+import org.citrusframework.spi.AbstractReferenceResolverAwareTestActionBuilder;
 import org.citrusframework.spi.ReferenceResolver;
-import org.citrusframework.spi.ReferenceResolverAware;
 import org.citrusframework.util.ObjectHelper;
 import org.citrusframework.util.StringUtils;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 
 /**
  * Action executes http client operations such as sending requests and receiving responses.
  *
- * @author Christoph Deppisch
  * @since 2.4
  */
-public class HttpClientActionBuilder implements TestActionBuilder.DelegatingTestActionBuilder<TestAction>, ReferenceResolverAware {
-
-    /** Bean reference resolver */
-    private ReferenceResolver referenceResolver;
+public class HttpClientActionBuilder extends AbstractReferenceResolverAwareTestActionBuilder<TestAction> {
 
     /** Target http client instance */
     private Endpoint httpClient;
     private String httpClientUri;
-
-    private TestActionBuilder<?> delegate;
 
     /**
      * Default constructor.
@@ -250,7 +243,7 @@ public class HttpClientActionBuilder implements TestActionBuilder.DelegatingTest
          * Generic response builder for expecting response messages on client with response status code.
          * @return
          */
-        public HttpClientResponseActionBuilder response(HttpStatus status) {
+        public HttpClientResponseActionBuilder response(HttpStatusCode status) {
             HttpClientResponseActionBuilder builder = new HttpClientResponseActionBuilder();
             if (httpClient != null) {
                 builder.endpoint(httpClient);
@@ -270,25 +263,5 @@ public class HttpClientActionBuilder implements TestActionBuilder.DelegatingTest
     public TestAction build() {
         ObjectHelper.assertNotNull(delegate, "Missing delegate action to build");
         return delegate.build();
-    }
-
-    @Override
-    public TestActionBuilder<?> getDelegate() {
-        return delegate;
-    }
-
-    /**
-     * Specifies the referenceResolver.
-     * @param referenceResolver
-     */
-    @Override
-    public void setReferenceResolver(ReferenceResolver referenceResolver) {
-        if (referenceResolver == null) {
-            this.referenceResolver = referenceResolver;
-
-            if (delegate instanceof ReferenceResolverAware) {
-                ((ReferenceResolverAware) delegate).setReferenceResolver(referenceResolver);
-            }
-        }
     }
 }

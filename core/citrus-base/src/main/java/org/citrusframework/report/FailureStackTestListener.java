@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
-/**
- * @author Christoph Deppisch
- */
 public class FailureStackTestListener extends AbstractTestListener {
 
     /** Logger */
@@ -209,8 +206,7 @@ public class FailureStackTestListener extends AbstractTestListener {
              * in startElement event.
              */
             if (eventElement.equals(action.getName())) {
-                if (action instanceof TestActionContainer && !actionStack.isEmpty()) {
-                    TestActionContainer container = (TestActionContainer)action;
+                if (action instanceof TestActionContainer container && !actionStack.isEmpty()) {
                     for (int i = container.getActions().size()-1; i >= 0; i--) {
                         actionStack.add(container.getActions().get(i));
                     }

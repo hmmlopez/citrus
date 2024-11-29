@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 /**
- * @author Matthias Beil
  * @since 1.2
  */
 public class ConditionalTest extends UnitTestSupport {
@@ -159,5 +158,4 @@ public class ConditionalTest extends UnitTestSupport {
 
         verify(action1).execute(this.context);
     }
-
 }

@@ -5,13 +5,20 @@
   <parent>
     <artifactId>citrus-core-parent</artifactId>
     <groupId>org.citrusframework</groupId>
-    <version>4.2.0-SNAPSHOT</version>
+    <version>4.5.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>citrus-api</artifactId>
   <name>Citrus :: Core :: API</name>
   <description>Citrus API and basic interfaces</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>

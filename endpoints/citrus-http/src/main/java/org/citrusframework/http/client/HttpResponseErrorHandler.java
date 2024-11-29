@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,18 @@
 
 package org.citrusframework.http.client;
 
-import java.io.IOException;
-
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.message.ErrorHandlingStrategy;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.lang.Nullable;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 
+import java.io.IOException;
+import java.net.URI;
+
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
 public class HttpResponseErrorHandler extends DefaultResponseErrorHandler {
@@ -33,17 +36,15 @@ public class HttpResponseErrorHandler extends DefaultResponseErrorHandler {
 
     /**
      * Default constructor using error handling strategy.
-     * @param errorHandlingStrategy
      */
     public HttpResponseErrorHandler(ErrorHandlingStrategy errorHandlingStrategy) {
         this.errorHandlingStrategy = errorHandlingStrategy;
     }
 
     @Override
-    public void handleError(ClientHttpResponse response) throws IOException {
+    protected void handleError(ClientHttpResponse response, HttpStatusCode statusCode, @Nullable URI url, @Nullable HttpMethod method) throws IOException {
         if (errorHandlingStrategy.equals(ErrorHandlingStrategy.PROPAGATE)) {
-            throw new HttpErrorPropagatingException(response.getStatusCode(), response.getStatusText(),
-                    response.getHeaders(), getResponseBody(response), getCharset(response));
+            throw new HttpErrorPropagatingException(response.getStatusCode(), response.getStatusText(), response.getHeaders(), getResponseBody(response), getCharset(response));
         } else if (errorHandlingStrategy.equals(ErrorHandlingStrategy.THROWS_EXCEPTION)) {
             super.handleError(response);
         } else {

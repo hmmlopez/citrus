@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,6 @@ import org.citrusframework.variable.VariableUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author Jan Lipphaus
- */
 public class VariableUtilsTest extends UnitTestSupport {
     private String validGroovyScript = "a = 1";
     private String groovyScriptResult = "1";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 package org.citrusframework.actions;
 
+import java.util.List;
+import javax.sql.DataSource;
+
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import javax.sql.DataSource;
-import java.util.List;
 
 /**
  * Test action execute SQL statements. Use this action when executing
@@ -30,7 +30,6 @@ import java.util.List;
  *
  * When executing SQL query statements (SELECT) see {@link ExecuteSQLQueryAction}.
  *
- * @author Christoph Deppisch, Jan Szczepanski
  * @since 2006
  */
 public class ExecuteSQLAction extends AbstractDatabaseConnectingTestAction {
@@ -150,7 +149,7 @@ public class ExecuteSQLAction extends AbstractDatabaseConnectingTestAction {
         }
 
         @Override
-        public ExecuteSQLAction build() {
+        public ExecuteSQLAction doBuild() {
             return new ExecuteSQLAction(this);
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7.6
  */
 public class DefaultHeaderValidator implements HeaderValidator {
@@ -75,7 +74,7 @@ public class DefaultHeaderValidator implements HeaderValidator {
         }
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Validating header element: " + headerName + "='" + expectedValue + "': OK.");
+            logger.debug("Validating header element: " + headerName + "='" + expectedValue + "': OK");
         }
     }
 

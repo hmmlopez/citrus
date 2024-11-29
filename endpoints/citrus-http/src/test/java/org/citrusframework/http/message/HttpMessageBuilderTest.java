@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-
 package org.citrusframework.http.message;
 
 import jakarta.servlet.http.Cookie;
-import java.util.Collections;
-
 import org.citrusframework.context.TestContext;
 import org.citrusframework.message.Message;
 import org.citrusframework.message.MessageHeaders;
@@ -27,10 +24,16 @@ import org.citrusframework.message.MessageType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static java.lang.System.currentTimeMillis;
+import static java.lang.System.setProperty;
+import static java.util.Collections.singletonList;
+import static org.citrusframework.CitrusSettings.HTTP_MESSAGE_BUILDER_FORCE_CITRUS_HEADER_UPDATE_ENABLED_DEFAULT;
+import static org.citrusframework.CitrusSettings.HTTP_MESSAGE_BUILDER_FORCE_CITRUS_HEADER_UPDATE_ENABLED_PROPERTY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 public class HttpMessageBuilderTest {
@@ -38,13 +41,13 @@ public class HttpMessageBuilderTest {
     private HttpMessage message;
 
     @BeforeMethod
-    public void setUp(){
+    public void setUp() {
         message = new HttpMessage("");
+        message.setHeader(MessageHeaders.TIMESTAMP, currentTimeMillis() - 1);
     }
 
     @Test
     public void testDefaultMessageHeader() {
-
         //GIVEN
         final HttpMessageBuilder builder = getBuilder();
 
@@ -53,14 +56,38 @@ public class HttpMessageBuilderTest {
 
         //THEN
         assertEquals(builtMessage.getHeaders().entrySet().size(), 3);
-        assertEquals(message.getHeader(MessageHeaders.ID), builtMessage.getHeader(MessageHeaders.ID));
-        assertEquals(message.getHeader(MessageHeaders.TIMESTAMP), builtMessage.getHeader(MessageHeaders.TIMESTAMP));
+        assertNotNull(message.getHeader(MessageHeaders.ID));
+        assertNotNull(message.getHeader(MessageHeaders.TIMESTAMP));
+        assertNotEquals(message.getHeader(MessageHeaders.ID), builtMessage.getHeader(MessageHeaders.ID));
+        assertNotEquals(message.getHeader(MessageHeaders.TIMESTAMP), builtMessage.getHeader(MessageHeaders.TIMESTAMP));
         assertEquals(builtMessage.getType(), MessageType.XML.toString());
     }
 
     @Test
-    public void testHeaderVariableSubstitution() {
+    public void testDefaultMessageHeaderWithNoForceUpdate() {
+        try {
+            setProperty(HTTP_MESSAGE_BUILDER_FORCE_CITRUS_HEADER_UPDATE_ENABLED_PROPERTY, "false");
 
+            //GIVEN
+            final HttpMessageBuilder builder = getBuilder();
+
+            //WHEN
+            final Message builtMessage = builder.build(new TestContext(), MessageType.XML.name());
+
+            //THEN
+            assertEquals(builtMessage.getHeaders().entrySet().size(), 3);
+            assertNotNull(message.getHeader(MessageHeaders.ID));
+            assertNotNull(message.getHeader(MessageHeaders.TIMESTAMP));
+            assertEquals(message.getHeader(MessageHeaders.ID), builtMessage.getHeader(MessageHeaders.ID));
+            assertEquals(message.getHeader(MessageHeaders.TIMESTAMP), builtMessage.getHeader(MessageHeaders.TIMESTAMP));
+            assertEquals(builtMessage.getType(), MessageType.XML.toString());
+        } finally {
+            setProperty(HTTP_MESSAGE_BUILDER_FORCE_CITRUS_HEADER_UPDATE_ENABLED_PROPERTY, HTTP_MESSAGE_BUILDER_FORCE_CITRUS_HEADER_UPDATE_ENABLED_DEFAULT);
+        }
+    }
+
+    @Test
+    public void testHeaderVariableSubstitution() {
         //GIVEN
         final HttpMessageBuilder builder = getBuilder();
 
@@ -78,8 +105,7 @@ public class HttpMessageBuilderTest {
     }
 
     @Test
-    public void testTemplateHeadersArePreserved(){
-
+    public void testTemplateHeadersArePreserved() {
         //GIVEN
         final HttpMessageBuilder builder = getBuilder();
         message.setHeader("foo", "bar");
@@ -94,8 +120,7 @@ public class HttpMessageBuilderTest {
     }
 
     @Test
-    public void testCookieEnricherIsCalledForTemplateCookies(){
-
+    public void testCookieEnricherIsCalledForTemplateCookies() {
         //GIVEN
         final CookieEnricher cookieEnricherMock = mock(CookieEnricher.class);
         final TestContext testContextMock = mock(TestContext.class);
@@ -105,17 +130,14 @@ public class HttpMessageBuilderTest {
         final Cookie enrichedCookie = mock(Cookie.class);
 
         when(cookieEnricherMock.enrich(
-                eq(Collections.singletonList(templateCookie)),
-                eq(testContextMock)))
-                .thenReturn(Collections.singletonList(enrichedCookie));
+                singletonList(templateCookie),
+                testContextMock))
+                .thenReturn(singletonList(enrichedCookie));
 
-        final HttpMessageBuilder builder = new HttpMessageBuilder(
-                message,
-                cookieEnricherMock);
+        final HttpMessageBuilder builder = new HttpMessageBuilder(message, cookieEnricherMock);
 
         //WHEN
-        final HttpMessage message = (HttpMessage) builder.build(
-                testContextMock, String.valueOf(MessageType.XML));
+        final HttpMessage message = (HttpMessage) builder.build(testContextMock, String.valueOf(MessageType.XML));
 
         //THEN
         assertEquals(message.getCookies().size(), 1);
@@ -123,8 +145,6 @@ public class HttpMessageBuilderTest {
     }
 
     private HttpMessageBuilder getBuilder() {
-        return new HttpMessageBuilder(
-                message,
-                mock(CookieEnricher.class));
+        return new HttpMessageBuilder(message, mock(CookieEnricher.class));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,6 @@ import org.testng.annotations.Test;
 
 import static org.citrusframework.DefaultTestActionBuilder.action;
 
-/**
- * @author Christoph Deppisch
- */
 public class AssertSoapFaultTest extends UnitTestSupport {
 
     @Autowired
@@ -257,7 +254,6 @@ public class AssertSoapFaultTest extends UnitTestSupport {
             throw new SoapFaultClientException(faultMessage);
         }).build();
 
-
         AssertSoapFault assertAction = new AssertSoapFault.Builder()
                 .validator(soapFaultValidator)
                 .when(action)
@@ -395,7 +391,6 @@ public class AssertSoapFaultTest extends UnitTestSupport {
 
             throw new SoapFaultClientException(faultMessage);
         }).build();
-
 
         AssertSoapFault assertAction = new AssertSoapFault.Builder()
                 .validator(soapFaultValidator)

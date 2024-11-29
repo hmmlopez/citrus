@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,6 @@
  */
 
 package org.citrusframework.ftp.client;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Optional;
 
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.keyverifier.AcceptAllServerKeyVerifier;
@@ -42,8 +38,11 @@ import org.citrusframework.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
+
 /**
- * @author Christoph Deppisch
  * @since 2.7.6
  */
 public class ScpClient extends SftpClient {
@@ -119,8 +118,7 @@ public class ScpClient extends SftpClient {
 
     @Override
     protected void connectAndLogin() {
-        try {
-            SshClient client = SshClient.setUpDefaultClient();
+        try (var client = SshClient.setUpDefaultClient()) {
             client.start();
 
             if (getEndpointConfiguration().isStrictHostChecking()) {

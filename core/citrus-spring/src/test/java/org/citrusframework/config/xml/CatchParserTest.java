@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,13 @@ import org.citrusframework.actions.FailAction;
 import org.citrusframework.container.Catch;
 import org.citrusframework.testng.AbstractActionParserTest;
 
-/**
- * @author Christoph Deppisch
- */
 public class CatchParserTest extends AbstractActionParserTest<Catch> {
 
     @Test
     public void testCatchParser() {
         assertActionCount(1);
         assertActionClassAndName(Catch.class, "catch");
-        
+
         Catch action = getNextTestActionFromTest();
         Assert.assertEquals(action.getException(), CitrusRuntimeException.class.getName());
         Assert.assertEquals(action.getActionCount(), 1);

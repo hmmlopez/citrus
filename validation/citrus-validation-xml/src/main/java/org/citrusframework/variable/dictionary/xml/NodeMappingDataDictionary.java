@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.w3c.dom.Node;
  * Very basic data dictionary that holds a list of mappings for message elements. Mapping key is the element path inside
  * the XML structure {@link org.citrusframework.util.XMLUtils getNodesPathName()}. The mapping value is set as new element
  * value where test variables are supported in value expressions.
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class NodeMappingDataDictionary extends AbstractXmlDataDictionary implements InitializingPhase {

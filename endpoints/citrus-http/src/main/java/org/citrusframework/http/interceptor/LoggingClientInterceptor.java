@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,17 +32,17 @@ import org.springframework.http.client.ClientHttpResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map.Entry;
 
 import static java.lang.String.join;
 import static java.lang.System.lineSeparator;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Simple logging interceptor writes Http request and response messages to the console.
  *
- * @author Christoph Deppisch
  * @since 1.2
  */
 public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
@@ -121,6 +121,24 @@ public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
      * @return
      */
     private String getRequestContent(HttpRequest request, String body) {
+        String contentType = request.getHeaders().getFirst(HttpHeaders.CONTENT_TYPE);
+        if (contentType != null) {
+            String[] contentTypeParts = contentType.split(";");
+            for (String contentTypePart : contentTypeParts) {
+                if(contentTypePart.startsWith("charset=") && !contentTypePart.endsWith("charset=")) {
+                    String charset = contentTypePart.split("=")[1];
+                    try {
+                        body = new String(body.getBytes(), charset);
+                    } catch (UnsupportedEncodingException e) {
+                        body = new String(body.getBytes(), UTF_8);
+                    }
+                }
+                break;
+            }
+        } else {
+            body = new String(body.getBytes(), UTF_8);
+        }
+
         StringBuilder builder = new StringBuilder();
 
         builder.append(request.getMethod());
@@ -227,7 +245,7 @@ public class LoggingClientInterceptor implements ClientHttpRequestInterceptor {
                 getBody();
             }
 
-            return new String(body, StandardCharsets.UTF_8);
+            return new String(body, UTF_8);
         }
 
         @Override

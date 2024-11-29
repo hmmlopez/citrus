@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.w3c.dom.Element;
 
 /**
  * Http client parser sets properties on bean definition for client component.
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class HttpClientParser extends AbstractEndpointParser {
@@ -77,6 +76,7 @@ public class HttpClientParser extends AbstractEndpointParser {
         BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("content-type"), "contentType");
         BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("polling-interval"), "pollingInterval");
         BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("handle-cookies"), "handleCookies");
+        BeanDefinitionParserUtils.setPropertyValue(endpointConfiguration, element.getAttribute("disable-redirect-handling"), "disableRedirectHandling");
 
         BeanDefinitionParserUtils.setPropertyReference(endpointConfiguration, element.getAttribute("error-handler"), "errorHandler");
         if (element.hasAttribute("error-strategy")) {

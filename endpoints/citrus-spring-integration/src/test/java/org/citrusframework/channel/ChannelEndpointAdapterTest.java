@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,13 @@ import org.citrusframework.context.TestContextFactory;
 import org.citrusframework.message.DefaultMessage;
 import org.citrusframework.message.Message;
 import org.citrusframework.testng.AbstractTestNGUnitTest;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.integration.channel.QueueChannel;
-import org.springframework.integration.core.MessageSelector;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+
 public class ChannelEndpointAdapterTest extends AbstractTestNGUnitTest {
 
     private QueueChannel channel = new QueueChannel();
@@ -52,11 +49,8 @@ public class ChannelEndpointAdapterTest extends AbstractTestNGUnitTest {
 
     @BeforeMethod
     public void purgeChannel() {
-        channel.purge(new MessageSelector() {
-            @Override
-            public boolean accept(org.springframework.messaging.Message message) {
-                return false; //purge all messages
-            }
+        channel.purge(message -> {
+            return false; //purge all messages
         });
     }
 
@@ -64,16 +58,18 @@ public class ChannelEndpointAdapterTest extends AbstractTestNGUnitTest {
     public void testEndpointAdapter() {
         final Message request = new DefaultMessage("<TestMessage><text>Hi!</text></TestMessage>");
 
-        new SimpleAsyncTaskExecutor().execute(new Runnable() {
-            @Override
-            public void run() {
+        var executor = newSingleThreadExecutor();
+        try {
+            executor.execute(() -> {
                 Message receivedMessage = endpointAdapter.getEndpoint().createConsumer().receive(context, endpointConfiguration.getTimeout());
                 Assert.assertNotNull(receivedMessage);
                 Assert.assertEquals(receivedMessage.getPayload(), request.getPayload());
 
                 endpointAdapter.getEndpoint().createProducer().send(new DefaultMessage("OK"), context);
-            }
-        });
+            });
+        } finally {
+            executor.shutdown();
+        }
 
         Message response = endpointAdapter.handleMessage(request);
         Assert.assertNotNull(response);

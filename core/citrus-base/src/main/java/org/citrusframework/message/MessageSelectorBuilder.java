@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,18 +22,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.citrusframework.context.TestContext;
-import org.citrusframework.util.StringUtils;
+
+import static org.citrusframework.util.StringUtils.hasText;
 
 /**
  * Constructs message selectors either from string value or from key value maps. Currently only AND logical combination
  * of multiple expressions is supported.
  *
- * @author Christoph Deppisch
  */
 public class MessageSelectorBuilder {
 
     /** Selector string */
-    private String selectorString = "";
+    private String selectorString;
 
     /**
      * Constructor using fields.
@@ -51,7 +51,7 @@ public class MessageSelectorBuilder {
      * @return
      */
     public static String build(String messageSelector, Map<String, Object> messageSelectorMap, TestContext context) {
-        if (StringUtils.hasText(messageSelector)) {
+        if (hasText(messageSelector)) {
             return context.replaceDynamicContentInString(messageSelector);
         } else if (messageSelectorMap != null && !messageSelectorMap.isEmpty()) {
             return MessageSelectorBuilder.fromKeyValueMap(
@@ -76,7 +76,7 @@ public class MessageSelectorBuilder {
      * @return
      */
     public static MessageSelectorBuilder fromKeyValueMap(Map<String, Object> valueMap) {
-        StringBuffer buf = new StringBuffer();
+        var buf = new StringBuilder();
 
         Iterator<Entry<String, Object>> iter = valueMap.entrySet().iterator();
 
@@ -85,7 +85,7 @@ public class MessageSelectorBuilder {
             String key = entry.getKey();
             String value = entry.getValue().toString();
 
-            buf.append(key + " = '" + value + "'");
+            buf.append(key).append(" = '").append(value).append("'");
         }
 
         while (iter.hasNext()) {
@@ -93,7 +93,7 @@ public class MessageSelectorBuilder {
         	String key = entry.getKey();
             String value = entry.getValue().toString();
 
-            buf.append(" AND " + key + " = '" + value + "'");
+            buf.append(" AND ").append(key).append(" = '").append(value).append("'");
         }
 
         return new MessageSelectorBuilder(buf.toString());
@@ -104,7 +104,7 @@ public class MessageSelectorBuilder {
      * @return
      */
     public Map<String, String> toKeyValueMap() {
-        Map<String, String> valueMap = new HashMap<String, String>();
+        Map<String, String> valueMap = new HashMap<>();
         String[] tokens;
 
         if (selectorString.contains(" AND")) {
@@ -113,7 +113,7 @@ public class MessageSelectorBuilder {
                 tokens = escapeEqualsFromXpathNodeTest(chunk).split("=");
                 valueMap.put(unescapeEqualsFromXpathNodeTest(tokens[0].trim()), tokens[1].trim().substring(1, tokens[1].trim().length() -1));
             }
-        } else {
+        } else if (hasText(selectorString)) {
             tokens = escapeEqualsFromXpathNodeTest(selectorString).split("=");
             valueMap.put(unescapeEqualsFromXpathNodeTest(tokens[0].trim()), tokens[1].trim().substring(1, tokens[1].trim().length() -1));
         }

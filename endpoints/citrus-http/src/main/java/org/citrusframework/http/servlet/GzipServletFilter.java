@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import java.io.IOException;
  * and compression on response body when applicable. Only applies gzip request decompression on requests with Content-Encoding="gzip".
  * Only applies gzip response compression on requests with Accept-Encoding="gzip".
  *
- * @author Christoph Deppisch
  * @since 2.6.2
  */
 public class GzipServletFilter extends OncePerRequestFilter {

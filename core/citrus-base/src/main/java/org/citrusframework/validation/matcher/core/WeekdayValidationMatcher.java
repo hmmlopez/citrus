@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import java.util.regex.PatternSyntaxException;
  * In addition to that user can specify the date format to parse:
  * MONDAY(YYYY-MM-DD)
  *
- * @author Christoph Deppisch
  * @since 1.3.1
  */
 public class WeekdayValidationMatcher implements ValidationMatcher, ControlExpressionParser {
@@ -72,7 +71,7 @@ public class WeekdayValidationMatcher implements ValidationMatcher, ControlExpre
             cal.setTime(dateFormat.parse(value));
 
             if (cal.get(Calendar.DAY_OF_WEEK) == Weekday.valueOf(weekday).getConstantValue()) {
-                logger.info("Weekday validation matcher successful - All values OK");
+                logger.debug("Weekday validation matcher successful - All values OK");
             } else {
                 throw new ValidationException(this.getClass().getSimpleName() + " failed for field '" + fieldName + "'" +
                         ". Received invalid week day '" + value + "', expected date to be a '" + weekday + "'");

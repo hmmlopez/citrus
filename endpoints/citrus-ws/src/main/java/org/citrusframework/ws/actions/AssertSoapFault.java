@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,6 @@ import org.springframework.ws.soap.client.SoapFaultClientException;
  * Class constructs a control soap fault detail with given expected information (faultCode, faultString and faultDetail)
  * and delegates validation to {@link SoapFaultValidator} instance.
  *
- * @author Christoph Deppisch
  * @since 2009
  */
 public class AssertSoapFault extends AbstractActionContainer {
@@ -112,8 +111,8 @@ public class AssertSoapFault extends AbstractActionContainer {
 
             validator.validateSoapFault(SoapFault.from(soapFaultException.getSoapFault()), controlFault, context, validationContext);
 
-            logger.debug("Asserted SOAP fault as expected: " + soapFaultException.getFaultCode() + ": " + soapFaultException.getFaultStringOrReason());
-            logger.info("Assert SOAP fault validation successful");
+            logger.debug("Asserted SOAP fault as expected: {}: {}", soapFaultException.getFaultCode(), soapFaultException.getFaultStringOrReason());
+            logger.debug("Assert SOAP fault validation successful");
 
             return;
         } catch (Exception e) {
@@ -471,8 +470,8 @@ public class AssertSoapFault extends AbstractActionContainer {
             if (validator == null) {
                 validator = new SimpleSoapFaultValidator();
             }
+
             return new AssertSoapFault(this);
         }
     }
-
 }

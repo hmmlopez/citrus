@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.citrusframework.xml.xpath.XPathUtils;
 /**
  * Extracts predicate from message payload via XPath expression evaluation.
  *
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class XPathPayloadMappingKeyExtractor extends AbstractMappingKeyExtractor {
@@ -60,5 +59,4 @@ public class XPathPayloadMappingKeyExtractor extends AbstractMappingKeyExtractor
     public void setNamespaceContextBuilder(NamespaceContextBuilder namespaceContextBuilder) {
         this.namespaceContextBuilder = namespaceContextBuilder;
     }
-
 }

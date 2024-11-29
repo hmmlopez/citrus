@@ -1,14 +1,11 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,9 +26,6 @@ import org.citrusframework.selenium.endpoint.SeleniumBrowser;
 import org.citrusframework.spi.ReferenceResolver;
 import org.citrusframework.spi.ReferenceResolverAware;
 
-/**
- * @author Christoph Deppisch
- */
 public class Selenium implements TestActionBuilder<SeleniumAction>, ReferenceResolverAware {
 
     private AbstractSeleniumAction.Builder<?, ?> builder;
@@ -215,7 +209,7 @@ public class Selenium implements TestActionBuilder<SeleniumAction>, ReferenceRes
     @Override
     public SeleniumAction build() {
         if (builder == null) {
-            throw new CitrusRuntimeException("Missing client or server Soap action - please provide proper action details");
+            throw new CitrusRuntimeException("Missing Selenium action - please provide proper action details");
         }
 
         if (builder instanceof TestActionContainerBuilder<?,?>) {

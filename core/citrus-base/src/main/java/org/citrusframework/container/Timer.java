@@ -1,11 +1,11 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,21 +16,20 @@
 
 package org.citrusframework.container;
 
-import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.citrusframework.AbstractTestContainerBuilder;
 import org.citrusframework.TestActionBuilder;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.CitrusRuntimeException;
+import org.citrusframework.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.citrusframework.util.StringUtils;
+
+import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 /**
- * @author Martin Maher
  * @since 2.5
  */
 public class Timer extends AbstractActionContainer implements StopTimer {
@@ -64,8 +63,12 @@ public class Timer extends AbstractActionContainer implements StopTimer {
     @Override
     public void doExecute(final TestContext context) {
         if (fork) {
-            ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
-            taskExecutor.execute(() -> configureAndRunTimer(context));
+            var taskExecutor = newSingleThreadExecutor();
+            try {
+                taskExecutor.execute(() -> configureAndRunTimer(context));
+            } finally {
+                taskExecutor.shutdownNow();
+            }
         } else {
             configureAndRunTimer(context);
         }

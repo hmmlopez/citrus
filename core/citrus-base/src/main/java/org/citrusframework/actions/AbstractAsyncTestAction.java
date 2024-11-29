@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,22 @@
 
 package org.citrusframework.actions;
 
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
 import org.citrusframework.Completable;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
+
 /**
  * Test action that performs in a separate thread. Action execution is not blocking the test execution chain. After
  * action has performed optional validation step is called.
  *
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 public abstract class AbstractAsyncTestAction extends AbstractTestAction implements Completable {
@@ -57,7 +56,7 @@ public abstract class AbstractAsyncTestAction extends AbstractTestAction impleme
             }
         });
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        var executor = newSingleThreadExecutor();
         finished = executor.submit(() -> {
             try {
                 doExecuteAsync(context);
@@ -70,6 +69,7 @@ public abstract class AbstractAsyncTestAction extends AbstractTestAction impleme
                     context.addException(new CitrusRuntimeException(e));
                 }
             } finally {
+                executor.shutdownNow();
                 result.complete(context);
             }
         });

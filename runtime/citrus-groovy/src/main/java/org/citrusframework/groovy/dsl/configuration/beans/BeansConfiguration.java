@@ -1,14 +1,11 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,9 +27,6 @@ import org.citrusframework.Citrus;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.message.DefaultMessageQueue;
 
-/**
- * @author Christoph Deppisch
- */
 public class BeansConfiguration extends GroovyObjectSupport {
 
     private final Citrus citrus;
@@ -69,24 +63,22 @@ public class BeansConfiguration extends GroovyObjectSupport {
         Object[] args = (Object[]) argLine;
         if (args.length == 2) {
             Class<?> type = (Class<?>) args[0];
-            if (args[1] instanceof Closure) {
-                Closure<?> closure = (Closure<?>) args[1];
+            if (args[1] instanceof Closure<?> closure) {
 
                 try {
-                    Object bean = type.newInstance();
+                    Object bean = type.getDeclaredConstructor().newInstance();
                     closure.setResolveStrategy(Closure.DELEGATE_ONLY);
                     closure.setDelegate(bean);
                     closure.call();
 
                     citrus.getCitrusContext().bind(name, bean);
                     return bean;
-                } catch (InstantiationException | IllegalAccessException e) {
+                } catch (IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e) {
                     throw new GroovyRuntimeException(String.format("Failed to instantiate bean of type '%s'", type), e);
                 }
             }
         } else if (args.length == 1) {
-            if (args[0] instanceof Closure) {
-                Closure<?> closure = (Closure<?>) args[0];
+            if (args[0] instanceof Closure<?> closure) {
                 closure.setResolveStrategy(Closure.DELEGATE_ONLY);
 
                 Object bean = closure.call();

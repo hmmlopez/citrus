@@ -1,14 +1,11 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,24 +16,70 @@
 
 package org.citrusframework.camel.actions;
 
-import java.util.Map;
-
 import org.citrusframework.TestActionBuilder;
-import org.testng.Assert;
+import org.citrusframework.spi.ReferenceResolver;
+import org.citrusframework.spi.ReferenceResolverAware;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
+import java.util.Map;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 public class CamelActionBuilderTest {
+
+    private CamelActionBuilder fixture;
+
+    @BeforeMethod
+    public void beforeMethod() {
+        fixture = new CamelActionBuilder();
+    }
 
     @Test
     public void shouldLookupTestActionBuilder() {
         Map<String, TestActionBuilder<?>> endpointBuilders = TestActionBuilder.lookup();
-        Assert.assertTrue(endpointBuilders.containsKey("camel"));
+        assertTrue(endpointBuilders.containsKey("camel"));
 
-        Assert.assertTrue(TestActionBuilder.lookup("camel").isPresent());
-        Assert.assertEquals(TestActionBuilder.lookup("camel").get().getClass(), CamelActionBuilder.class);
+        assertTrue(TestActionBuilder.lookup("camel").isPresent());
+        assertEquals(TestActionBuilder.lookup("camel").get().getClass(), CamelActionBuilder.class);
     }
 
+    @Test
+    public void passReferenceResolverToDelegate() {
+        var referenceResolverAware = mock(TestReferenceResolver.class);
+        setField(fixture, "delegate", referenceResolverAware);
+
+        var referenceResolver = mock(ReferenceResolver.class);
+        fixture.setReferenceResolver(referenceResolver);
+
+        verify(referenceResolverAware).setReferenceResolver(referenceResolver);
+    }
+
+    @Test
+    public void setReferenceResolver_ignoresNonReferenceResolverAware() {
+        var referenceResolverAware = mock(TestActionBuilder.class);
+        setField(fixture, "delegate", referenceResolverAware);
+
+        fixture.setReferenceResolver(mock(ReferenceResolver.class));
+
+        verifyNoInteractions(referenceResolverAware);
+    }
+
+    @Test
+    public void setReferenceResolver_ignoresNullReferenceResolver() {
+        var referenceResolverAware = mock(TestReferenceResolver.class);
+        setField(fixture, "delegate", referenceResolverAware);
+
+        fixture.setReferenceResolver(null);
+
+        verifyNoInteractions(referenceResolverAware);
+    }
+
+    private static abstract class TestReferenceResolver implements TestActionBuilder, ReferenceResolverAware {
+    }
 }

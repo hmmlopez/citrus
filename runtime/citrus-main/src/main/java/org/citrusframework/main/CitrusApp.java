@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
  * Command line options are passed to the application for optional arguments. Application will run until the
  * duration time option has passed by or until the JVM terminates.
  *
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 public class CitrusApp {

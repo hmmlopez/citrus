@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.springframework.ws.mime.Attachment;
  * Validator will create a {@link SoapAttachment} and automatically handle contentId and
  * contentType validation. Content body validation is delegated to subclasses.
  *
- * @author Christoph Deppisch
  */
 public abstract class AbstractSoapAttachmentValidator implements SoapAttachmentValidator {
     /**
@@ -48,15 +47,13 @@ public abstract class AbstractSoapAttachmentValidator implements SoapAttachmentV
         for (SoapAttachment controlAttachment : controlAttachments) {
             SoapAttachment attachment = findAttachment(soapMessage, controlAttachment);
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Found attachment with contentId '" + controlAttachment.getContentId() + "'");
-            }
+            logger.debug("Found attachment with contentId '{}'", controlAttachment.getContentId());
 
             validateAttachmentContentId(attachment, controlAttachment);
             validateAttachmentContentType(attachment, controlAttachment);
             validateAttachmentContent(attachment, controlAttachment);
 
-            logger.info("SOAP attachment validation successful: All values OK");
+            logger.debug("SOAP attachment validation successful: All values OK");
         }
     }
 
@@ -103,27 +100,26 @@ public abstract class AbstractSoapAttachmentValidator implements SoapAttachmentV
      */
     protected void validateAttachmentContentId(SoapAttachment receivedAttachment, SoapAttachment controlAttachment) {
         //in case contentId was not set in test case, skip validation
-        if (!StringUtils.hasText(controlAttachment.getContentId())) { return; }
+        if (!StringUtils.hasText(controlAttachment.getContentId())) {
+            return;
+        }
 
         if (receivedAttachment.getContentId() != null) {
             if (controlAttachment.getContentId() == null) {
                 throw new ValidationException(buildValidationErrorMessage("Values not equal for attachment contentId",
-                            null, receivedAttachment.getContentId()));
+                        null, receivedAttachment.getContentId()));
             }
 
             if (!receivedAttachment.getContentId().equals(controlAttachment.getContentId())) {
                 throw new ValidationException(buildValidationErrorMessage("Values not equal for attachment contentId",
-                            controlAttachment.getContentId(), receivedAttachment.getContentId()));
+                        controlAttachment.getContentId(), receivedAttachment.getContentId()));
             }
         } else if (StringUtils.hasText(controlAttachment.getContentId())) {
             throw new ValidationException(buildValidationErrorMessage("Values not equal for attachment contentId",
-                        controlAttachment.getContentId(), null));
+                    controlAttachment.getContentId(), null));
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Validating attachment contentId: " + receivedAttachment.getContentId() +
-                    "='" + controlAttachment.getContentId() + "': OK.");
-        }
+        logger.debug("Validating attachment contentId: {}='{}': OK", receivedAttachment.getContentId(), controlAttachment.getContentId());
     }
 
     /**
@@ -150,10 +146,7 @@ public abstract class AbstractSoapAttachmentValidator implements SoapAttachmentV
                         controlAttachment.getContentType(), null));
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Validating attachment contentType: " + receivedAttachment.getContentType() +
-                    "='" + controlAttachment.getContentType() + "': OK.");
-        }
+        logger.debug("Validating attachment contentType: {}='{}': OK", receivedAttachment.getContentType(), controlAttachment.getContentType());
     }
 
     /**

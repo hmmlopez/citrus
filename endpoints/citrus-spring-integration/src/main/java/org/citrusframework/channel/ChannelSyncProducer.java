@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
  * Reply message is correlated and stored in correlation manager. This way test cases are able to receive synchronous
  * message asynchronously at later time.
  *
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class ChannelSyncProducer extends ChannelProducer implements ReplyConsumer {
@@ -129,5 +128,4 @@ public class ChannelSyncProducer extends ChannelProducer implements ReplyConsume
     public void setCorrelationManager(CorrelationManager<Message> correlationManager) {
         this.correlationManager = correlationManager;
     }
-
 }

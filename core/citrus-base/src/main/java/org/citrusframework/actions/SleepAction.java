@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Stop the test execution for a given amount of time.
  *
- * @author Christoph Deppisch
  * @since 2006
  */
 public class SleepAction extends AbstractTestAction {
@@ -140,7 +139,6 @@ public class SleepAction extends AbstractTestAction {
         public Builder seconds(Long seconds) {
             return time(String.valueOf(seconds  * 1000L), TimeUnit.MILLISECONDS);
         }
-
 
         public Builder time(Duration duration) {
             milliseconds(duration.toMillis());

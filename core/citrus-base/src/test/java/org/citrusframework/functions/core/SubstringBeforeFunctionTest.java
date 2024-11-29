@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.citrusframework.functions.core;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.citrusframework.UnitTestSupport;
@@ -25,15 +24,14 @@ import org.citrusframework.exceptions.InvalidFunctionUsageException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
+import static java.util.Collections.emptyList;
+
 public class SubstringBeforeFunctionTest extends UnitTestSupport {
     SubstringBeforeFunction function = new SubstringBeforeFunction();
 
     @Test
     public void testFunction() {
-        List<String> params = new ArrayList<String>();
+        List<String> params = new ArrayList<>();
         params.add("Hallo,TestFramework");
         params.add(",");
         Assert.assertEquals(function.execute(params, context), "Hallo");
@@ -46,6 +44,6 @@ public class SubstringBeforeFunctionTest extends UnitTestSupport {
 
     @Test(expectedExceptions = {InvalidFunctionUsageException.class})
     public void testNoParameters() {
-        function.execute(Collections.<String>emptyList(), context);
+        function.execute(emptyList(), context);
     }
 }

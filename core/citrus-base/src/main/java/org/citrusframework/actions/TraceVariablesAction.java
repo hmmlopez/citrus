@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
  * Action that prints variable values to the console/logger. Action requires a list of variable
  * names. Tries to find the variables in the test context and print its values.
  *
- * @author Christoph Deppisch
  * @since 2006
  */
 public class TraceVariablesAction extends AbstractTestAction {

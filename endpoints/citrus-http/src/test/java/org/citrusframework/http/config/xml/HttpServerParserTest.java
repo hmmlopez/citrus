@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,6 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
-/**
- * @author Christoph Deppisch
- */
 public class HttpServerParserTest extends AbstractBeanDefinitionParserTest {
 
     @Test
@@ -64,7 +61,7 @@ public class HttpServerParserTest extends AbstractBeanDefinitionParserTest {
         assertEquals(server.getName(), "httpServer1");
         assertEquals(server.getPort(), 8081);
         assertEquals(server.getContextConfigLocation(), "classpath:org/citrusframework/http/citrus-servlet-context.xml");
-        assertEquals(server.getResourceBase(), "src/main/resources");
+        assertNull(server.getResourceBase());
         assertFalse(server.isAutoStart());
         assertFalse(server.isDebugLogging());
         assertFalse(server.isUseRootContextAsParent());
@@ -112,7 +109,7 @@ public class HttpServerParserTest extends AbstractBeanDefinitionParserTest {
         assertEquals(server.getName(), "httpServer3");
         assertEquals(server.getPort(), 8083);
         assertEquals(server.getContextConfigLocation(), "classpath:org/citrusframework/http/citrus-servlet-context.xml");
-        assertEquals(server.getResourceBase(), "src/main/resources");
+        assertNull(server.getResourceBase());
         assertFalse(server.isAutoStart());
         assertFalse(server.isUseRootContextAsParent());
         assertEquals(server.getServletName(), "httpServer3-servlet");
@@ -125,7 +122,7 @@ public class HttpServerParserTest extends AbstractBeanDefinitionParserTest {
         assertEquals(server.getName(), "httpServer4");
         assertEquals(server.getPort(), 8084);
         assertEquals(server.getContextConfigLocation(), "classpath:org/citrusframework/http/citrus-servlet-context.xml");
-        assertEquals(server.getResourceBase(), "src/main/resources");
+        assertNull(server.getResourceBase());
         assertFalse(server.isAutoStart());
         assertFalse(server.isUseRootContextAsParent());
         assertEquals(server.getServletName(), "httpServer4-servlet");
@@ -140,7 +137,7 @@ public class HttpServerParserTest extends AbstractBeanDefinitionParserTest {
         assertEquals(server.getName(), "httpServer5");
         assertEquals(server.getPort(), 8085);
         assertEquals(server.getContextConfigLocation(), "classpath:org/citrusframework/http/citrus-servlet-context.xml");
-        assertEquals(server.getResourceBase(), "src/main/resources");
+        assertNull(server.getResourceBase());
         assertFalse(server.isAutoStart());
         assertFalse(server.isUseRootContextAsParent());
         assertEquals(server.getServletName(), "httpServer5-servlet");

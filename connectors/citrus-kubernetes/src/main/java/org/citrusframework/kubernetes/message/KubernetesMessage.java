@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,25 @@
 
 package org.citrusframework.kubernetes.message;
 
-import org.citrusframework.exceptions.CitrusRuntimeException;
-import org.citrusframework.kubernetes.command.*;
-import org.citrusframework.kubernetes.model.KubernetesRequest;
-import org.citrusframework.kubernetes.model.KubernetesResponse;
-import org.citrusframework.message.DefaultMessage;
+import java.io.IOException;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.Watcher;
-
-import java.io.IOException;
-import java.util.Map;
+import org.citrusframework.exceptions.CitrusRuntimeException;
+import org.citrusframework.kubernetes.command.KubernetesCommand;
+import org.citrusframework.kubernetes.model.KubernetesRequest;
+import org.citrusframework.kubernetes.model.KubernetesResponse;
+import org.citrusframework.message.DefaultMessage;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
 public class KubernetesMessage extends DefaultMessage {
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     private KubernetesRequest request;
     private KubernetesResponse response;
@@ -85,7 +84,7 @@ public class KubernetesMessage extends DefaultMessage {
      * @param result
      * @return
      */
-    public static KubernetesMessage response(String command, KubernetesResource<?> result) {
+    public static KubernetesMessage response(String command, KubernetesResource result) {
         KubernetesResponse response = new KubernetesResponse();
         response.setCommand(command);
         response.setResult(result);
@@ -100,7 +99,7 @@ public class KubernetesMessage extends DefaultMessage {
      * @param result
      * @return
      */
-    public static KubernetesMessage response(String command, Watcher.Action action, KubernetesResource<?> result) {
+    public static KubernetesMessage response(String command, Watcher.Action action, KubernetesResource result) {
         KubernetesResponse response = new KubernetesResponse();
         response.setCommand(command);
         response.setResult(result);
@@ -145,7 +144,7 @@ public class KubernetesMessage extends DefaultMessage {
      * @param command
      * @return
      */
-    public static KubernetesMessage request(KubernetesCommand<?> command) {
+    public static KubernetesMessage request(KubernetesCommand<?, ?> command) {
         KubernetesRequest request = new KubernetesRequest();
         request.setCommand(command.getName());
 

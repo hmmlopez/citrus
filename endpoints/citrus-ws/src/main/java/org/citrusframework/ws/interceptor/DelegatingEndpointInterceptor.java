@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,12 @@ import java.util.List;
 /**
  * Interceptor implementation delegates to list of other endpoint interceptors.
  *
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class DelegatingEndpointInterceptor implements SmartEndpointInterceptor, SoapEndpointInterceptor {
 
     /** List of interceptors to delegate to when this interceptor is invoked */
-    private List<EndpointInterceptor> interceptors = new ArrayList<EndpointInterceptor>();
+    private List<EndpointInterceptor> interceptors = new ArrayList<>();
 
     @Override
     public boolean shouldIntercept(MessageContext messageContext, Object endpoint) {
@@ -119,5 +118,4 @@ public class DelegatingEndpointInterceptor implements SmartEndpointInterceptor, 
     public void setInterceptors(List<EndpointInterceptor> interceptors) {
         this.interceptors = interceptors;
     }
-
 }

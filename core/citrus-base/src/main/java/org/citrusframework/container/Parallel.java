@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
  * Test action will execute nested actions in parallel. Each action is executed in a
  * separate thread. Container joins all threads and waiting for them to end successfully.
  *
- * @author Christoph Deppisch
  */
 public class Parallel extends AbstractActionContainer {
 
@@ -108,7 +107,7 @@ public class Parallel extends AbstractActionContainer {
             } catch (CitrusRuntimeException e) {
                 logger.error("Parallel test action raised error", e);
                 exceptionHandler.accept(e);
-            } catch (Exception | AssertionError e) {
+            } catch (Exception | Error e) {
                 logger.error("Parallel test action raised error", e);
                 exceptionHandler.accept(new CitrusRuntimeException(e));
             }

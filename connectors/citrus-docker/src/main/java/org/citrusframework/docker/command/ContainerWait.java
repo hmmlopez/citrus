@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,14 @@
 
 package org.citrusframework.docker.command;
 
+import com.github.dockerjava.api.command.WaitContainerResultCallback;
+import com.github.dockerjava.api.model.WaitResponse;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.docker.actions.DockerExecuteAction;
 import org.citrusframework.docker.client.DockerClient;
 import org.citrusframework.docker.message.DockerMessageHeaders;
-import com.github.dockerjava.api.command.WaitContainerCmd;
-import com.github.dockerjava.api.command.WaitContainerResultCallback;
-import com.github.dockerjava.api.model.WaitResponse;
 
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class ContainerWait extends AbstractDockerCommand<WaitResponse> {
@@ -39,20 +37,20 @@ public class ContainerWait extends AbstractDockerCommand<WaitResponse> {
 
     @Override
     public void execute(DockerClient dockerClient, TestContext context) {
-        WaitContainerCmd command = dockerClient.getEndpointConfiguration().getDockerClient().waitContainerCmd(getContainerId(context));
+        try (var command = dockerClient.getEndpointConfiguration().getDockerClient().waitContainerCmd(getContainerId(context))) {
+            WaitContainerResultCallback waitResult = new WaitContainerResultCallback() {
+                @Override
+                public void onNext(WaitResponse waitResponse) {
+                    super.onNext(waitResponse);
+                    setCommandResult(waitResponse);
+                }
+            };
 
-        WaitContainerResultCallback waitResult = new WaitContainerResultCallback() {
-            @Override
-            public void onNext(WaitResponse waitResponse) {
-                super.onNext(waitResponse);
-                setCommandResult(waitResponse);
-            }
-        };
+            command.exec(waitResult);
 
-        command.exec(waitResult);
-
-        Integer statusCode = waitResult.awaitStatusCode();
-        context.setVariable(DockerMessageHeaders.DOCKER_PREFIX + "statusCode", statusCode);
+            Integer statusCode = waitResult.awaitStatusCode();
+            context.setVariable(DockerMessageHeaders.DOCKER_PREFIX + "statusCode", statusCode);
+        }
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class ChannelEndpointConsumerTest extends AbstractTestNGUnitTest {
 
     private MessagingTemplate messagingTemplate = Mockito.mock(MessagingTemplate.class);
@@ -59,7 +56,7 @@ public class ChannelEndpointConsumerTest extends AbstractTestNGUnitTest {
 
         endpoint.getEndpointConfiguration().setChannel(channel);
 
-        Map<String, Object> headers = new HashMap<String, Object>();
+        Map<String, Object> headers = new HashMap<>();
         final org.springframework.messaging.Message message = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
                                 .copyHeaders(headers)
                                 .build();
@@ -85,7 +82,7 @@ public class ChannelEndpointConsumerTest extends AbstractTestNGUnitTest {
 
         endpoint.getEndpointConfiguration().setChannelResolver(channelResolver);
 
-        Map<String, Object> headers = new HashMap<String, Object>();
+        Map<String, Object> headers = new HashMap<>();
         final org.springframework.messaging.Message message = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
                                 .copyHeaders(headers)
                                 .build();
@@ -113,7 +110,7 @@ public class ChannelEndpointConsumerTest extends AbstractTestNGUnitTest {
         endpoint.getEndpointConfiguration().setChannel(channel);
         endpoint.getEndpointConfiguration().setTimeout(10000L);
 
-        Map<String, Object> headers = new HashMap<String, Object>();
+        Map<String, Object> headers = new HashMap<>();
         final org.springframework.messaging.Message message = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
                                 .copyHeaders(headers)
                                 .build();
@@ -138,7 +135,7 @@ public class ChannelEndpointConsumerTest extends AbstractTestNGUnitTest {
         endpoint.getEndpointConfiguration().setChannel(channel);
         endpoint.getEndpointConfiguration().setTimeout(10000L);
 
-        Map<String, Object> headers = new HashMap<String, Object>();
+        Map<String, Object> headers = new HashMap<>();
         final org.springframework.messaging.Message message = MessageBuilder.withPayload("<TestRequest><Message>Hello World!</Message></TestRequest>")
                                 .copyHeaders(headers)
                                 .build();

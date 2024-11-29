@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,19 @@ import org.w3c.dom.Element;
 /**
  * Bean definition parser for creating Camel routes action in test case.
  *
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class CreateCamelRouteActionParser extends AbstractCamelRouteActionParser {
 
     @Override
     public void parse(BeanDefinitionBuilder beanDefinition, Element element, ParserContext parserContext) {
-        beanDefinition.addPropertyValue("routeContext",
-                PayloadElementParser.parseMessagePayload(DomUtils.getChildElementByTagName(element, "routeContext")));
+        if (DomUtils.getChildElementByTagName(element, "routeContext") != null) {
+            beanDefinition.addPropertyValue("route",
+                    PayloadElementParser.parseMessagePayload(DomUtils.getChildElementByTagName(element, "routeContext")));
+        } else {
+            beanDefinition.addPropertyValue("route",
+                    PayloadElementParser.parseMessagePayload(DomUtils.getChildElementByTagName(element, "route")));
+        }
     }
 
     @Override
@@ -51,11 +55,19 @@ public class CreateCamelRouteActionParser extends AbstractCamelRouteActionParser
 
         /**
          * Sets the routeContext.
-         *
          * @param routeContext
          */
+        @Deprecated
         public void setRouteContext(String routeContext) {
-            builder.routeContext(routeContext);
+            builder.route(routeContext);
+        }
+
+        /**
+         * Sets the route specification.
+         * @param routeSpec
+         */
+        public void setRoute(String routeSpec) {
+            builder.route(routeSpec);
         }
 
         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import org.springframework.web.util.UrlPathHelper;
  * Message controller implementation handling all incoming requests by forwarding to a message
  * handler for further processing.
  *
- * @author Christoph Deppisch
  */
 @Controller
 @RequestMapping("/*")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,13 @@ import org.testng.annotations.Test;
 import org.citrusframework.actions.EchoAction;
 import org.citrusframework.testng.AbstractActionParserTest;
 
-/**
- * @author Christoph Deppisch
- */
 public class EchoActionParserTest extends AbstractActionParserTest<EchoAction> {
 
     @Test
     public void testEchoActionParser() {
         assertActionCount(1);
         assertActionClassAndName(EchoAction.class, "echo");
-        
+
         EchoAction action = getNextTestActionFromTest();
         Assert.assertEquals(action.getDescription(), "This action prints messages to console logger");
         Assert.assertEquals(action.getMessage(), "This is a test!");

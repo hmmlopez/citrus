@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.citrusframework.util.StringUtils;
 import org.citrusframework.util.TypeConverter;
 
 /**
- * @author Christoph Deppisch
  * @since 2.5
  */
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -110,7 +109,7 @@ public class RmiServiceInvocation {
             }
         }
 
-        return types.toArray(new Class[types.size()]);
+        return types.toArray(new Class[0]);
     }
 
     /**
@@ -162,7 +161,7 @@ public class RmiServiceInvocation {
             throw new CitrusRuntimeException("Failed to construct method arg objects", e);
         }
 
-        return argValues.toArray(new Object[argValues.size()]);
+        return argValues.toArray(new Object[0]);
     }
 
     /**
@@ -248,7 +247,7 @@ public class RmiServiceInvocation {
 
         public List<MethodArg> getArgs() {
             if (args == null) {
-                args = new ArrayList<MethodArg>();
+                args = new ArrayList<>();
             }
             return this.args;
         }

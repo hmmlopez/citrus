@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.citrusframework.message.builder.DefaultPayloadBuilder;
  * class is primary used in unit tests and Soap message validators as we have other mechanisms there to
  * construct the control message.
  *
- * @author Christoph Deppisch
  */
 public class StaticMessageBuilder extends DefaultMessageBuilder {
 
@@ -100,5 +99,4 @@ public class StaticMessageBuilder extends DefaultMessageBuilder {
     public Message getMessage() {
         return message;
     }
-
 }

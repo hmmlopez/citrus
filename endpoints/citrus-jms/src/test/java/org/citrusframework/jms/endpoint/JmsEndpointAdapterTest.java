@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class JmsEndpointAdapterTest extends AbstractTestNGUnitTest {
 
     private ConnectionFactory connectionFactory = Mockito.mock(ConnectionFactory.class);
@@ -72,7 +69,7 @@ public class JmsEndpointAdapterTest extends AbstractTestNGUnitTest {
 
     @Test
     public void testEndpointAdapter() throws JMSException {
-        TextMessage jmsResponse = new TextMessageImpl("<TestResponse>Hello World!</TestResponse>", new HashMap<String, Object>());
+        TextMessage jmsResponse = new TextMessageImpl("<TestResponse>Hello World!</TestResponse>", new HashMap<>());
 
         reset(connectionFactory, connection, session, messageConsumer, messageProducer, tempReplyQueue);
 
@@ -87,14 +84,13 @@ public class JmsEndpointAdapterTest extends AbstractTestNGUnitTest {
         when(session.createProducer(destination)).thenReturn(messageProducer);
 
         when(session.createTextMessage("<TestMessage><text>Hi!</text></TestMessage>")).thenReturn(
-                new TextMessageImpl("<TestMessage><text>Hi!</text></TestMessage>", new HashMap<String, Object>()));
-
+                new TextMessageImpl("<TestMessage><text>Hi!</text></TestMessage>", new HashMap<>()));
 
         Message response = endpointAdapter.handleMessage(new DefaultMessage("<TestMessage><text>Hi!</text></TestMessage>"));
         Assert.assertNotNull(response);
         Assert.assertEquals(response.getPayload(String.class), "<TestResponse>Hello World!</TestResponse>");
 
-        verify(messageProducer).send((TextMessage)any());
+        verify(messageProducer).send(any());
         verify(connection).start();
         verify(tempReplyQueue).delete();
 
@@ -115,14 +111,12 @@ public class JmsEndpointAdapterTest extends AbstractTestNGUnitTest {
         when(session.createProducer(destination)).thenReturn(messageProducer);
 
         when(session.createTextMessage("<TestMessage><text>Hi!</text></TestMessage>")).thenReturn(
-                new TextMessageImpl("<TestMessage><text>Hi!</text></TestMessage>", new HashMap<String, Object>()));
-
+                new TextMessageImpl("<TestMessage><text>Hi!</text></TestMessage>", new HashMap<>()));
 
         Assert.assertNull(endpointAdapter.handleMessage(new DefaultMessage("<TestMessage><text>Hi!</text></TestMessage>")));
 
-        verify(messageProducer).send((TextMessage)any());
+        verify(messageProducer).send(any());
         verify(connection).start();
         verify(tempReplyQueue).delete();
     }
-
 }

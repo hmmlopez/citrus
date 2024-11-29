@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.citrusframework.dsl.endpoint.ws.WebServiceEndpointCatalog;
 import org.citrusframework.endpoint.direct.DirectEndpoints;
 
 /**
- * @author Christoph Deppisch
  * @since 3.0
  */
 public abstract class CitrusEndpoints {
@@ -200,5 +199,4 @@ public abstract class CitrusEndpoints {
     public static CamelEndpointCatalog camel() {
         return CamelEndpointCatalog.camel();
     }
-
 }

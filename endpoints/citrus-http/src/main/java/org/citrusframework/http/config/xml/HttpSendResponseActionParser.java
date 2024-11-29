@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import static org.citrusframework.config.xml.DescriptionElementParser.doParse;
 import static org.citrusframework.util.StringUtils.hasText;
 
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class HttpSendResponseActionParser extends SendMessageActionParser {

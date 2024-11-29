@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
  * Validation matcher receives a XML data and validates it against expected XML with full
  * XML validation support (e.g. ignoring elements, namespace support, ...).
  *
- * @author Christoph Deppisch
  */
 public class XmlValidationMatcher implements ValidationMatcher {
 
@@ -108,5 +107,4 @@ public class XmlValidationMatcher implements ValidationMatcher {
 
         return data;
     }
-
 }

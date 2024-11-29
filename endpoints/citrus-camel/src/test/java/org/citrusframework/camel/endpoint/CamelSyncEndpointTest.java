@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,12 @@ import org.apache.camel.support.DefaultExchange;
 import org.apache.camel.support.DefaultMessage;
 import org.apache.camel.support.SimpleUuidGenerator;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.*;
 
 /**
- * @author Christoph Deppisch
  * @since 1.4.1
  */
 public class CamelSyncEndpointTest extends AbstractTestNGUnitTest {
@@ -95,7 +92,6 @@ public class CamelSyncEndpointTest extends AbstractTestNGUnitTest {
         endpointConfiguration.setEndpointUri(endpointUri);
 
         CamelSyncEndpoint camelEndpoint = new CamelSyncEndpoint(endpointConfiguration);
-
 
         Message replyMessage = new org.citrusframework.message.DefaultMessage("Hello from Citrus!")
                                                 .setHeader("operation", "hello");
@@ -157,13 +153,10 @@ public class CamelSyncEndpointTest extends AbstractTestNGUnitTest {
         when(producerTemplate.request(eq(endpointUri), any(Processor.class))).thenReturn(exchange);
 
         when(messageListeners.isEmpty()).thenReturn(false);
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Message inboundMessage = (Message) invocation.getArguments()[0];
-                Assert.assertTrue(inboundMessage.getPayload(String.class).contains("Hello from Camel!"));
-                return null;
-            }
+        doAnswer(invocation -> {
+            Message inboundMessage = (Message) invocation.getArguments()[0];
+            Assert.assertTrue(inboundMessage.getPayload(String.class).contains("Hello from Camel!"));
+            return null;
         }).when(messageListeners).onInboundMessage(any(Message.class), eq(context));
 
         camelEndpoint.createProducer().send(requestMessage, context);

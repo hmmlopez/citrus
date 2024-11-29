@@ -1,70 +1,141 @@
+/*
+ * Copyright the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.citrusframework;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.citrusframework.container.AbstractActionContainer;
 import org.citrusframework.container.AfterTest;
 import org.citrusframework.container.BeforeTest;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.exceptions.TestCaseFailedException;
-import org.citrusframework.util.TestUtils;
+import org.citrusframework.spi.ReferenceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.lang.String.format;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static org.citrusframework.TestResult.failed;
+import static org.citrusframework.TestResult.skipped;
+import static org.citrusframework.TestResult.success;
+import static org.citrusframework.util.TestUtils.waitForCompletion;
 
 /**
  * Default test case implementation holding a list of test actions to execute. Test case also holds variable definitions and
  * performs the test lifecycle such as start, finish, before and after test.
- * @author Christoph Deppisch
+ *
  */
 public class DefaultTestCase extends AbstractActionContainer implements TestCase, TestGroupAware, TestParameterAware {
 
-    /** Logger */
     private static final Logger logger = LoggerFactory.getLogger(DefaultTestCase.class);
 
-    /** Further chain of test actions to be executed in any case (success, error)
-     * Usually used to clean up database in any case of test result */
+    private static final TestResultInstanceProvider DEFAULT_TEST_RESULT_INSTANCE_PROVIDER = new DefaultTestResultInstanceProvider();
+
+    /**
+     * Further chain of test actions to be executed in any case (success, error)
+     * Usually used to clean up database in any case of test result
+     */
     private List<TestActionBuilder<?>> finalActions = new ArrayList<>();
 
-    /** Tests variables */
+    /**
+     * Tests variables
+     */
     private Map<String, Object> variableDefinitions = new LinkedHashMap<>();
 
-    /** Meta-Info */
+    /**
+     * Meta-Info
+     */
     private TestCaseMetaInfo metaInfo = new TestCaseMetaInfo();
 
-    /** Test class type */
+    /**
+     * Test class type
+     */
     private Class<?> testClass = this.getClass();
 
-    /** Test package name */
+    /**
+     * Test package name
+     */
     private String packageName = this.getClass().getPackage().getName();
 
-    /** In case test was called with parameters from outside */
+    /**
+     * In case test was called with parameters from outside
+     */
     private final Map<String, Object> parameters = new LinkedHashMap<>();
 
-    /** The result of this test case */
+    /**
+     * The result of this test case
+     */
     private TestResult testResult;
 
-    /** Marks this test case as instance that grows in size step by step as test actions are executed */
+    /**
+     * Marks this test case as instance that grows in size step by step as test actions are executed
+     */
     private boolean incremental = false;
 
-    /** Test groups */
+    /**
+     * Test groups
+     */
     private String[] groups;
 
-    /** Time to wait for nested actions to finish */
+    /**
+     * Time to wait for nested actions to finish
+     */
     private long timeout = 10000L;
+
+    private final StopWatch timer = new StopWatch();
+
+    @Override
+    public void doExecute(final TestContext context) {
+        if (!getMetaInfo().getStatus().equals(TestCaseMetaInfo.Status.DISABLED)) {
+            try {
+                start(context);
+
+                for (final TestActionBuilder<?> actionBuilder : actions) {
+                    executeAction(actionBuilder.build(), context);
+                }
+
+                testResult = getTestResultInstanceProvider(context).createSuccess(this);
+            } catch (final TestCaseFailedException e) {
+                gracefullyStopTimer();
+                throw e;
+            } catch (final Exception | Error e) {
+                testResult = getTestResultInstanceProvider(context).createFailed(this, e);
+                throw new TestCaseFailedException(e);
+            }
+        } else {
+            testResult = getTestResultInstanceProvider(context).createSkipped(this);
+            context.getTestListeners().onTestSkipped(this);
+        }
+    }
 
     @Override
     public void start(final TestContext context) {
         context.getTestListeners().onTestStart(this);
 
         try {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Initializing test case");
-            }
+            logger.debug("Initializing test case");
 
             debugVariables("Global", context);
             initializeTestParameters(parameters, context);
@@ -72,40 +143,21 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
             debugVariables("Test", context);
 
             beforeTest(context);
-        } catch (final Exception | AssertionError e) {
-            testResult = TestResult.failed(getName(), testClass.getName(), e);
+        } catch (final Exception | Error e) {
+            testResult = getTestResultInstanceProvider(context).createFailed(this, e);
             throw new TestCaseFailedException(e);
         }
     }
 
     @Override
-    public void doExecute(final TestContext context) {
-        if (!getMetaInfo().getStatus().equals(TestCaseMetaInfo.Status.DISABLED)) {
-            try {
-                start(context);
-                for (final TestActionBuilder<?> actionBuilder: actions) {
-                    executeAction(actionBuilder.build(), context);
-                }
-
-                testResult = TestResult.success(getName(), testClass.getName());
-            } catch (final TestCaseFailedException e) {
-                throw e;
-            } catch (final Exception | AssertionError e) {
-                testResult = TestResult.failed(getName(), testClass.getName(), e);
-                throw new TestCaseFailedException(e);
-            }
-        } else {
-            testResult = TestResult.skipped(getName(), testClass.getName());
-            context.getTestListeners().onTestSkipped(this);
-        }
-    }
-
-    @Override
     public void beforeTest(final TestContext context) {
+        restartTimer();
+
         for (final BeforeTest sequenceBeforeTest : context.getBeforeTest()) {
             try {
-                if (sequenceBeforeTest.shouldExecute(getName(), packageName, groups))
+                if (sequenceBeforeTest.shouldExecute(getName(), packageName, groups)) {
                     sequenceBeforeTest.execute(context);
+                }
             } catch (final Exception e) {
                 throw new CitrusRuntimeException("Before test failed with errors", e);
             }
@@ -119,7 +171,7 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
                 if (sequenceAfterTest.shouldExecute(getName(), packageName, groups)) {
                     sequenceAfterTest.execute(context);
                 }
-            } catch (final Exception | AssertionError e) {
+            } catch (final Exception | Error e) {
                 logger.warn("After test failed with errors", e);
             }
         }
@@ -133,6 +185,7 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
 
         try {
             setActiveAction(action);
+
             if (!action.isDisabled(context)) {
                 context.getTestActionListeners().onTestActionStart(this, action);
 
@@ -141,17 +194,22 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
             } else {
                 context.getTestActionListeners().onTestActionSkipped(this, action);
             }
-        } catch (final Exception | AssertionError e) {
-            testResult = TestResult.failed(getName(), testClass.getName(), e);
+        } catch (final Exception | Error e) {
+            testResult = getTestResultInstanceProvider(context).createFailed(this, e);
             throw new TestCaseFailedException(e);
         } finally {
             setExecutedAction(action);
         }
     }
 
+    @Override
+    public void fail(Throwable throwable) {
+        setTestResult(failed(getName(), testClass.getName(), throwable));
+        completeTestResultWithDuration();
+    }
+
     /**
-     * Method that will be executed in any case of test case result (success, error)
-     * Usually used for clean up tasks.
+     * Method that will be executed in any case of test case result (success, error). Usually used for clean up tasks.
      */
     public void finish(final TestContext context) {
         if (getMetaInfo().getStatus().equals(TestCaseMetaInfo.Status.DISABLED)) {
@@ -160,17 +218,17 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
 
         try {
             CitrusRuntimeException contextException = null;
-            if (testResult == null) {
+            if (isNull(testResult)) {
                 if (context.hasExceptions()) {
                     contextException = context.getExceptions().remove(0);
-                    testResult = TestResult.failed(getName(), testClass.getName(), contextException);
+                    testResult = getTestResultInstanceProvider(context).createFailed(this, contextException);
                 } else {
-                    testResult = TestResult.success(getName(), testClass.getName());
+                    testResult = getTestResultInstanceProvider(context).createSuccess(this);
                 }
             }
 
             if (context.isSuccess(testResult)) {
-                TestUtils.waitForCompletion(this, context, timeout);
+                waitForCompletion(this, context, timeout);
             }
 
             context.getTestListeners().onTestFinish(this);
@@ -180,9 +238,12 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
                 throw new TestCaseFailedException(contextException);
             }
         } catch (final TestCaseFailedException e) {
+            if (isNull(testResult) || testResult.isSuccess()) {
+                testResult = getTestResultInstanceProvider(context).createFailed(this, e.getCause());
+            }
             throw e;
-        } catch (final Exception | AssertionError e) {
-            testResult = TestResult.failed(getName(), testClass.getName(), e);
+        } catch (final Exception | Error e) {
+            testResult = getTestResultInstanceProvider(context).createFailed(this, e);
             throw new TestCaseFailedException(e);
         } finally {
             if (testResult != null) {
@@ -194,18 +255,40 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
             }
 
             afterTest(context);
+
+            completeTestResultWithDuration();
+        }
+    }
+
+    private void restartTimer() {
+        if (timer.isStopped()) {
+            timer.reset();
+            timer.start();
+        }
+    }
+
+    private void completeTestResultWithDuration() {
+        gracefullyStopTimer();
+
+        if (nonNull(testResult)) {
+            testResult.withDuration(Duration.ofNanos(timer.getNanoTime()));
+        }
+    }
+
+    private void gracefullyStopTimer() {
+        if (!timer.isStopped()) {
+            timer.stop();
         }
     }
 
     /**
      * Run final test actions.
-     * @param context
      */
     private void executeFinalActions(TestContext context) {
         if (!finalActions.isEmpty()) {
             logger.debug("Entering finally block in test case");
 
-            /* walk through the finally chain and execute the actions in there */
+            /* walk through the finally-chain and execute the actions in there */
             for (final TestActionBuilder<?> actionBuilder : finalActions) {
                 TestAction action = actionBuilder.build();
                 if (!action.isDisabled(context)) {
@@ -218,30 +301,44 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
             }
         }
 
+        /* test context may also have some actions to run finally */
+        for (final TestActionBuilder<?> actionBuilder : context.getFinalActions()) {
+            TestAction action = actionBuilder.build();
+            if (!action.isDisabled(context)) {
+                context.getTestActionListeners().onTestActionStart(this, action);
+                action.execute(context);
+                context.getTestActionListeners().onTestActionFinish(this, action);
+            } else {
+                context.getTestActionListeners().onTestActionSkipped(this, action);
+            }
+        }
+
         if (testResult.isSuccess() && context.hasExceptions()) {
             CitrusRuntimeException contextException = context.getExceptions().remove(0);
-            testResult = TestResult.failed(getName(), testClass.getName(), contextException);
+            testResult = getTestResultInstanceProvider(context).createFailed(this, contextException);
             throw new TestCaseFailedException(contextException);
         }
     }
 
     /**
      * Print variables in given test context.
+     *
      * @param scope
      * @param context
      */
     private void debugVariables(String scope, TestContext context) {
         /* Debug print global variables */
         if (context.hasVariables() && logger.isDebugEnabled()) {
-            logger.debug(String.format("%s variables:", scope));
+            logger.debug("{} variables:", scope);
             for (final Map.Entry<String, Object> entry : context.getVariables().entrySet()) {
-                logger.debug(String.format("%s = %s", entry.getKey(), entry.getValue()));
+                logger.debug("{} = {}", entry.getKey(), entry.getValue());
             }
         }
     }
 
     /**
      * Sets test parameters as test variables.
+     *
      * @param parameters
      * @param context
      */
@@ -251,15 +348,14 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
         context.setVariable(CitrusSettings.TEST_PACKAGE_VARIABLE, packageName);
 
         for (final Map.Entry<String, Object> paramEntry : parameters.entrySet()) {
-            if (logger.isDebugEnabled()) {
-                logger.debug(String.format("Initializing test parameter '%s' as variable", paramEntry.getKey()));
-            }
+            logger.debug("Initializing test parameter '{}' as variable", paramEntry.getKey());
             context.setVariable(paramEntry.getKey(), paramEntry.getValue());
         }
     }
 
     /**
      * Initialize the test variables in the given test context.
+     *
      * @param variableDefinitions
      * @param context
      */
@@ -281,6 +377,7 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
 
     /**
      * Setter for variables.
+     *
      * @param variableDefinitions
      */
     public void setVariableDefinitions(final Map<String, Object> variableDefinitions) {
@@ -294,10 +391,21 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
 
     /**
      * Setter for finally chain.
+     *
      * @param finalActions
      */
     public void setFinalActions(final List<TestAction> finalActions) {
         this.finalActions = finalActions.stream().map(action -> (TestActionBuilder<?>) () -> action).collect(Collectors.toList());
+    }
+
+    private TestResultInstanceProvider getTestResultInstanceProvider(TestContext context) {
+
+        ReferenceResolver referenceResolver = context.getReferenceResolver();
+        if (referenceResolver != null && referenceResolver.isResolvable(TestResultInstanceProvider.class)) {
+            return referenceResolver.resolve(TestResultInstanceProvider.class);
+        }
+
+        return DEFAULT_TEST_RESULT_INSTANCE_PROVIDER;
     }
 
     @Override
@@ -314,14 +422,14 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
 
         stringBuilder.append("[testActions:");
 
-        for (final TestActionBuilder<?> actionBuilder: actions) {
+        for (final TestActionBuilder<?> actionBuilder : actions) {
             TestAction action = actionBuilder.build();
             stringBuilder.append(action.getClass().getName()).append(";");
         }
 
         stringBuilder.append("] ");
 
-        return super.toString() + stringBuilder.toString();
+        return super.toString() + stringBuilder;
     }
 
     @Override
@@ -336,6 +444,7 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
 
     /**
      * Set the test case meta information.
+     *
      * @param metaInfo the metaInfo to set
      */
     public void setMetaInfo(final TestCaseMetaInfo metaInfo) {
@@ -344,6 +453,7 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
 
     /**
      * Get all actions in the finally chain.
+     *
      * @return the finalActions
      */
     public List<TestAction> getFinalActions() {
@@ -373,8 +483,11 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
     @Override
     public void setParameters(final String[] parameterNames, final Object[] parameterValues) {
         if (parameterNames.length != parameterValues.length) {
-            throw new CitrusRuntimeException(String.format("Invalid test parameter usage - received '%s' parameters with '%s' values",
-                    parameterNames.length, parameterValues.length));
+            throw new CitrusRuntimeException(
+                    format(
+                            "Invalid test parameter usage - received '%s' parameters with '%s' values",
+                            parameterNames.length,
+                            parameterValues.length));
         }
 
         for (int i = 0; i < parameterNames.length; i++) {
@@ -440,5 +553,27 @@ public class DefaultTestCase extends AbstractActionContainer implements TestCase
      */
     public long getTimeout() {
         return timeout;
+    }
+
+    /**
+     * Default implementation of {@link TestResultInstanceProvider} that provides simple TestResults
+     * without any parameters.
+     */
+    private static final class DefaultTestResultInstanceProvider implements TestResultInstanceProvider {
+
+        @Override
+        public TestResult createSuccess(TestCase testCase) {
+            return success(testCase.getName(), testCase.getTestClass().getName());
+        }
+
+        @Override
+        public TestResult createFailed(TestCase testCase, Throwable throwable) {
+            return failed(testCase.getName(), testCase.getTestClass().getName(), throwable);
+        }
+
+        @Override
+        public TestResult createSkipped(TestCase testCase) {
+            return skipped(testCase.getName(), testCase.getTestClass().getName());
+        }
     }
 }

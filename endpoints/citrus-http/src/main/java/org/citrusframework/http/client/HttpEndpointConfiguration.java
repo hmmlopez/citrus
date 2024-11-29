@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.citrusframework.http.client;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.citrusframework.endpoint.AbstractPollableEndpointConfiguration;
 import org.citrusframework.endpoint.resolver.DynamicEndpointUriResolver;
@@ -43,7 +42,6 @@ import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class HttpEndpointConfiguration extends AbstractPollableEndpointConfiguration {
@@ -98,6 +96,11 @@ public class HttpEndpointConfiguration extends AbstractPollableEndpointConfigura
 
     /** Should handle http cookies */
     private boolean handleCookies = false;
+
+    /**
+     * Should disable redirect handling
+     */
+    private boolean disableRedirectHandling = false;
 
     /** Default status code returned by http server */
     private int defaultStatusCode = HttpStatus.OK.value();
@@ -320,6 +323,10 @@ public class HttpEndpointConfiguration extends AbstractPollableEndpointConfigura
             httpClient = HttpClientBuilder.create().useSystemProperties();
         }
 
+        if (disableRedirectHandling) {
+            httpClient.disableRedirectHandling();
+        }
+
         return httpClient;
     }
 
@@ -395,6 +402,24 @@ public class HttpEndpointConfiguration extends AbstractPollableEndpointConfigura
      */
     public void setHandleCookies(boolean handleCookies) {
         this.handleCookies = handleCookies;
+    }
+
+    /**
+     * Gets the disableRedirectHandling.
+     *
+     * @return
+     */
+    public boolean isDisableRedirectHandling() {
+        return disableRedirectHandling;
+    }
+
+    /**
+     * Sets the disableRedirectHandling.
+     *
+     * @param disableRedirectHandling
+     */
+    public void setDisableRedirectHandling(boolean disableRedirectHandling) {
+        this.disableRedirectHandling = disableRedirectHandling;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
  * Basic message validator is able to verify empty message payloads. Both received and control message must have
  * empty message payloads otherwise ths validator will raise some exception.
  *
- * @author Christoph Deppisch
  */
 public class DefaultEmptyMessageValidator extends DefaultMessageValidator {
 

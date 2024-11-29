@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Executes docker command with given docker client implementation. Possible command result is stored within command object.
  *
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class DockerExecuteAction extends AbstractTestAction {
@@ -101,9 +100,7 @@ public class DockerExecuteAction extends AbstractTestAction {
      * @param context
      */
     private void validateCommandResult(DockerCommand command, TestContext context) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Starting Docker command result validation");
-        }
+        logger.debug("Starting Docker command result validation");
 
         if (StringUtils.hasText(expectedCommandResult)) {
             if (command.getCommandResult() == null) {
@@ -114,7 +111,7 @@ public class DockerExecuteAction extends AbstractTestAction {
                 String commandResultJson = jsonMapper.writeValueAsString(command.getCommandResult());
                 JsonMessageValidationContext validationContext = new JsonMessageValidationContext();
                 getMessageValidator(context).validateMessage(new DefaultMessage(commandResultJson), new DefaultMessage(expectedCommandResult), context, Collections.singletonList(validationContext));
-                logger.info("Docker command result validation successful - all values OK!");
+                logger.debug("Docker command result validation successful - all values OK!");
             } catch (JsonProcessingException e) {
                 throw new CitrusRuntimeException(e);
             }
@@ -138,12 +135,12 @@ public class DockerExecuteAction extends AbstractTestAction {
         // try to find json message validator in registry
         Optional<MessageValidator<? extends ValidationContext>> defaultJsonMessageValidator = context.getMessageValidatorRegistry().findMessageValidator(DEFAULT_JSON_MESSAGE_VALIDATOR);
 
-        if (!defaultJsonMessageValidator.isPresent()
+        if (defaultJsonMessageValidator.isEmpty()
                 && context.getReferenceResolver().isResolvable(DEFAULT_JSON_MESSAGE_VALIDATOR)) {
             defaultJsonMessageValidator = Optional.of(context.getReferenceResolver().resolve(DEFAULT_JSON_MESSAGE_VALIDATOR, MessageValidator.class));
         }
 
-        if (!defaultJsonMessageValidator.isPresent()) {
+        if (defaultJsonMessageValidator.isEmpty()) {
             // try to find json message validator via resource path lookup
             defaultJsonMessageValidator = MessageValidator.lookup("json");
         }

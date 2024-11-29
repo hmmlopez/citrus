@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Creates new variables from given field. Either uses field name or control value as variable name.
  *
- * @author Christoph Deppisch
  * @since 2.0
  */
 public class CreateVariableValidationMatcher implements ValidationMatcher {
@@ -39,11 +38,11 @@ public class CreateVariableValidationMatcher implements ValidationMatcher {
     public void validate(String fieldName, String value, List<String> controlParameters, TestContext context) throws ValidationException {
         String name = fieldName;
 
-        if (controlParameters != null && controlParameters.size() > 0) {
+        if (controlParameters != null && !controlParameters.isEmpty()) {
             name = controlParameters.get(0);
         }
 
-        logger.info("Setting variable: " + name + " to value: " + value);
+        logger.debug("Setting variable: " + name + " to value: " + value);
 
         context.setVariable(name, value);
     }

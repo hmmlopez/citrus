@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import static org.citrusframework.actions.ReceiveMessageAction.Builder.receive;
 import static org.citrusframework.actions.SendMessageAction.Builder.send;
 
 /**
- * @author Christoph Deppisch
  * @since 3.3.1
  */
 public class JsonMappingValidationProcessorIT extends TestNGCitrusSpringSupport {
@@ -86,14 +85,10 @@ public class JsonMappingValidationProcessorIT extends TestNGCitrusSpringSupport 
                 .message()
                 .validate(JsonSupport.validate(Person.class)
                     .mapper(mapper)
-                    .validator((person, headers, context) -> {
-                        Assert.assertEquals(person.name, "christoph");
-                    }).build())
+                    .validator((person, headers, context) -> Assert.assertEquals(person.name, "christoph")).build())
                 .validate(JsonSupport.validate(Person.class)
                     .mapper(mapper)
-                    .validator((person, headers, context) -> {
-                        Assert.assertTrue(person.age > 30);
-                    }).build())
+                    .validator((person, headers, context) -> Assert.assertTrue(person.age > 30)).build())
         );
     }
 
@@ -110,14 +105,10 @@ public class JsonMappingValidationProcessorIT extends TestNGCitrusSpringSupport 
                 .message()
                 .validate(JsonSupport.validate(Person.class)
                         .mapper(mapper)
-                        .validator((person, headers, context) -> {
-                            Assert.assertTrue(person.age > 30);
-                        }).build())
+                        .validator((person, headers, context) -> Assert.assertTrue(person.age > 30)).build())
                 .validate(JsonSupport.validate(Person.class)
                         .mapper(mapper)
-                        .validator((person, headers, context) -> {
-                            Assert.assertEquals(person.name, "should fail");
-                        }).build())
+                        .validator((person, headers, context) -> Assert.assertEquals(person.name, "should fail")).build())
         );
     }
 
@@ -134,9 +125,7 @@ public class JsonMappingValidationProcessorIT extends TestNGCitrusSpringSupport 
                 .message()
                 .validate(JsonSupport.validate(Person.class)
                         .mapper(mapper)
-                        .validator((person, headers, context) -> {
-                            Assert.assertEquals(person.name, "should fail");
-                        }).build())
+                        .validator((person, headers, context) -> Assert.assertEquals(person.name, "should fail")).build())
         );
     }
 

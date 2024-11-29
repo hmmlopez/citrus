@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import org.springframework.messaging.core.DestinationResolver;
  * of type {@link org.springframework.integration.channel.QueueChannel}. Action receives
  * a list of channel objects or a list of channel names that are resolved dynamically at runtime.
  *
- * @author Christoph Deppisch
  */
 public class PurgeMessageChannelAction extends AbstractTestAction {
     /** List of channel names to be purged */
@@ -296,5 +295,4 @@ public class PurgeMessageChannelAction extends AbstractTestAction {
             return new PurgeMessageChannelAction(this);
         }
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  * Namespace handler registers bean definition parser
  * for Citrus testcase schema elements.
  *
- * @author Christoph Deppisch, Thorsten Schlathoelter
  * @since 2007
  */
 public class CitrusTestCaseNamespaceHandler extends NamespaceHandlerSupport {
@@ -42,5 +41,4 @@ public class CitrusTestCaseNamespaceHandler extends NamespaceHandlerSupport {
             registerBeanDefinitionParser(actionParserEntry.getKey(), actionParserEntry.getValue());
         }
     }
-
 }

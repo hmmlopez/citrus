@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 
 package org.citrusframework.docker.command;
 
+import com.github.dockerjava.api.model.ResponseItem;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.docker.actions.DockerExecuteAction;
 import org.citrusframework.docker.client.DockerClient;
-import com.github.dockerjava.api.command.RemoveImageCmd;
-import com.github.dockerjava.api.model.ResponseItem;
 
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class ImageRemove extends AbstractDockerCommand<ResponseItem> {
@@ -39,15 +37,15 @@ public class ImageRemove extends AbstractDockerCommand<ResponseItem> {
 
     @Override
     public void execute(DockerClient dockerClient, TestContext context) {
-        RemoveImageCmd command = dockerClient.getEndpointConfiguration().getDockerClient().removeImageCmd(getImageId(context));
+        try (var command = dockerClient.getEndpointConfiguration().getDockerClient().removeImageCmd(getImageId(context))) {
+            if (hasParameter("force")) {
+                command.withForce(Boolean.valueOf(getParameter("force", context)));
+            }
 
-        if (hasParameter("force")) {
-            command.withForce(Boolean.valueOf(getParameter("force", context)));
+            command.exec();
+
+            setCommandResult(success());
         }
-
-        command.exec();
-
-        setCommandResult(success());
     }
 
     /**
@@ -99,5 +97,4 @@ public class ImageRemove extends AbstractDockerCommand<ResponseItem> {
             return this;
         }
     }
-
 }

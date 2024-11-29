@@ -1,14 +1,11 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +19,6 @@ package org.citrusframework.message.builder;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,16 +41,16 @@ import org.citrusframework.message.WithPayloadBuilder;
 import org.citrusframework.spi.ReferenceResolver;
 import org.citrusframework.spi.ReferenceResolverAware;
 import org.citrusframework.spi.Resource;
-import org.citrusframework.util.FileUtils;
 import org.citrusframework.validation.builder.DefaultMessageBuilder;
 import org.citrusframework.validation.builder.StaticMessageBuilder;
 import org.citrusframework.variable.VariableExtractor;
 import org.citrusframework.variable.VariableExtractorAdapter;
 import org.citrusframework.variable.dictionary.DataDictionary;
 
-/**
- * @author Christoph Deppisch
- */
+import static java.util.Collections.singletonMap;
+import static org.citrusframework.util.FileUtils.getDefaultCharset;
+import static org.citrusframework.util.FileUtils.readToString;
+
 public abstract class MessageBuilderSupport<T extends TestAction, B extends MessageBuilderSupport.MessageActionBuilder<T, S, B>, S extends MessageBuilderSupport<T, B, S>>
         implements TestActionBuilder<T>, ReferenceResolverAware {
     protected final S self;
@@ -130,8 +126,8 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
      * @return The modified message action builder
      */
     public S body(final MessagePayloadBuilder payloadBuilder) {
-        if (messageBuilder instanceof WithPayloadBuilder) {
-            ((WithPayloadBuilder) messageBuilder).setPayloadBuilder(payloadBuilder);
+        if (messageBuilder instanceof WithPayloadBuilder withPayloadBuilder) {
+            withPayloadBuilder.setPayloadBuilder(payloadBuilder);
         } else {
             throw new CitrusRuntimeException("Unable to set payload builder on message builder type: " + messageBuilder.getClass());
         }
@@ -154,7 +150,7 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
      * @return The modified message action builder
      */
     public S body(final Resource payloadResource) {
-        return body(payloadResource, FileUtils.getDefaultCharset());
+        return body(payloadResource, getDefaultCharset());
     }
 
     /**
@@ -165,7 +161,7 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
      */
     public S body(final Resource payloadResource, final Charset charset) {
         try {
-            body(FileUtils.readToString(payloadResource, charset));
+            body(readToString(payloadResource, charset));
         } catch (IOException e) {
             throw new CitrusRuntimeException("Failed to read payload resource", e);
         }
@@ -179,8 +175,8 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
      * @return The modified message action builder
      */
     public S header(final String name, final Object value) {
-        if (messageBuilder instanceof WithHeaderBuilder) {
-            ((WithHeaderBuilder) messageBuilder).addHeaderBuilder(new DefaultHeaderBuilder(Collections.singletonMap(name, value)));
+        if (messageBuilder instanceof WithHeaderBuilder withHeaderBuilder) {
+            withHeaderBuilder.addHeaderBuilder(new DefaultHeaderBuilder(singletonMap(name, value)));
         } else {
             throw new CitrusRuntimeException("Unable to set message header on builder type: " + messageBuilder.getClass());
         }
@@ -193,8 +189,8 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
      * @return The modified message action builder
      */
     public S headers(final Map<String, Object> headers) {
-        if (messageBuilder instanceof WithHeaderBuilder) {
-            ((WithHeaderBuilder) messageBuilder).addHeaderBuilder(new DefaultHeaderBuilder(headers));
+        if (messageBuilder instanceof WithHeaderBuilder withHeaderBuilder) {
+            withHeaderBuilder.addHeaderBuilder(new DefaultHeaderBuilder(headers));
         } else {
             throw new CitrusRuntimeException("Unable to set message header on builder type: " + messageBuilder.getClass());
         }
@@ -220,8 +216,8 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
      * @return The modified message action builder
      */
     public S header(final MessageHeaderDataBuilder headerDataBuilder) {
-        if (messageBuilder instanceof WithHeaderBuilder) {
-            ((WithHeaderBuilder) messageBuilder).addHeaderBuilder(headerDataBuilder);
+        if (messageBuilder instanceof WithHeaderBuilder withHeaderBuilder) {
+            withHeaderBuilder.addHeaderBuilder(headerDataBuilder);
         } else {
             throw new CitrusRuntimeException("Unable to set message header data on builder type: " + messageBuilder.getClass());
         }
@@ -235,7 +231,7 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
      * @return The modified message action builder
      */
     public S header(final Resource resource) {
-        return header(resource, FileUtils.getDefaultCharset());
+        return header(resource, getDefaultCharset());
     }
 
     /**
@@ -247,8 +243,8 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
      */
     public S header(final Resource resource, final Charset charset) {
         try {
-            if (messageBuilder instanceof WithHeaderBuilder) {
-                ((WithHeaderBuilder) messageBuilder).addHeaderBuilder(new DefaultHeaderDataBuilder(FileUtils.readToString(resource, charset)));
+            if (messageBuilder instanceof WithHeaderBuilder withHeaderBuilder) {
+                withHeaderBuilder.addHeaderBuilder(new DefaultHeaderDataBuilder(readToString(resource, charset)));
             } else {
                 throw new CitrusRuntimeException("Unable to set message header data on builder type: " + messageBuilder.getClass());
             }
@@ -264,8 +260,8 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
      * @return The modified message action builder
      */
     public S name(final String name) {
-        if (messageBuilder instanceof Named) {
-            ((Named) messageBuilder).setName(name);
+        if (messageBuilder instanceof Named named) {
+            named.setName(name);
         } else {
             throw new CitrusRuntimeException("Unable to set message name on builder type: " + messageBuilder.getClass());
         }
@@ -449,6 +445,13 @@ public abstract class MessageBuilderSupport<T extends TestAction, B extends Mess
          */
         public M message(final Message message) {
             return getMessageBuilderSupport().from(message);
+        }
+
+        /**
+         * Adds message processor on the message as fluent builder.
+         */
+        public M extract(VariableExtractor.Builder<?, ?> builder) {
+            return message().extract(builder);
         }
 
         /**

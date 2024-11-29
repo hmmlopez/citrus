@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.citrusframework.selenium.endpoint.SeleniumBrowserConfiguration;
 import org.citrusframework.selenium.endpoint.SeleniumHeaders;
 import org.citrusframework.testng.AbstractTestNGUnitTest;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.Browser;
@@ -34,7 +33,6 @@ import org.testng.annotations.Test;
 import static org.mockito.Mockito.*;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
 public class StartBrowserActionTest extends AbstractTestNGUnitTest {
@@ -74,12 +72,9 @@ public class StartBrowserActionTest extends AbstractTestNGUnitTest {
         when(seleniumBrowser.isStarted()).thenReturn(false);
         when(seleniumBrowserConfiguration.getStartPageUrl()).thenReturn("http://localhost:8080");
 
-        doAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Assert.assertEquals(invocation.getArguments()[0].toString(), "http://localhost:8080");
-                return null;
-            }
+        doAnswer((Answer<Object>) invocation -> {
+            Assert.assertEquals(invocation.getArguments()[0].toString(), "http://localhost:8080");
+            return null;
         }).when(navigation).to(any(URL.class));
 
         StartBrowserAction action =  new StartBrowserAction.Builder()
@@ -123,5 +118,4 @@ public class StartBrowserActionTest extends AbstractTestNGUnitTest {
         verify(seleniumBrowser).stop();
         verify(seleniumBrowser).start();
     }
-
 }

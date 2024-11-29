@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.citrusframework.endpoint;
 
 /**
  * Abstract endpoint configuration provides basic properties such as message listeners.
- * @author Christoph Deppisch
  * @since 1.4
  */
 public abstract class AbstractEndpointConfiguration implements EndpointConfiguration {
@@ -41,5 +40,4 @@ public abstract class AbstractEndpointConfiguration implements EndpointConfigura
     public void setTimeout(long timeout) {
         this.timeout = timeout;
     }
-
 }

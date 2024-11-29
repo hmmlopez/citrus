@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,14 @@
 
 package org.citrusframework.docker.command;
 
+import com.github.dockerjava.api.command.InspectImageResponse;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.docker.actions.DockerExecuteAction;
 import org.citrusframework.docker.client.DockerClient;
-import com.github.dockerjava.api.command.InspectImageCmd;
-import com.github.dockerjava.api.command.InspectImageResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class ImageInspect extends AbstractDockerCommand<InspectImageResponse> {
@@ -42,11 +40,12 @@ public class ImageInspect extends AbstractDockerCommand<InspectImageResponse> {
 
     @Override
     public void execute(DockerClient dockerClient, TestContext context) {
-        InspectImageCmd command = dockerClient.getEndpointConfiguration().getDockerClient().inspectImageCmd(getImageId(context));
-        InspectImageResponse response = command.exec();
+        try (var command = dockerClient.getEndpointConfiguration().getDockerClient().inspectImageCmd(getImageId(context))) {
+            InspectImageResponse response = command.exec();
 
-        setCommandResult(response);
-        logger.debug(response.toString());
+            setCommandResult(response);
+            logger.debug(response.toString());
+        }
     }
 
     /**

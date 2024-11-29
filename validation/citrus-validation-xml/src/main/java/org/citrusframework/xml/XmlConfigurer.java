@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.w3c.dom.ls.LSSerializer;
  * Class is loaded with Spring application context in Citrus. When loaded automatically initializes XML utilities
  * with this XML processing configuration. Configuration is pushed to XML utility classes after properties are set.
  *
- * @author Christoph Deppisch
  * @since 2.6.2
  */
 public class XmlConfigurer implements InitializingPhase {
@@ -144,7 +143,6 @@ public class XmlConfigurer implements InitializingPhase {
     public LSOutput createLSOutput() {
         return domImpl.createLSOutput();
     }
-
 
     /**
      * Creates LSResourceResolver from dom implementation.

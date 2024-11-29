@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package org.citrusframework.kafka.config.handler;
 
-import org.citrusframework.kafka.config.xml.*;
+import org.citrusframework.kafka.config.xml.KafkaEmbeddedServerParser;
+import org.citrusframework.kafka.config.xml.KafkaEndpointParser;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 
 /**
- * @author Christoph Deppisch
  * @since 2.8
  */
 public class CitrusKafkaConfigNamespaceHandler extends NamespaceHandlerSupport {

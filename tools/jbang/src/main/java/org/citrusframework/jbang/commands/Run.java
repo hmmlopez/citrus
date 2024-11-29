@@ -1,12 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright the original author or authors.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,6 +39,7 @@ import org.citrusframework.jbang.LoggingSupport;
 import org.citrusframework.main.TestEngine;
 import org.citrusframework.main.TestRunConfiguration;
 import org.citrusframework.report.TestReporter;
+import org.citrusframework.report.TestReporterSettings;
 import org.citrusframework.report.TestResults;
 import org.citrusframework.util.FileUtils;
 import picocli.CommandLine.Command;
@@ -68,7 +68,7 @@ public class Run extends CitrusCommand {
 
     @Option(names = { "--logging-level" }, completionCandidates = LoggingSupport.LoggingLevels.class,
             defaultValue = "info", description = "Logging level")
-    private String loggingLevel;
+    private String loggingLevel = "info";
 
     @Option(names = { "--logging-color" }, defaultValue = "true", description = "Use colored logging")
     private boolean loggingColor = true;
@@ -90,6 +90,7 @@ public class Run extends CitrusCommand {
 
     private int run() throws Exception {
         File work = new File(WORK_DIR);
+        TestReporterSettings.setReportDirectory(WORK_DIR + "/citrus-reports");
         removeDir(work);
         if (!work.mkdirs()) {
             System.err.println("Failed to create working directory " + WORK_DIR);
@@ -208,11 +209,7 @@ public class Run extends CitrusCommand {
 
         String on = FileUtils.getBaseName(name);
         on = on.toLowerCase(Locale.ROOT);
-        if (on.endsWith("readme")) {
-            return true;
-        }
-
-        return false;
+        return on.endsWith("readme");
     }
 
     private static void removeDir(File d) {

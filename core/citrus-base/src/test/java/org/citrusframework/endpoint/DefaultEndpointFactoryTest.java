@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,12 @@ import org.testng.annotations.Test;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class DefaultEndpointFactoryTest {
 
     private ReferenceResolver referenceResolver = Mockito.mock(ReferenceResolver.class);
 
     @Test
-    public void testResolveDirectEndpoint() throws Exception {
+    public void testResolveDirectEndpoint() {
         reset(referenceResolver);
         when(referenceResolver.resolve("myEndpoint", Endpoint.class)).thenReturn(Mockito.mock(Endpoint.class));
         TestContext context = new TestContext();
@@ -53,8 +50,8 @@ public class DefaultEndpointFactoryTest {
     }
 
     @Test
-    public void testResolveCustomEndpoint() throws Exception {
-        Map<String, EndpointComponent> components = new HashMap<String, EndpointComponent>();
+    public void testResolveCustomEndpoint() {
+        Map<String, EndpointComponent> components = new HashMap<>();
         components.put("custom", new DirectEndpointComponent());
 
         reset(referenceResolver);
@@ -70,8 +67,8 @@ public class DefaultEndpointFactoryTest {
     }
 
     @Test
-    public void testOverwriteEndpointComponent() throws Exception {
-        Map<String, EndpointComponent> components = new HashMap<String, EndpointComponent>();
+    public void testOverwriteEndpointComponent() {
+        Map<String, EndpointComponent> components = new HashMap<>();
         components.put("jms", new DirectEndpointComponent());
 
         reset(referenceResolver);
@@ -87,7 +84,7 @@ public class DefaultEndpointFactoryTest {
     }
 
     @Test
-    public void testResolveUnknownEndpointComponent() throws Exception {
+    public void testResolveUnknownEndpointComponent() {
         reset(referenceResolver);
         when(referenceResolver.resolveAll(EndpointComponent.class)).thenReturn(Collections.emptyMap());
         TestContext context = new TestContext();
@@ -103,7 +100,7 @@ public class DefaultEndpointFactoryTest {
     }
 
     @Test
-    public void testResolveInvalidEndpointUri() throws Exception {
+    public void testResolveInvalidEndpointUri() {
         reset(referenceResolver);
         TestContext context = new TestContext();
         context.setReferenceResolver(referenceResolver);

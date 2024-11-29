@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.citrusframework.http.config.xml;
 
 import java.util.Map;
-
 import org.citrusframework.TestActor;
 import org.citrusframework.http.client.HttpClient;
 import org.citrusframework.http.client.HttpResponseErrorHandler;
@@ -33,9 +32,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
 public class HttpClientParserTest extends AbstractBeanDefinitionParserTest {
 
     @Test
@@ -60,6 +56,7 @@ public class HttpClientParserTest extends AbstractBeanDefinitionParserTest {
         Assert.assertEquals(httpClient.getEndpointConfiguration().getCorrelator().getClass(), DefaultMessageCorrelator.class);
         Assert.assertEquals(httpClient.getEndpointConfiguration().getTimeout(), 5000L);
         Assert.assertFalse(httpClient.getEndpointConfiguration().isHandleCookies());
+        Assert.assertFalse(httpClient.getEndpointConfiguration().isDisableRedirectHandling());
 
         // 2nd message sender
         httpClient = clients.get("httpClient2");
@@ -75,6 +72,7 @@ public class HttpClientParserTest extends AbstractBeanDefinitionParserTest {
         Assert.assertEquals(httpClient.getEndpointConfiguration().getTimeout(), 10000L);
         Assert.assertFalse(httpClient.getEndpointConfiguration().isDefaultAcceptHeader());
         Assert.assertTrue(httpClient.getEndpointConfiguration().isHandleCookies());
+        Assert.assertTrue(httpClient.getEndpointConfiguration().isDisableRedirectHandling());
         Assert.assertEquals(httpClient.getEndpointConfiguration().getErrorHandlingStrategy(), ErrorHandlingStrategy.THROWS_EXCEPTION);
         Assert.assertEquals(httpClient.getEndpointConfiguration().getErrorHandler(), beanDefinitionContext.getBean("errorHandler"));
         Assert.assertEquals(httpClient.getEndpointConfiguration().getBinaryMediaTypes().size(), 2L);
@@ -117,5 +115,4 @@ public class HttpClientParserTest extends AbstractBeanDefinitionParserTest {
             Assert.assertTrue(ObjectHelper.assertNotNull(e.getMessage()).contains("One of the properties 'request-url' or 'endpoint-resolver' is required"));
         }
     }
-
 }

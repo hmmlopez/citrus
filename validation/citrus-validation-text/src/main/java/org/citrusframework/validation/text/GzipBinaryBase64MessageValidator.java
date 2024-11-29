@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.citrusframework.validation.context.ValidationContext;
  * Message validator automatically converts received binary data message payload to base64 String. Assumes control
  * message payload is also base64 encoded String so we can compare the text data with normal plain text validation.
  *
- * @author Christoph Deppisch
  */
 public class GzipBinaryBase64MessageValidator extends BinaryBase64MessageValidator {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,6 @@
 
 package org.citrusframework.kafka.endpoint;
 
-import java.util.Collections;
-import java.util.concurrent.Future;
-
-import org.citrusframework.exceptions.CitrusRuntimeException;
-import org.citrusframework.kafka.message.KafkaMessage;
-import org.citrusframework.message.Message;
-import org.citrusframework.testng.AbstractTestNGUnitTest;
-import org.citrusframework.util.SocketUtils;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -32,19 +24,24 @@ import org.apache.kafka.clients.producer.internals.FutureRecordMetadata;
 import org.apache.kafka.clients.producer.internals.ProduceRequestResult;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.utils.Time;
+import org.citrusframework.exceptions.CitrusRuntimeException;
+import org.citrusframework.kafka.message.KafkaMessage;
+import org.citrusframework.message.Message;
+import org.citrusframework.testng.AbstractTestNGUnitTest;
+import org.citrusframework.util.SocketUtils;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.Collections;
+import java.util.concurrent.Future;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class KafkaProducerTest extends AbstractTestNGUnitTest {
 
     private final KafkaProducer kafkaProducer = Mockito.mock(KafkaProducer.class);
@@ -139,5 +136,4 @@ public class KafkaProducerTest extends AbstractTestNGUnitTest {
 
         endpoint.createProducer().send(null, context);
     }
-
 }

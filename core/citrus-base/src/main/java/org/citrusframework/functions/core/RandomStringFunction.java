@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.InvalidFunctionUsageException;
 import org.citrusframework.functions.Function;
 
+import static java.lang.Boolean.parseBoolean;
+import static java.lang.Integer.parseInt;
+
 /**
  * Function generating a random string containing alphabetic characters. Arguments specify
  * upper and lower case mode.
  *
- * @author Christoph Deppisch
  */
 public class RandomStringFunction implements Function {
     private static Random generator = new Random(System.currentTimeMillis());
@@ -74,7 +76,7 @@ public class RandomStringFunction implements Function {
             throw new InvalidFunctionUsageException("Too many parameters for function");
         }
 
-        numberOfLetters = Integer.valueOf(parameterList.get(0));
+        numberOfLetters = parseInt(parameterList.get(0));
         if (numberOfLetters < 0) {
             throw new InvalidFunctionUsageException("Invalid parameter definition. Number of letters must not be positive non-zero integer value");
         }
@@ -84,7 +86,7 @@ public class RandomStringFunction implements Function {
         }
 
         if (parameterList.size() > 2) {
-            includeNumbers = Boolean.valueOf(parameterList.get(2));
+            includeNumbers = parseBoolean(parameterList.get(2));
         }
 
         if (notationMethod.equals(UPPERCASE)) {

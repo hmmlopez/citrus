@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
 package org.citrusframework.ws.actions;
 
 import org.citrusframework.TestAction;
-import org.citrusframework.TestActionBuilder;
+import org.citrusframework.spi.AbstractReferenceResolverAwareTestActionBuilder;
 import org.citrusframework.spi.ReferenceResolver;
-import org.citrusframework.spi.ReferenceResolverAware;
 import org.citrusframework.util.ObjectHelper;
 import org.citrusframework.ws.client.WebServiceClient;
 import org.citrusframework.ws.server.WebServiceServer;
@@ -27,15 +26,9 @@ import org.citrusframework.ws.server.WebServiceServer;
 /**
  * Action executes soap client and server operations.
  *
- * @author Christoph Deppisch
  * @since 2.6
  */
-public class SoapActionBuilder implements TestActionBuilder.DelegatingTestActionBuilder<TestAction>, ReferenceResolverAware {
-
-	/** Bean reference resolver */
-	private ReferenceResolver referenceResolver;
-
-	private TestActionBuilder<?> delegate;
+public class SoapActionBuilder extends AbstractReferenceResolverAwareTestActionBuilder<TestAction> {
 
 	/**
 	 * Static entrance method for the SOAP fluent action builder.
@@ -98,25 +91,5 @@ public class SoapActionBuilder implements TestActionBuilder.DelegatingTestAction
 	public TestAction build() {
 		ObjectHelper.assertNotNull(delegate, "Missing delegate action to build");
 		return delegate.build();
-	}
-
-	@Override
-	public TestActionBuilder<?> getDelegate() {
-		return delegate;
-	}
-
-	/**
-	 * Specifies the referenceResolver.
-	 * @param referenceResolver
-	 */
-	@Override
-	public void setReferenceResolver(ReferenceResolver referenceResolver) {
-		if (referenceResolver == null) {
-			this.referenceResolver = referenceResolver;
-
-			if (delegate instanceof ReferenceResolverAware) {
-				((ReferenceResolverAware) delegate).setReferenceResolver(referenceResolver);
-			}
-		}
 	}
 }

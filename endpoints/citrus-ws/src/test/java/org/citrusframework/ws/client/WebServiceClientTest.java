@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,6 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.*;
 
-/**
- * @author Christoph Deppisch
- */
 public class WebServiceClientTest extends AbstractTestNGUnitTest {
 
     private WebServiceTemplate webServiceTemplate = Mockito.mock(WebServiceTemplate.class);
@@ -120,7 +117,6 @@ public class WebServiceClientTest extends AbstractTestNGUnitTest {
         SoapFault soapFault = Mockito.mock(SoapFault.class);
 
         reset(webServiceTemplate, soapFaultMessage, soapBody, soapFault);
-
 
         when(soapFaultMessage.getSoapBody()).thenReturn(soapBody);
         when(soapFaultMessage.getFaultReason()).thenReturn("Internal server error");

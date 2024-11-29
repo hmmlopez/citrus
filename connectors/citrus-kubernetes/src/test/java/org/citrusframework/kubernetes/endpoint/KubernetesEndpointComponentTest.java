@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,11 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
 public class KubernetesEndpointComponentTest {
 
-    private TestContext context = new TestContext();
+    private final TestContext context = new TestContext();
 
     @Test
     public void testCreateClientEndpoint() throws Exception {
@@ -62,7 +61,7 @@ public class KubernetesEndpointComponentTest {
 
         Assert.assertEquals(endpoint.getClass(), KubernetesClient.class);
 
-        Assert.assertEquals(((KubernetesClient)endpoint).getEndpointConfiguration().getKubernetesClientConfig().getMasterUrl(), "https://localhost:8443");
+        Assert.assertEquals(((KubernetesClient)endpoint).getEndpointConfiguration().getKubernetesClientConfig().getMasterUrl(), "https://localhost:8443/");
         Assert.assertEquals(((KubernetesClient)endpoint).getEndpointConfiguration().getKubernetesClientConfig().getNamespace(), "myNamespace");
         Assert.assertEquals(((KubernetesClient) endpoint).getEndpointConfiguration().getTimeout(), 10000L);
     }
@@ -85,5 +84,4 @@ public class KubernetesEndpointComponentTest {
     public void testLookupByQualifier() {
         Assert.assertTrue(EndpointComponent.lookup("k8s").isPresent());
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 
 package org.citrusframework.kubernetes.command;
 
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.api.model.*;
-import io.fabric8.kubernetes.client.dsl.ClientMixedOperation;
-import io.fabric8.kubernetes.client.dsl.ClientPodResource;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
-public class DeletePod extends AbstractDeleteCommand<DeleteResult, Pod, DeletePod> {
+public class DeletePod extends AbstractDeleteCommand<Pod, PodList, PodResource, DeletePod> {
 
     /**
      * Default constructor initializing the command name.
@@ -36,7 +36,7 @@ public class DeletePod extends AbstractDeleteCommand<DeleteResult, Pod, DeletePo
     }
 
     @Override
-    protected ClientMixedOperation<Pod, PodList, DoneablePod, ClientPodResource<Pod, DoneablePod>> operation(KubernetesClient kubernetesClient, TestContext context) {
+    protected MixedOperation<Pod, PodList, PodResource> operation(KubernetesClient kubernetesClient, TestContext context) {
         return kubernetesClient.getClient().pods();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import java.util.Optional;
  * contains a list of all available tests with meta information. Excel documentation creates a table of all available tests with
  * meta information such as name, author, status and so on.
  *
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 @Mojo(name = "generate-docs", defaultPhase = LifecyclePhase.PROCESS_TEST_RESOURCES)

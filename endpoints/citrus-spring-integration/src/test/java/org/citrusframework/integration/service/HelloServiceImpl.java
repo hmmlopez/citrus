@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import org.citrusframework.integration.service.model.HelloResponse;
 import org.springframework.messaging.Message;
 import org.springframework.integration.support.MessageBuilder;
 
-/**
- * @author Christoph Deppisch
- */
 public class HelloServiceImpl extends AbstractMarshallingHelloService {
 
     public Message<HelloResponse> sayHello(Message<HelloRequest> request) {
@@ -32,13 +29,12 @@ public class HelloServiceImpl extends AbstractMarshallingHelloService {
         response.setCorrelationId(request.getPayload().getCorrelationId());
         response.setUser("HelloService");
         response.setText("Hello " + request.getPayload().getUser());
-        
+
         MessageBuilder<HelloResponse> builder = MessageBuilder.withPayload(response);
         builder.setHeader("CorrelationId", request.getHeaders().get("CorrelationId"));
         builder.setHeader("Operation", "sayHello");
         builder.setHeader("Type", "response");
-        
+
         return builder.build();
     }
-
 }

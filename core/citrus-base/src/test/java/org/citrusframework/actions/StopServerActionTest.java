@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class StopServerActionTest extends UnitTestSupport {
 
     @Test
@@ -81,7 +78,7 @@ public class StopServerActionTest extends UnitTestSupport {
         when(server1.getName()).thenReturn("MyServer1");
         when(server2.getName()).thenReturn("MyServer2");
 
-        List<Server> serverList = new ArrayList<Server>();
+        List<Server> serverList = new ArrayList<>();
         serverList.add(server1);
         serverList.add(server2);
 

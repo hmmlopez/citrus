@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.w3c.dom.ls.LSResourceResolver;
 /**
  * Very basic LSResolver implementation for resolving dtd resources by their systemId.
  *
- * @author Christoph Deppisch
  */
 public class LSResolverImpl implements LSResourceResolver {
     /** DOM implementation */

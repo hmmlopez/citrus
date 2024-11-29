@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,20 @@
 
 package org.citrusframework.jmx.model;
 
-import org.citrusframework.jmx.mbean.*;
+import org.citrusframework.jmx.mbean.HelloBean;
+import org.citrusframework.jmx.mbean.HelloBeanImpl;
+import org.citrusframework.jmx.mbean.NewsBean;
+import org.citrusframework.jmx.mbean.NewsBeanImpl;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.management.*;
-import java.util.Arrays;
+import javax.management.MBeanInfo;
+import javax.management.ObjectName;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 /**
- * @author Christoph Deppisch
  * @since 2.5
  */
 public class ManagedBeanDefinitionTest {
@@ -124,7 +129,7 @@ public class ManagedBeanDefinitionTest {
         ManagedBeanInvocation.Attribute att2 = new ManagedBeanInvocation.Attribute();
         att2.setType(Boolean.class.getName());
         att2.setName("standard");
-        definition.setAttributes(Arrays.asList(att1, att2));
+        definition.setAttributes(List.of(att1, att2));
 
         ManagedBeanInvocation.Operation op1 = new ManagedBeanInvocation.Operation();
         op1.setName("operation");
@@ -132,7 +137,7 @@ public class ManagedBeanDefinitionTest {
         OperationParam p1 = new OperationParam();
         p1.setType(Integer.class.getName());
         op1.getParameter().getParameter().add(p1);
-        definition.setOperations(Arrays.asList(op1));
+        definition.setOperations(singletonList(op1));
 
         MBeanInfo info = definition.createMBeanInfo();
 
@@ -149,5 +154,4 @@ public class ManagedBeanDefinitionTest {
         Assert.assertEquals(info.getOperations()[0].getSignature()[0].getName(), "p1");
         Assert.assertNull(info.getOperations()[0].getReturnType());
     }
-
 }

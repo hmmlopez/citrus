@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * @author Christoph Deppisch
  * @since 2.5
  */
 public class HttpClientConfigParser implements AnnotationConfigParser<HttpClientConfig, HttpClient> {
@@ -83,6 +82,7 @@ public class HttpClientConfigParser implements AnnotationConfigParser<HttpClient
 
         builder.defaultAcceptHeader(annotation.defaultAcceptHeader());
         builder.handleCookies(annotation.handleCookies());
+        builder.disableRedirectHandling(annotation.disableRedirectHandling());
         builder.charset(annotation.charset());
         builder.contentType(annotation.contentType());
         builder.pollingInterval(annotation.pollingInterval());

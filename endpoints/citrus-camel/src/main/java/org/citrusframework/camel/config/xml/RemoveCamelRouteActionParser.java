@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.citrusframework.camel.config.xml;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.citrusframework.camel.actions.RemoveCamelRouteAction;
@@ -29,7 +28,6 @@ import org.w3c.dom.Element;
 /**
  * Bean definition parser for starting Camel routes action in test case.
  *
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class RemoveCamelRouteActionParser extends AbstractCamelRouteActionParser {
@@ -38,9 +36,9 @@ public class RemoveCamelRouteActionParser extends AbstractCamelRouteActionParser
     public void parse(BeanDefinitionBuilder beanDefinition, Element element, ParserContext parserContext) {
         List<String> routeIds = new ArrayList<>();
         List<?> routeElements = DomUtils.getChildElementsByTagName(element, "route");
-        if (routeElements.size() > 0) {
-            for (Iterator<?> iter = routeElements.iterator(); iter.hasNext();) {
-                Element routeElement = (Element) iter.next();
+        if (!routeElements.isEmpty()) {
+            for (Object o : routeElements) {
+                Element routeElement = (Element) o;
                 routeIds.add(routeElement.getAttribute("id"));
             }
 

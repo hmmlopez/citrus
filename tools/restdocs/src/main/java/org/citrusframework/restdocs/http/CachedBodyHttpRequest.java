@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
 
 import java.net.URI;
+import java.util.Map;
 
 /**
  * Helper Http request wrapper implementation provides access to the request body for usage
  * in RestDoc converters. Delegates other method calls to original Http request instance.
  *
- * @author Christoph Deppisch
  * @since 2.6
  */
 public class CachedBodyHttpRequest implements HttpRequest {
@@ -44,6 +44,11 @@ public class CachedBodyHttpRequest implements HttpRequest {
     }
 
     @Override
+    public HttpHeaders getHeaders() {
+        return delegate.getHeaders();
+    }
+
+    @Override
     public HttpMethod getMethod() {
         return delegate.getMethod();
     }
@@ -54,7 +59,7 @@ public class CachedBodyHttpRequest implements HttpRequest {
     }
 
     @Override
-    public HttpHeaders getHeaders() {
-        return delegate.getHeaders();
+    public Map<String, Object> getAttributes() {
+        return delegate.getAttributes();
     }
 }

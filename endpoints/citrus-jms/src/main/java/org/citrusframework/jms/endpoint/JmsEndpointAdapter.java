@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
  * on reply destination. Provides jms endpoint for clients to connect to destinations in order to provide proper
  * response message.
  *
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class JmsEndpointAdapter extends AbstractEndpointAdapter {

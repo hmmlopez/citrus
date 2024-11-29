@@ -1,11 +1,11 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,11 +36,9 @@ import org.testng.annotations.Test;
 
 import static org.citrusframework.dsl.PathExpressionSupport.path;
 import static org.citrusframework.zookeeper.actions.ZooExecuteAction.Builder.zookeeper;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * @author Martin Maher
  * @since 2.5
  */
 public class ZooExecuteTestActionBuilderTest extends UnitTestSupport {
@@ -173,7 +171,6 @@ public class ZooExecuteTestActionBuilderTest extends UnitTestSupport {
         Assert.assertEquals(action.getName(), actionName);
         Assert.assertEquals(action.getCommand().getClass(), org.citrusframework.zookeeper.command.SetData.class);
     }
-
 
     private Stat prepareStatMock() {
         Stat stat = Mockito.mock(Stat.class);

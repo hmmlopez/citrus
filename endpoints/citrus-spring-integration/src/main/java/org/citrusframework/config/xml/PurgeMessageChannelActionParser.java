@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import org.w3c.dom.Element;
 /**
  * Bean definition parser for purge-channel action in test case.
  *
- * @author Christoph Deppisch
  */
 public class PurgeMessageChannelActionParser implements BeanDefinitionParser {
 
@@ -55,8 +54,8 @@ public class PurgeMessageChannelActionParser implements BeanDefinitionParser {
             BeanDefinitionParserUtils.setPropertyReference(beanDefinition, element.getAttribute("message-selector"), "messageSelector");
         }
 
-        List<String> channelNames = new ArrayList<String>();
-        ManagedList<BeanDefinition> channelRefs = new ManagedList<BeanDefinition>();
+        List<String> channelNames = new ArrayList<>();
+        ManagedList<BeanDefinition> channelRefs = new ManagedList<>();
         List<Element> channelElements = DomUtils.getChildElementsByTagName(element, "channel");
         for (Element channel : channelElements) {
             String channelName = channel.getAttribute("name");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ import org.citrusframework.messaging.Producer;
 import org.citrusframework.ws.UnitTestSupport;
 import org.citrusframework.ws.message.SoapFault;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -37,9 +35,6 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class SendSoapFaultActionTest extends UnitTestSupport {
 
     private Endpoint endpoint = Mockito.mock(Endpoint.class);
@@ -61,18 +56,15 @@ public class SendSoapFaultActionTest extends UnitTestSupport {
         when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
         when(endpointConfiguration.getTimeout()).thenReturn(5000L);
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Message sentMessage = (Message)invocation.getArguments()[0];
-                Assert.assertTrue(sentMessage instanceof SoapFault);
+        doAnswer(invocation -> {
+            Message sentMessage = (Message)invocation.getArguments()[0];
+            Assert.assertTrue(sentMessage instanceof SoapFault);
 
-                SoapFault soapFault = (SoapFault) sentMessage;
-                Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
-                Assert.assertEquals(soapFault.getFaultString(), "Internal server error");
-                Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
-                return null;
-            }
+            SoapFault soapFault = (SoapFault) sentMessage;
+            Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
+            Assert.assertEquals(soapFault.getFaultString(), "Internal server error");
+            Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
+            return null;
         }).when(producer).send(any(Message.class), any(TestContext.class));
 
         when(endpoint.getActor()).thenReturn(null);
@@ -97,19 +89,16 @@ public class SendSoapFaultActionTest extends UnitTestSupport {
         when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
         when(endpointConfiguration.getTimeout()).thenReturn(5000L);
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Message sentMessage = (Message)invocation.getArguments()[0];
-                Assert.assertTrue(sentMessage instanceof SoapFault);
+        doAnswer(invocation -> {
+            Message sentMessage = (Message)invocation.getArguments()[0];
+            Assert.assertTrue(sentMessage instanceof SoapFault);
 
-                SoapFault soapFault = (SoapFault) sentMessage;
-                Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
-                Assert.assertEquals(soapFault.getFaultString(), "Internal server error");
-                Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
-                Assert.assertEquals(soapFault.getFaultActor(), "SERVER");
-                return null;
-            }
+            SoapFault soapFault = (SoapFault) sentMessage;
+            Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
+            Assert.assertEquals(soapFault.getFaultString(), "Internal server error");
+            Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
+            Assert.assertEquals(soapFault.getFaultActor(), "SERVER");
+            return null;
         }).when(producer).send(any(Message.class), any(TestContext.class));
 
         when(endpoint.getActor()).thenReturn(null);
@@ -132,18 +121,15 @@ public class SendSoapFaultActionTest extends UnitTestSupport {
         when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
         when(endpointConfiguration.getTimeout()).thenReturn(5000L);
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Message sentMessage = (Message)invocation.getArguments()[0];
-                Assert.assertTrue(sentMessage instanceof SoapFault);
+        doAnswer(invocation -> {
+            Message sentMessage = (Message)invocation.getArguments()[0];
+            Assert.assertTrue(sentMessage instanceof SoapFault);
 
-                SoapFault soapFault = (SoapFault) sentMessage;
-                Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
-                Assert.assertNull(soapFault.getFaultString());
-                Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
-                return null;
-            }
+            SoapFault soapFault = (SoapFault) sentMessage;
+            Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
+            Assert.assertNull(soapFault.getFaultString());
+            Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
+            return null;
         }).when(producer).send(any(Message.class), any(TestContext.class));
 
         when(endpoint.getActor()).thenReturn(null);
@@ -170,18 +156,15 @@ public class SendSoapFaultActionTest extends UnitTestSupport {
         when(endpoint.getEndpointConfiguration()).thenReturn(endpointConfiguration);
         when(endpointConfiguration.getTimeout()).thenReturn(5000L);
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Message sentMessage = (Message)invocation.getArguments()[0];
-                Assert.assertTrue(sentMessage instanceof SoapFault);
+        doAnswer(invocation -> {
+            Message sentMessage = (Message)invocation.getArguments()[0];
+            Assert.assertTrue(sentMessage instanceof SoapFault);
 
-                SoapFault soapFault = (SoapFault) sentMessage;
-                Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
-                Assert.assertEquals(soapFault.getFaultString(), "Internal server error");
-                Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
-                return null;
-            }
+            SoapFault soapFault = (SoapFault) sentMessage;
+            Assert.assertEquals(soapFault.getFaultCode(), "{http://citrusframework.org}ws:TEC-1000");
+            Assert.assertEquals(soapFault.getFaultString(), "Internal server error");
+            Assert.assertEquals(soapFault.getLocale(), Locale.ENGLISH);
+            return null;
         }).when(producer).send(any(Message.class), any(TestContext.class));
 
         when(endpoint.getActor()).thenReturn(null);

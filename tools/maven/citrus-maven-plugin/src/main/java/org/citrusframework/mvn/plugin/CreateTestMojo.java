@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import org.codehaus.plexus.components.interactivity.PrompterException;
  *
  * Mojo offers an interactive mode, where the plugin prompts for parameters during execution.
  *
- * @author Christoph Deppisch
  * @since 2.7.4
  */
 @Mojo(name = "create-test")

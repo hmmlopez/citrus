@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 
 package org.citrusframework.util;
-
 
 import org.citrusframework.xml.namespace.NamespaceContextBuilder;
 import org.mockito.Mockito;
@@ -35,9 +34,6 @@ import java.util.Map;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class XMLUtilsTest {
 
     @Test
@@ -377,8 +373,10 @@ public class XMLUtilsTest {
 
         Document doc = XMLUtils.parseMessagePayload(payload);
 
-        Assert.assertEquals(XMLUtils.serialize(doc), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<testRequest xmlns=\"http://citrusframework.org/test-default\">ÄäÖöÜü</testRequest>\n");
+        Assert.assertEquals(XMLUtils.serialize(doc), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testRequest xmlns="http://citrusframework.org/test-default">ÄäÖöÜü</testRequest>
+                """);
     }
 
     @Test

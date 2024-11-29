@@ -1,14 +1,11 @@
 /*
- * Copyright 2022 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,18 +26,18 @@ import org.citrusframework.DefaultTestCase;
 import org.citrusframework.TestCase;
 import org.citrusframework.TestCaseRunner;
 import org.citrusframework.TestCaseRunnerFactory;
-import org.citrusframework.TestResult;
 import org.citrusframework.annotations.CitrusFramework;
 import org.citrusframework.annotations.CitrusResource;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.exceptions.TestCaseFailedException;
 
+import static org.citrusframework.TestResult.failed;
+
 /**
  * Default test loader implementation takes case on test names/packages and initializes the test runner if applicable.
  * Also loads the test case and provides it to registered test handlers. This way a test case can be loaded from different sources
  * like Java code, Groovy code, XML, Json, YAML, etc.
- * @author Christoph Deppisch
  */
 public class DefaultTestLoader implements TestLoader {
 
@@ -94,14 +91,22 @@ public class DefaultTestLoader implements TestLoader {
         try {
             doLoad();
         } catch (TestCaseFailedException e) {
-            // This kind of exception indicates that the error has already been handled. Just throw and end test run.
-            throw e;
-        } catch (Exception | AssertionError e) {
             if (testCase == null) {
                 testCase = runner.getTestCase();
             }
 
-            testCase.setTestResult(TestResult.failed(testCase.getName(), testCase.getTestClass().getName(), e));
+            if (testCase.getTestResult() == null || testCase.getTestResult().isSuccess()) {
+                testCase.setTestResult(failed(testCase.getName(), testCase.getTestClass().getName(), e));
+            }
+
+            // This kind of exception indicates that the error has already been handled. Just throw and end test run.
+            throw e;
+        } catch (Exception | Error e) {
+            if (testCase == null) {
+                testCase = runner.getTestCase();
+            }
+
+            testCase.setTestResult(failed(testCase.getName(), testCase.getTestClass().getName(), e));
             throw new TestCaseFailedException(e);
         }  finally {
             runner.stop();
@@ -231,7 +236,6 @@ public class DefaultTestLoader implements TestLoader {
         setTestName(testName);
         return this;
     }
-
 
     @Override
     public void setPackageName(String packageName) {

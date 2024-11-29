@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,6 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.*;
 
-/**
- * @author Christoph Deppisch
- */
 public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
 
     private final ConnectionFactory connectionFactory = Mockito.mock(ConnectionFactory.class);
@@ -70,7 +67,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
 
         final Message message = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         TextMessage jmsResponse = new TextMessageImpl("<TestResponse>Hello World!</TestResponse>", responseHeaders);
 
         reset(connectionFactory, destination, connection, session, messageConsumer, messageProducer);
@@ -84,7 +81,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
         when(session.createProducer(destination)).thenReturn(messageProducer);
 
         when(session.createTextMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")).thenReturn(
-                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<String, Object>()));
+                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<>()));
 
         endpoint.createProducer().send(message, context);
 
@@ -102,7 +99,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
 
         final Message message = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         TextMessage jmsResponse = new TextMessageImpl("<TestResponse>Hello World!</TestResponse>", responseHeaders);
 
         reset(connectionFactory, destination, connection, session, messageConsumer, messageProducer);
@@ -118,7 +115,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
         when(session.createProducer(destinationQueue)).thenReturn(messageProducer);
 
         when(session.createTextMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")).thenReturn(
-                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<String, Object>()));
+                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<>()));
 
         when(session.createQueue("myDestination")).thenReturn(destinationQueue);
 
@@ -137,7 +134,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
 
         final Message message = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         TextMessage jmsResponse = new TextMessageImpl("<TestResponse>Hello World!</TestResponse>", responseHeaders);
 
         reset(connectionFactory, destination, connection, session, messageConsumer, messageProducer, tempReplyQueue);
@@ -153,7 +150,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
         when(session.createProducer(destination)).thenReturn(messageProducer);
 
         when(session.createTextMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")).thenReturn(
-                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<String, Object>()));
+                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<>()));
 
         endpoint.createProducer().send(message, context);
 
@@ -173,7 +170,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
 
         final Message message = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         TextMessage jmsResponse = new TextMessageImpl("<TestResponse>Hello World!</TestResponse>", responseHeaders);
 
         reset(connectionFactory, destination, connection, session, messageConsumer, messageProducer);
@@ -187,7 +184,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
         when(session.createProducer(destination)).thenReturn(messageProducer);
 
         when(session.createTextMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")).thenReturn(
-                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<String, Object>()));
+                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<>()));
 
         endpoint.createProducer().send(message, context);
 
@@ -209,7 +206,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
 
         final Message message = new DefaultMessage("<TestRequest><Message>Hello World!</Message></TestRequest>");
 
-        Map<String, Object> responseHeaders = new HashMap<String, Object>();
+        Map<String, Object> responseHeaders = new HashMap<>();
         TextMessage jmsResponse = new TextMessageImpl("<TestResponse>Hello World!</TestResponse>", responseHeaders);
 
         reset(connectionFactory, destination, connection, session, messageConsumer, messageProducer);
@@ -223,7 +220,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
         when(session.createProducer(destination)).thenReturn(messageProducer);
 
         when(session.createTextMessage("<TestRequest><Message>Hello World!</Message></TestRequest>")).thenReturn(
-                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<String, Object>()));
+                new TextMessageImpl("<TestRequest><Message>Hello World!</Message></TestRequest>", new HashMap<>()));
 
         endpoint.createProducer().send(message, context);
 
@@ -275,7 +272,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
 
         JmsSyncEndpoint endpoint = new JmsSyncEndpoint();
 
-        ((JmsSyncProducer)endpoint.createProducer()).getCorrelationManager().setObjectStore(new ObjectStore<Message>() {
+        ((JmsSyncProducer) endpoint.createProducer()).getCorrelationManager().setObjectStore(new ObjectStore<>() {
             @Override
             public void add(String correlationKey, Message object) {
             }
@@ -308,7 +305,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
         JmsSyncEndpoint endpoint = new JmsSyncEndpoint();
         endpoint.getEndpointConfiguration().setPollingInterval(300L);
 
-        ((JmsSyncProducer)endpoint.createProducer()).getCorrelationManager().setObjectStore(new ObjectStore<Message>() {
+        ((JmsSyncProducer) endpoint.createProducer()).getCorrelationManager().setObjectStore(new ObjectStore<>() {
             @Override
             public void add(String correlationKey, Message object) {
             }
@@ -319,7 +316,6 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
                 return null;
             }
         });
-
 
         JmsSyncProducer jmsSyncProducer = (JmsSyncProducer)endpoint.createConsumer();
         jmsSyncProducer.getCorrelationManager().saveCorrelationKey(
@@ -342,7 +338,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
         JmsSyncEndpoint endpoint = new JmsSyncEndpoint();
         endpoint.getEndpointConfiguration().setPollingInterval(1000L);
 
-        ((JmsSyncProducer)endpoint.createProducer()).getCorrelationManager().setObjectStore(new ObjectStore<Message>() {
+        ((JmsSyncProducer) endpoint.createProducer()).getCorrelationManager().setObjectStore(new ObjectStore<>() {
             @Override
             public void add(String correlationKey, Message object) {
             }
@@ -375,7 +371,7 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
         JmsSyncEndpoint endpoint = new JmsSyncEndpoint();
         endpoint.getEndpointConfiguration().setPollingInterval(1000L);
 
-        ((JmsSyncProducer)endpoint.createProducer()).getCorrelationManager().setObjectStore(new ObjectStore<Message>() {
+        ((JmsSyncProducer) endpoint.createProducer()).getCorrelationManager().setObjectStore(new ObjectStore<>() {
             @Override
             public void add(String correlationKey, Message object) {
             }
@@ -386,7 +382,6 @@ public class JmsEndpointSyncProducerTest extends AbstractTestNGUnitTest {
                 return null;
             }
         });
-
 
         JmsSyncProducer jmsSyncProducer = (JmsSyncProducer)endpoint.createConsumer();
         jmsSyncProducer.getCorrelationManager().saveCorrelationKey(

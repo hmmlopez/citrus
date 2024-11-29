@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.citrusframework.validation.json;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
@@ -39,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Message validator evaluates set of JSONPath expressions on message payload and checks that values are as expected.
- * @author Christoph Deppisch
  * @since 2.3
  */
 public class JsonPathMessageValidator extends AbstractMessageValidator<JsonPathMessageValidationContext> {
@@ -76,12 +74,10 @@ public class JsonPathMessageValidator extends AbstractMessageValidator<JsonPathM
                 //do the validation of actual and expected value for element
                 ValidationUtils.validateValues(jsonPathResult, expectedValue, jsonPathExpression, context);
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Validating element: " + jsonPathExpression + "='" + expectedValue + "': OK.");
-                }
+                logger.debug("Validating element: {}='{}': OK", jsonPathExpression, expectedValue);
             }
 
-            logger.info("JSONPath element validation successful: All values OK");
+            logger.debug("JSONPath element validation successful: All values OK");
         } catch (ParseException e) {
             throw new CitrusRuntimeException("Failed to parse JSON text", e);
         }
@@ -97,7 +93,7 @@ public class JsonPathMessageValidator extends AbstractMessageValidator<JsonPathM
         List<JsonPathMessageValidationContext> jsonPathMessageValidationContexts = validationContexts.stream()
                 .filter(JsonPathMessageValidationContext.class::isInstance)
                 .map(JsonPathMessageValidationContext.class::cast)
-                .collect(Collectors.toList());
+                .toList();
 
         if (jsonPathMessageValidationContexts.size() > 1) {
             // Collect all jsonPath expressions and combine into one single validation context

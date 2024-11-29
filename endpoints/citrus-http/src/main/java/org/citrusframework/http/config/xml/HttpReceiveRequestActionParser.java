@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Element;
 
+import static java.lang.Boolean.parseBoolean;
+
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class HttpReceiveRequestActionParser extends ReceiveMessageActionParser {
@@ -113,7 +114,7 @@ public class HttpReceiveRequestActionParser extends ReceiveMessageActionParser {
                 httpMessage.cookie(new Cookie(cookie.getAttribute("name"), cookie.getAttribute("value")));
             }
 
-            boolean ignoreCase = headers.hasAttribute("ignore-case") ? Boolean.valueOf(headers.getAttribute("ignore-case")) : true;
+            boolean ignoreCase = !headers.hasAttribute("ignore-case") || parseBoolean(headers.getAttribute("ignore-case"));
             validationContexts.stream().filter(context -> context instanceof HeaderValidationContext)
                     .map(context -> (HeaderValidationContext) context)
                     .forEach(context -> context.setHeaderNameIgnoreCase(ignoreCase));

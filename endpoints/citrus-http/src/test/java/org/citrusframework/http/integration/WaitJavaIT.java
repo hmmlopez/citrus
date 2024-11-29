@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import static org.citrusframework.actions.StartServerAction.Builder.start;
 import static org.citrusframework.actions.StopServerAction.Builder.stop;
 import static org.citrusframework.container.FinallySequence.Builder.doFinally;
 import static org.citrusframework.container.Wait.Builder.waitFor;
-
 
 @Test
 public class WaitJavaIT extends TestNGCitrusSpringSupport {

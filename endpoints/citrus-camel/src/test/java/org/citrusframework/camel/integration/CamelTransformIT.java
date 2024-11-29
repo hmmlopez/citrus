@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import static org.citrusframework.actions.SendMessageAction.Builder.send;
 import static org.citrusframework.camel.dsl.CamelSupport.camel;
 import static org.apache.camel.builder.endpoint.StaticEndpointBuilders.seda;
 
-/**
- * @author Christoph Deppisch
- */
 public class CamelTransformIT extends TestNGCitrusSpringSupport {
 
     @Autowired
@@ -73,5 +70,4 @@ public class CamelTransformIT extends TestNGCitrusSpringSupport {
                 .type(MessageType.PLAINTEXT)
                 .body("Citrus rocks!"));
     }
-
 }

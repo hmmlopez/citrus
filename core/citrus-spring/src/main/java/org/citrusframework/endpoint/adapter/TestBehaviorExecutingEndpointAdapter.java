@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2023 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
  * Test executing endpoint adapter specialization executes a Java DSL test designer or test runner loaded from
  * Spring application context by bean name mapping.
  *
- * @author Christoph Deppisch
  * @since 1.3.1
  */
 public class TestBehaviorExecutingEndpointAdapter extends XmlTestExecutingEndpointAdapter {

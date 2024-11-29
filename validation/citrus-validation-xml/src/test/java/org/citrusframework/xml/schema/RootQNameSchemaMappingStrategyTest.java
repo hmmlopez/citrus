@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,6 @@ import org.testng.annotations.Test;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-
-/**
- * @author Christoph Deppisch
- */
 public class RootQNameSchemaMappingStrategyTest {
 
     private XsdSchema schemaMock = Mockito.mock(XsdSchema.class);
@@ -41,10 +37,10 @@ public class RootQNameSchemaMappingStrategyTest {
     public void testPositiveMapping() {
         RootQNameSchemaMappingStrategy strategy = new RootQNameSchemaMappingStrategy();
 
-        List<XsdSchema> schemas = new ArrayList<XsdSchema>();
+        List<XsdSchema> schemas = new ArrayList<>();
         schemas.add(schemaMock);
 
-        Map<String, XsdSchema> mappings = new HashMap<String, XsdSchema>();
+        Map<String, XsdSchema> mappings = new HashMap<>();
         mappings.put("foo", schemaMock);
         mappings.put("bar", Mockito.mock(XsdSchema.class));
 
@@ -54,7 +50,6 @@ public class RootQNameSchemaMappingStrategyTest {
 
         when(schemaMock.getTargetNamespace()).thenReturn("http://citrusframework.org/schema");
 
-
         Assert.assertEquals(strategy.getSchema(schemas, "http://citrusframework.org/schema", "foo"), schemaMock);
 
     }
@@ -63,10 +58,10 @@ public class RootQNameSchemaMappingStrategyTest {
     public void testPositiveMappingWithNamespaces() {
         RootQNameSchemaMappingStrategy strategy = new RootQNameSchemaMappingStrategy();
 
-        List<XsdSchema> schemas = new ArrayList<XsdSchema>();
+        List<XsdSchema> schemas = new ArrayList<>();
         schemas.add(schemaMock);
 
-        Map<String, XsdSchema> mappings = new HashMap<String, XsdSchema>();
+        Map<String, XsdSchema> mappings = new HashMap<>();
         mappings.put("{http://citrusframework.org/schema/foo}foo", Mockito.mock(XsdSchema.class));
         mappings.put("{http://citrusframework.org/schema}foo", schemaMock);
         mappings.put("bar", Mockito.mock(XsdSchema.class));
@@ -76,7 +71,6 @@ public class RootQNameSchemaMappingStrategyTest {
         reset(schemaMock);
 
         when(schemaMock.getTargetNamespace()).thenReturn("http://citrusframework.org/schema");
-
 
         Assert.assertEquals(strategy.getSchema(schemas, "http://citrusframework.org/schema", "foo"), schemaMock);
 
@@ -86,10 +80,10 @@ public class RootQNameSchemaMappingStrategyTest {
     public void testNoMappingFound() {
         RootQNameSchemaMappingStrategy strategy = new RootQNameSchemaMappingStrategy();
 
-        List<XsdSchema> schemas = new ArrayList<XsdSchema>();
+        List<XsdSchema> schemas = new ArrayList<>();
         schemas.add(schemaMock);
 
-        Map<String, XsdSchema> mappings = new HashMap<String, XsdSchema>();
+        Map<String, XsdSchema> mappings = new HashMap<>();
         mappings.put("{http://citrusframework.org/schema/foos}foos", Mockito.mock(XsdSchema.class));
         mappings.put("{http://citrusframework.org/schema}foos", schemaMock);
 
@@ -99,7 +93,6 @@ public class RootQNameSchemaMappingStrategyTest {
 
         when(schemaMock.getTargetNamespace()).thenReturn("http://citrusframework.org/schema");
 
-
         Assert.assertNull(strategy.getSchema(schemas, "http://citrusframework.org/schema", "foo"));
 
     }
@@ -108,10 +101,10 @@ public class RootQNameSchemaMappingStrategyTest {
     public void testMappingErrorWithNamespaceInconstistency() {
         RootQNameSchemaMappingStrategy strategy = new RootQNameSchemaMappingStrategy();
 
-        List<XsdSchema> schemas = new ArrayList<XsdSchema>();
+        List<XsdSchema> schemas = new ArrayList<>();
         schemas.add(schemaMock);
 
-        Map<String, XsdSchema> mappings = new HashMap<String, XsdSchema>();
+        Map<String, XsdSchema> mappings = new HashMap<>();
         mappings.put("{http://citrusframework.org/schema/foo}foo", Mockito.mock(XsdSchema.class));
         mappings.put("{http://citrusframework.org/schema}foo", schemaMock);
         mappings.put("bar", Mockito.mock(XsdSchema.class));
@@ -121,7 +114,6 @@ public class RootQNameSchemaMappingStrategyTest {
         reset(schemaMock);
 
         when(schemaMock.getTargetNamespace()).thenReturn("http://citrusframework.org/schema/unknown");
-
 
         try {
             strategy.getSchema(schemas, "http://citrusframework.org/schema", "foo");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.citrusframework.functions.Function;
  * nested CDATA sections are not allowed. This function adds the CDATA section tags
  * at runtime.
  *
- * @author Christoph Deppisch
  */
 public class CreateCDataSectionFunction implements Function {
 
@@ -44,5 +43,4 @@ public class CreateCDataSectionFunction implements Function {
 
         return CDATA_START + parameterList.get(0) + CDATA_END;
     }
-
 }

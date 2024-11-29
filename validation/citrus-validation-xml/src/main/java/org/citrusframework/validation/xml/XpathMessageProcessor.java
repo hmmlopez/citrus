@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.w3c.dom.Node;
  * Processor implementation evaluating XPath expressions on message payload during message construction.
  * Class identifies XML elements inside the message payload via XPath expressions in order to overwrite their value.
  *
- * @author Christoph Deppisch
  */
 public class XpathMessageProcessor extends AbstractMessageProcessor {
 

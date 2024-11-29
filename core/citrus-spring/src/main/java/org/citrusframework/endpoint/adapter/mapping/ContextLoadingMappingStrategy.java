@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.springframework.context.support.FileSystemXmlApplicationContext;
  * Endpoint adapter mapping strategy loads new Spring Application contexts defined by one or more locations
  * and tries to find matching Spring bean with given name or id.
  *
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class ContextLoadingMappingStrategy implements EndpointAdapterMappingStrategy {

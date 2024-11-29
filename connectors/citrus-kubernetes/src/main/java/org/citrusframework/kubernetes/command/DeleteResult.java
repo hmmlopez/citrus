@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,12 @@
 
 package org.citrusframework.kubernetes.command;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.ObjectMeta;
 import jakarta.validation.constraints.NotNull;
 
-
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -35,53 +30,19 @@ import jakarta.validation.constraints.NotNull;
         "kind",
         "success"
 })
-public class DeleteResult implements HasMetadata {
-    @NotNull
-    @JsonProperty("kind")
-    private String kind = "Delete";
+public class DeleteResult {
 
     @NotNull
     @JsonProperty("apiVersion")
-    private String apiVersion = "v1";
+    private String apVersion;
+
+    @NotNull
+    @JsonProperty("kind")
+    private String kind;
 
     @NotNull
     @JsonProperty("success")
     private Boolean success;
-
-    @JsonIgnore
-    private String type;
-
-    @Override
-    public String getKind() {
-        return kind + type;
-    }
-
-    /**
-     * Gets the value of the apiVersion property.
-     *
-     * @return the apiVersion
-     */
-    public String getApiVersion() {
-        return apiVersion;
-    }
-
-    /**
-     * Sets the apiVersion property.
-     *
-     * @param apiVersion
-     */
-    public void setApiVersion(String apiVersion) {
-        this.apiVersion = apiVersion;
-    }
-
-    /**
-     * Sets the kind.
-     *
-     * @param kind
-     */
-    public void setKind(String kind) {
-        this.kind = kind;
-    }
 
     /**
      * Gets the success.
@@ -102,29 +63,34 @@ public class DeleteResult implements HasMetadata {
     }
 
     /**
-     * Gets the type.
-     *
+     * Gets the api version.
      * @return
      */
-    public String getType() {
-        return type;
+    public String getApVersion() {
+        return apVersion;
     }
 
     /**
-     * Sets the type.
-     *
-     * @param type
+     * Sets the api version.
+     * @param apVersion
      */
-    public void setType(String type) {
-        this.type = type;
+    public void setApVersion(String apVersion) {
+        this.apVersion = apVersion;
     }
 
-    @Override
-    public ObjectMeta getMetadata() {
-        return null;
+    /**
+     * Gets the resource kind.
+     * @return
+     */
+    public String getKind() {
+        return kind;
     }
 
-    @Override
-    public void setMetadata(ObjectMeta objectMeta) {
+    /**
+     * Sets the resource kind.
+     * @param kind
+     */
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 }

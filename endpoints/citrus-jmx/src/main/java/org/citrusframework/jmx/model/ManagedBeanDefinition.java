@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.citrusframework.util.ReflectionHelper;
 import org.citrusframework.util.StringUtils;
 
 /**
- * @author Christoph Deppisch
  * @since 2.5
  */
 public class ManagedBeanDefinition {
@@ -129,7 +128,7 @@ public class ManagedBeanDefinition {
             }
         }
 
-        return infoList.toArray(new MBeanOperationInfo[infoList.size()]);
+        return infoList.toArray(new MBeanOperationInfo[0]);
     }
 
     /**
@@ -145,7 +144,7 @@ public class ManagedBeanDefinition {
             }
         }
 
-        return infoList.toArray(new MBeanConstructorInfo[infoList.size()]);
+        return infoList.toArray(new MBeanConstructorInfo[0]);
     }
 
     /**
@@ -196,7 +195,7 @@ public class ManagedBeanDefinition {
             }
         }
 
-        return infoList.toArray(new MBeanAttributeInfo[infoList.size()]);
+        return infoList.toArray(new MBeanAttributeInfo[0]);
     }
 
     /**
@@ -324,5 +323,4 @@ public class ManagedBeanDefinition {
     public void setObjectName(String objectName) {
         this.objectName = objectName;
     }
-
 }

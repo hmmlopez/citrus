@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,31 +25,32 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.util.*;
 
+import static java.lang.Integer.parseInt;
+
 /**
  * Class to automatically generate a list of all available tests in HTML.
- * 
- * @author Christoph Deppisch
+ *
  * @since 2007
  */
 public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
-    
+
     /** Test doc specific information */
     private String pageTitle = "Citrus Test Documentation";
     private String overviewTitle = "Overview";
     private String overviewColumns = "1";
     private String logoFilePath = "logo.png";
-    
+
     /**
      * Default constructor with test doc template name.
      */
     public HtmlTestDocsGenerator() {
         super("CitrusTests.html", "testdoc.html.template");
     }
-    
+
     @Override
-    public void doHeader(OutputStream buffered) throws TransformerException, IOException, SAXException {
+    public void doHeader(OutputStream buffered) throws IOException {
         List<File> testFiles = getTestFiles();
-        int maxEntries = testFiles.size() / Integer.valueOf(getTestDocProperties().getProperty("overview.columns"));
+        int maxEntries = testFiles.size() / parseInt(getTestDocProperties().getProperty("overview.columns"));
 
         buffered.write("<td style=\"border:1px solid #bbbbbb;\">".getBytes());
         buffered.write("<ol>".getBytes());
@@ -71,12 +72,12 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
         buffered.write("</ol>".getBytes());
         buffered.write("</td>".getBytes());
     }
-    
+
     @Override
     public void doBody(OutputStream buffered) throws TransformerException, IOException, SAXException {
         StreamResult res = new StreamResult(buffered);
         Transformer t = getTransformer("generate-html-doc.xslt", "text/html", "html");
-        
+
         int testNumber = 1;
         for (File testFile : getTestFiles()) {
             buffered.write("<tr>".getBytes());
@@ -90,11 +91,11 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
             buffered.write("</td>".getBytes());
 
             buffered.write("</tr>".getBytes());
-            
+
             testNumber++;
         }
     }
-    
+
     /**
      * Builds a new test doc generator.
      * @return
@@ -102,7 +103,7 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
     public static HtmlTestDocsGenerator build() {
         return new HtmlTestDocsGenerator();
     }
-    
+
     /**
      * Adds a custom output file.
      * @param filename the output file name.
@@ -112,7 +113,7 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
         this.setOutputFile(filename);
         return this;
     }
-    
+
     /**
      * Adds a custom page title.
      * @param pageTitle the page title.
@@ -122,7 +123,7 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
         this.pageTitle = pageTitle;
         return this;
     }
-    
+
     /**
      * Adds a custom overview title.
      * @param overvieTitle the title.
@@ -132,7 +133,7 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
         this.overviewTitle = overvieTitle;
         return this;
     }
-    
+
     /**
      * Adds a column configuration.
      * @param columns the column names.
@@ -142,7 +143,7 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
         this.overviewColumns = columns;
         return this;
     }
-    
+
     /**
      * Adds a custom logo file path.
      * @param logoFilePath the file path.
@@ -152,7 +153,7 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
         this.logoFilePath = logoFilePath;
         return this;
     }
-    
+
     /**
      * Adds a custom test source directory.
      * @param testDir the test source directory.
@@ -162,13 +163,13 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
         this.setSrcDirectory(testDir);
         return this;
     }
-    
+
     /**
      * Executable application cli.
      * @param args
      */
     public static void main(String[] args) {
-        try {    
+        try {
             HtmlTestDocsGenerator generator = HtmlTestDocsGenerator.build();
 
             generator.useSrcDirectory(args.length == 1 ? args[0] : generator.srcDirectory)
@@ -178,14 +179,13 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
                 .withOverviewTitle(args.length == 5 ? args[4] : generator.overviewTitle)
                 .withColumns(args.length == 6 ? args[5] : generator.overviewColumns);
 
-
             generator.generateDoc();
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new CitrusRuntimeException("Wrong usage exception! " +
                     "Use parameters in the following way: [test.directory] [output.file]", e);
         }
     }
-    
+
     @Override
     protected Properties getTestDocProperties() {
         Properties props = new Properties();
@@ -194,7 +194,7 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
         props.setProperty("overview.columns", overviewColumns);
         props.setProperty("logo.file.path", logoFilePath);
         props.setProperty("date", String.format("%1$tY-%1$tm-%1$td", new GregorianCalendar()));
-        
+
         return props;
     }
 
@@ -211,5 +211,4 @@ public class HtmlTestDocsGenerator extends AbstractTestDocsGenerator {
     public String getPageTitle() {
         return pageTitle;
     }
-
 }

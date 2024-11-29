@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.testng.annotations.Test;
  * A Zookeeper server must be running for this test to succeed. The zookeeper maven
  * plugin can be used for starting and stopping the server on demand.
  *
- * @author Martin Maher
  * @since 2.5
  */
 @Test

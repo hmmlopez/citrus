@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@ package org.citrusframework.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * @author Christoph Deppisch
- */
 public class InvocationDummy {
 
     /**
@@ -40,7 +37,7 @@ public class InvocationDummy {
             logger.debug("Constructor with argument: " + arg);
         }
     }
-    
+
     public InvocationDummy(Integer arg1, String arg2, Boolean arg3) {
         if (logger.isDebugEnabled()) {
         	if (logger.isDebugEnabled()) {
@@ -57,17 +54,17 @@ public class InvocationDummy {
             logger.debug("Methode invoke no arguments");
         }
     }
-    
+
     public void invoke(String text) {
     	if (logger.isDebugEnabled()) {
             logger.debug("Methode invoke with string argument: '" + text + "'");
         }
     }
-    
+
     public void invoke(String[] args) {
-        for (int i = 0; i < args.length; i++) {
+        for (var arg : args) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Methode invoke with argument: " + args[i]);
+                logger.debug("Methode invoke with argument: " + arg);
             }
         }
     }

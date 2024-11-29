@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.citrusframework.message.DefaultMessage;
 import org.citrusframework.message.Message;
 import org.citrusframework.report.MessageListeners;
 import org.citrusframework.variable.GlobalVariables;
-import org.citrusframework.variable.VariableExpressionSegmentMatcher;
 import org.citrusframework.variable.SegmentVariableExtractor;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -46,9 +45,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.fail;
 
-/**
- * @author Christoph Deppisch
- */
 public class TestContextTest extends UnitTestSupport {
 
     private final GlobalVariables globalVariables = new GlobalVariables();
@@ -179,7 +175,7 @@ public class TestContextTest extends UnitTestSupport {
 
         SegmentVariableExtractor jsonExtractorMock = Mockito.mock(SegmentVariableExtractor.class);
         context.getSegmentVariableExtractorRegistry().getSegmentValueExtractors().add(jsonExtractorMock);
-        
+
         Mockito.doReturn(true).when(jsonExtractorMock).canExtract(Mockito.eq(context), Mockito.eq(json), Mockito.any());
         Mockito.doReturn("Peter").when(jsonExtractorMock).extractValue(Mockito.eq(context), Mockito.eq(json), Mockito.any());
 
@@ -233,7 +229,7 @@ public class TestContextTest extends UnitTestSupport {
 
         Assert.assertThrows(() -> context.getVariable(String.format("${%s}", variableExpression)));
     }
-    
+
     @Test
     public void testUnknownFromPathExpression() {
         context.setVariable("helloData", new DataContainer("hello"));
@@ -460,7 +456,7 @@ public class TestContextTest extends UnitTestSupport {
         private final Object data;
 
         private final int[] intVals =  new int[] {0, 1, 2, 3, 4};
-        
+
         private static final String CONSTANT = "FOO";
 
         /**

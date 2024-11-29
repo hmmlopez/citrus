@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package org.citrusframework.kafka.endpoint;
 
-import java.util.Map;
-
 import org.citrusframework.context.TestContext;
 import org.citrusframework.endpoint.AbstractEndpointComponent;
 import org.citrusframework.endpoint.Endpoint;
+
+import java.util.Map;
 
 /**
  * Kafka endpoint component is able to create kafka endpoint from endpoint uri with parameters. Depending on uri creates a
@@ -28,7 +28,6 @@ import org.citrusframework.endpoint.Endpoint;
  *
  * Further endpoint parameters such as connectionFactory get passed to the endpoint configuration.
  *
- * @author Christoph Deppisch
  * @since 2.8
  */
 public class KafkaEndpointComponent extends AbstractEndpointComponent {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.citrusframework.validation.xml;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.xml.namespace.NamespaceContext;
 
 import org.citrusframework.XmlValidationHelper;
@@ -42,7 +41,6 @@ import org.w3c.dom.Node;
 
 /**
  * Message validator evaluates set of XPath expressions on message payload and checks that values are as expected.
- * @author Christoph Deppisch
  * @since 2.3
  */
 public class XpathMessageValidator extends AbstractMessageValidator<XpathMessageValidationContext> {
@@ -116,12 +114,10 @@ public class XpathMessageValidator extends AbstractMessageValidator<XpathMessage
             //do the validation of actual and expected value for element
             ValidationUtils.validateValues(xPathResult, expectedValue, xPathExpression, context);
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Validating element: " + xPathExpression + "='" + expectedValue + "': OK.");
-            }
+            logger.debug("Validating element: {}='{}': OK", xPathExpression, expectedValue);
         }
 
-        logger.info("XPath element validation successful: All elements OK");
+        logger.debug("XPath element validation successful: All elements OK");
     }
 
     @Override
@@ -134,9 +130,9 @@ public class XpathMessageValidator extends AbstractMessageValidator<XpathMessage
         List<XpathMessageValidationContext> xpathMessageValidationContexts = validationContexts.stream()
                 .filter(XpathMessageValidationContext.class::isInstance)
                 .map(XpathMessageValidationContext.class::cast)
-                .collect(Collectors.toList());
+                .toList();
 
-        if (xpathMessageValidationContexts.size() > 1) {
+        if (!xpathMessageValidationContexts.isEmpty()) {
             XpathMessageValidationContext xpathMessageValidationContext = xpathMessageValidationContexts.get(0);
 
             // Collect all xpath expressions and combine into one single validation context

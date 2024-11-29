@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.springframework.messaging.MessageHeaders;
  * messages and vice versa. Converter combines message converting logic and header mapping.
  * Usually the message's payload is extracted to the JMS message payload and default JMS headers are mapped.
  *
- * @author Christoph Deppisch
  */
 public class JmsMessageConverter implements MessageConverter<jakarta.jms.Message, jakarta.jms.Message, JmsEndpointConfiguration> {
 
@@ -88,7 +87,7 @@ public class JmsMessageConverter implements MessageConverter<jakarta.jms.Message
                 ((BytesMessage) jmsMessage).readBytes(bytes);
                 payload = bytes;
             } else if (jmsMessage instanceof MapMessage) {
-                Map<String, Object> map = new HashMap<String, Object>();
+                Map<String, Object> map = new HashMap<>();
                 Enumeration en = ((MapMessage) jmsMessage).getMapNames();
                 while (en.hasMoreElements()) {
                     String key = (String) en.nextElement();
@@ -101,8 +100,7 @@ public class JmsMessageConverter implements MessageConverter<jakarta.jms.Message
                 payload = jmsMessage;
             }
 
-            if (payload instanceof Message) {
-                Message nestedMessage = (Message) payload;
+            if (payload instanceof Message nestedMessage) {
                 for (Map.Entry<String, Object> headerEntry : headers.entrySet()) {
                     if (!headerEntry.getKey().startsWith(org.citrusframework.message.MessageHeaders.MESSAGE_PREFIX)) {
                         nestedMessage.setHeader(headerEntry.getKey(), headerEntry.getValue());
@@ -152,7 +150,7 @@ public class JmsMessageConverter implements MessageConverter<jakarta.jms.Message
             } else if (payload instanceof Map) {
                 jmsMessage = session.createMapMessage();
                 Map<?, ?> map = ((Map) payload);
-                for (Map.Entry entry : map.entrySet()) {
+                for (var entry : map.entrySet()) {
                     if (!(entry.getKey() instanceof String)) {
                         throw new CitrusRuntimeException("Cannot convert non-String key of type [" + entry.getKey() + "] to JMS MapMessage entry");
                     }
@@ -171,5 +169,4 @@ public class JmsMessageConverter implements MessageConverter<jakarta.jms.Message
             throw new CitrusRuntimeException("Failed to convert jms message", e);
         }
     }
-
 }

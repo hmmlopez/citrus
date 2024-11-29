@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,19 @@
 package org.citrusframework.camel.endpoint;
 
 import org.apache.camel.CamelContext;
+import org.apache.camel.ConsumerTemplate;
+import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultCamelContext;
+import org.citrusframework.camel.CamelSettings;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.exceptions.MessageTimeoutException;
 import org.citrusframework.message.Message;
 import org.citrusframework.messaging.Consumer;
-import org.apache.camel.ConsumerTemplate;
-import org.apache.camel.Exchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author Christoph Deppisch
  * @since 1.4.1
  */
 public class CamelConsumer implements Consumer {
@@ -107,8 +107,8 @@ public class CamelConsumer implements Consumer {
             } else {
                 if (context.getReferenceResolver().resolveAll(CamelContext.class).size() == 1) {
                     endpointConfiguration.setCamelContext(context.getReferenceResolver().resolve(CamelContext.class));
-                } else if (context.getReferenceResolver().isResolvable("camelContext")) {
-                    endpointConfiguration.setCamelContext(context.getReferenceResolver().resolve("camelContext", CamelContext.class));
+                } else if (context.getReferenceResolver().isResolvable(CamelSettings.getContextName())) {
+                    endpointConfiguration.setCamelContext(context.getReferenceResolver().resolve(CamelSettings.getContextName(), CamelContext.class));
                 } else {
                     endpointConfiguration.setCamelContext(new DefaultCamelContext());
                 }
@@ -124,5 +124,4 @@ public class CamelConsumer implements Consumer {
     public String getName() {
         return name;
     }
-
 }

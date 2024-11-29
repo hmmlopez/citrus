@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import java.lang.annotation.*;
  * Citrus test framework annotation marking a field or method parameter for object injection. Framework instance is injected
  * as value of annotated field or parameter in Java DSL test cases.
  *
- * @author Christoph Deppisch
  * @since 2.2
  */
 @Retention(RetentionPolicy.RUNTIME)

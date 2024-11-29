@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import org.testng.internal.MethodInstance;
  * Citrus annotated test method. So TestNG test is executed multiple times respectively for each Citrus test
  * constructed by method annotation.
  *
- * @author Christoph Deppisch
  * @since 1.3.1
  */
 public class TestNGCitrusSpringMethodInterceptor implements IMethodInterceptor {

@@ -1,14 +1,11 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,26 +18,35 @@ package org.citrusframework.camel.dsl;
 
 import java.util.function.Function;
 
+import org.apache.camel.CamelContext;
+import org.apache.camel.Processor;
+import org.apache.camel.builder.DataFormatClause;
+import org.apache.camel.builder.ExpressionClauseSupport;
+import org.apache.camel.model.OutputDefinition;
+import org.apache.camel.model.ProcessorDefinition;
+import org.citrusframework.actions.ReceiveMessageAction;
+import org.citrusframework.actions.SendMessageAction;
+import org.citrusframework.camel.CamelSettings;
 import org.citrusframework.camel.actions.CamelActionBuilder;
+import org.citrusframework.camel.actions.CamelContextActionBuilder;
 import org.citrusframework.camel.actions.CamelControlBusAction;
+import org.citrusframework.camel.actions.CamelExchangeActionBuilder;
+import org.citrusframework.camel.actions.CamelJBangActionBuilder;
 import org.citrusframework.camel.actions.CamelRouteActionBuilder;
+import org.citrusframework.camel.actions.CreateCamelComponentAction;
 import org.citrusframework.camel.endpoint.CamelEndpoint;
 import org.citrusframework.camel.endpoint.CamelEndpointBuilder;
+import org.citrusframework.camel.endpoint.CamelEndpointConfiguration;
+import org.citrusframework.camel.endpoint.CamelSyncEndpoint;
+import org.citrusframework.camel.endpoint.CamelSyncEndpointConfiguration;
 import org.citrusframework.camel.message.CamelDataFormatMessageProcessor;
 import org.citrusframework.camel.message.CamelMessageProcessor;
 import org.citrusframework.camel.message.CamelRouteProcessor;
 import org.citrusframework.camel.message.CamelTransformMessageProcessor;
-import org.citrusframework.camel.message.format.DataFormatClauseSupport;
 import org.citrusframework.endpoint.EndpointUriBuilder;
-import org.apache.camel.CamelContext;
-import org.apache.camel.Processor;
-import org.apache.camel.builder.ExpressionClauseSupport;
-import org.apache.camel.model.OutputDefinition;
-import org.apache.camel.model.ProcessorDefinition;
 
 /**
  * Support class combining all available Apache Camel Java DSL capabilities.
- * @author Christoph Deppisch
  */
 public class CamelSupport {
 
@@ -64,12 +70,36 @@ public class CamelSupport {
     }
 
     /**
-     * Static entrance for all Camel related Java DSL functionalities.
+     * Sets Camel context.
      * @return
      */
     public CamelSupport camelContext(CamelContext camelContext) {
         this.camelContext = camelContext;
         return this;
+    }
+
+    /**
+     * Entrance for Camel context related Java DSL functionalities.
+     * @return
+     */
+    public CamelContextActionBuilder camelContext() {
+        return new CamelContextActionBuilder();
+    }
+
+    /**
+     * Sends message using Camel endpointUris.
+     * @return
+     */
+    public CamelExchangeActionBuilder<SendMessageAction.Builder> send() {
+        return new CamelActionBuilder().send();
+    }
+
+    /**
+     * Receives message using Camel endpointUris.
+     * @return
+     */
+    public CamelExchangeActionBuilder<ReceiveMessageAction.Builder> receive() {
+        return new CamelActionBuilder().receive();
     }
 
     /**
@@ -88,10 +118,29 @@ public class CamelSupport {
      * @return
      */
     public CamelEndpoint endpoint(String endpointUri) {
-        return new CamelEndpointBuilder()
-                .camelContext(camelContext)
-                .endpoint(() -> endpointUri)
-                .build();
+        return endpoint(endpointUri, false);
+    }
+
+    /**
+     * Constructs proper endpoint uri from endpoint uri builder.
+     * @return
+     */
+    public CamelEndpoint endpoint(String endpointUri, boolean inOut) {
+        if (inOut) {
+            CamelSyncEndpointConfiguration endpointConfiguration = new CamelSyncEndpointConfiguration();
+            endpointConfiguration.setCamelContext(camelContext);
+            endpointConfiguration.setEndpointUri(endpointUri);
+            endpointConfiguration.setTimeout(CamelSettings.getTimeout());
+
+            return new CamelSyncEndpoint(endpointConfiguration);
+        } else {
+            CamelEndpointConfiguration endpointConfiguration = new CamelEndpointConfiguration();
+            endpointConfiguration.setCamelContext(camelContext);
+            endpointConfiguration.setEndpointUri(endpointUri);
+            endpointConfiguration.setTimeout(CamelSettings.getTimeout());
+
+            return new CamelEndpoint(endpointConfiguration);
+        }
     }
 
     /**
@@ -108,6 +157,26 @@ public class CamelSupport {
      */
     public EndpointBuilderFactorySupport endpoints() {
         return new EndpointBuilderFactorySupport();
+    }
+
+    /**
+     * Binds given component to the Camel context.
+     * @return
+     */
+    public CreateCamelComponentAction.Builder bind(String name, Object component) {
+        return new CamelActionBuilder()
+                .camelContext(camelContext)
+                .bind(name, component);
+    }
+
+    /**
+     * Binds a component to the Camel context.
+     * @return
+     */
+    public CreateCamelComponentAction.Builder bind() {
+        return new CamelActionBuilder()
+                .camelContext(camelContext)
+                .bind();
     }
 
     /**
@@ -138,6 +207,16 @@ public class CamelSupport {
         return new CamelActionBuilder()
                 .camelContext(camelContext)
                 .route();
+    }
+
+    /**
+     * Perform actions with Camel JBang.
+     * @return
+     */
+    public CamelJBangActionBuilder jbang() {
+        return new CamelActionBuilder()
+                .camelContext(camelContext)
+                .jbang();
     }
 
     /**
@@ -174,15 +253,15 @@ public class CamelSupport {
      * Message processor marshalling message body with given data format.
      * @return
      */
-    public DataFormatClauseSupport<CamelDataFormatMessageProcessor.Builder> marshal() {
-        return CamelDataFormatMessageProcessor.Builder.marshal().camelContext(camelContext);
+    public DataFormatClause<CamelDataFormatMessageProcessor.Builder.InlineProcessDefinition> marshal() {
+        return CamelDataFormatMessageProcessor.Builder.marshal(camelContext);
     }
 
     /**
      * Message processor unmarshalling message body with given data format.
      * @return
      */
-    public DataFormatClauseSupport<CamelDataFormatMessageProcessor.Builder> unmarshal() {
-        return CamelDataFormatMessageProcessor.Builder.unmarshal().camelContext(camelContext);
+    public DataFormatClause<CamelDataFormatMessageProcessor.Builder.InlineProcessDefinition> unmarshal() {
+        return CamelDataFormatMessageProcessor.Builder.unmarshal(camelContext);
     }
 }

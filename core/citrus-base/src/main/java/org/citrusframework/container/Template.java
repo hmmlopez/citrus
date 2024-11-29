@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,6 @@ import org.slf4j.LoggerFactory;
  * users can create a local test context by setting globalContext to false. Templates then will
  * have no affect on the variables used in the test case.
  *
- * @author Christoph Deppisch
  * @since 2007
  */
 public class Template extends AbstractTestAction {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,6 @@ import jakarta.xml.soap.MimeHeader;
 import jakarta.xml.soap.MimeHeaders;
 import jakarta.xml.soap.SOAPMessage;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.ws.soap.SoapBody;
 import org.springframework.ws.soap.SoapEnvelope;
@@ -48,9 +46,6 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.*;
 
-/**
- * @author Christoph Deppisch
- */
 public class SoapRequestMessageCallbackTest extends AbstractTestNGUnitTest {
 
     private final SoapMessage soapRequest = Mockito.mock(SoapMessage.class);
@@ -71,7 +66,6 @@ public class SoapRequestMessageCallbackTest extends AbstractTestNGUnitTest {
 
         when(soapRequest.getSoapBody()).thenReturn(soapBody);
         when(soapBody.getPayloadResult()).thenReturn(soapBodyResult);
-
 
         callback.doWithMessage(soapRequest);
 
@@ -117,7 +111,6 @@ public class SoapRequestMessageCallbackTest extends AbstractTestNGUnitTest {
 
         when(soapRequest.getSoapHeader()).thenReturn(soapHeader);
         when(soapHeader.getResult()).thenReturn(soapHeaderResult);
-
 
         callback.doWithMessage(soapRequest);
 
@@ -213,7 +206,6 @@ public class SoapRequestMessageCallbackTest extends AbstractTestNGUnitTest {
 
         SoapRequestMessageCallback callback = new SoapRequestMessageCallback(testMessage, new WebServiceEndpointConfiguration(), context);
 
-
         SaajSoapMessage saajSoapRequest = Mockito.mock(SaajSoapMessage.class);
         SoapEnvelope soapEnvelope = Mockito.mock(SoapEnvelope.class);
         SOAPMessage saajMessage = Mockito.mock(SOAPMessage.class);
@@ -258,21 +250,17 @@ public class SoapRequestMessageCallbackTest extends AbstractTestNGUnitTest {
         when(soapRequest.getSoapBody()).thenReturn(soapBody);
         when(soapBody.getPayloadResult()).thenReturn(new StringResult());
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                InputStreamSource contentStream = (InputStreamSource)invocation.getArguments()[1];
-                BufferedReader reader = new BufferedReader(new InputStreamReader(contentStream.getInputStream()));
+        doAnswer(invocation -> {
+            InputStreamSource contentStream = (InputStreamSource) invocation.getArguments()[1];
+            BufferedReader reader = new BufferedReader(new InputStreamReader(contentStream.getInputStream()));
 
-                Assert.assertEquals(reader.readLine(), "This is a SOAP attachment");
-                Assert.assertEquals(reader.readLine(), "with multi-line");
+            Assert.assertEquals(reader.readLine(), "This is a SOAP attachment");
+            Assert.assertEquals(reader.readLine(), "with multi-line");
 
-                reader.close();
-                return null;
-            }
-        }).when(soapRequest).addAttachment(eq(attachment.getContentId()), (InputStreamSource)any(), eq(attachment.getContentType()));
+            reader.close();
+            return null;
+        }).when(soapRequest).addAttachment(eq(attachment.getContentId()), any(), eq(attachment.getContentType()));
 
         callback.doWithMessage(soapRequest);
-
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.citrusframework.http.actions;
 
-import java.util.Optional;
-
 import jakarta.servlet.http.Cookie;
 import org.citrusframework.actions.ReceiveMessageAction;
 import org.citrusframework.http.message.HttpMessage;
@@ -26,11 +24,11 @@ import org.citrusframework.http.message.HttpMessageUtils;
 import org.citrusframework.message.Message;
 import org.citrusframework.message.MessageBuilder;
 import org.citrusframework.message.builder.ReceiveMessageBuilderSupport;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
+import java.util.Optional;
+
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public class HttpClientResponseActionBuilder extends ReceiveMessageAction.ReceiveMessageActionBuilder<ReceiveMessageAction, HttpClientResponseActionBuilder.HttpMessageBuilderSupport, HttpClientResponseActionBuilder> {
@@ -98,7 +96,7 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
          * @param status
          * @return
          */
-        public HttpMessageBuilderSupport status(HttpStatus status) {
+        public HttpMessageBuilderSupport status(HttpStatusCode status) {
             httpMessage.status(status);
             return this;
         }

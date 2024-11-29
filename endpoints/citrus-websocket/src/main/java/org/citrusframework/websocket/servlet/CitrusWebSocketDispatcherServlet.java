@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.springframework.web.socket.server.support.WebSocketHttpRequestHandler
  * Citrus dispatcher servlet extends Spring's message dispatcher servlet and just
  * adds optional configuration settings for default mapping strategies and so on.
  *
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class CitrusWebSocketDispatcherServlet extends CitrusDispatcherServlet {

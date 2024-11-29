@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,6 @@ import org.citrusframework.testng.AbstractBeanDefinitionParserTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author Roland Huss, Christoph Deppisch
- */
 public class SftpServerParserTest extends AbstractBeanDefinitionParserTest {
 
     @Test
@@ -79,5 +76,4 @@ public class SftpServerParserTest extends AbstractBeanDefinitionParserTest {
         Assert.assertEquals(server.getEndpointAdapter(), beanDefinitionContext.getBean("sftpServerAdapter"));
         Assert.assertNull(server.getActor());
     }
-
 }

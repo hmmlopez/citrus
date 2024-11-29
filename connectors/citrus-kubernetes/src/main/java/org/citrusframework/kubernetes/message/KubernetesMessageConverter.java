@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,25 +31,24 @@ import org.citrusframework.message.MessageConverter;
 import org.citrusframework.util.StringUtils;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
-public class KubernetesMessageConverter implements MessageConverter<KubernetesCommand<?>, KubernetesCommand<?>, KubernetesEndpointConfiguration> {
+public class KubernetesMessageConverter implements MessageConverter<KubernetesCommand<?, ?>, KubernetesCommand<?, ?>, KubernetesEndpointConfiguration> {
 
     @Override
-    public KubernetesCommand<?> convertOutbound(Message message, KubernetesEndpointConfiguration endpointConfiguration, TestContext context) {
-        KubernetesCommand<?> command = getCommand(message, endpointConfiguration);
+    public KubernetesCommand<?, ?> convertOutbound(Message message, KubernetesEndpointConfiguration endpointConfiguration, TestContext context) {
+        KubernetesCommand<?, ?> command = getCommand(message, endpointConfiguration);
         convertOutbound(command, message, endpointConfiguration, context);
 
         return command;
     }
 
     @Override
-    public void convertOutbound(KubernetesCommand<?> command, Message message, KubernetesEndpointConfiguration endpointConfiguration, TestContext context) {
+    public void convertOutbound(KubernetesCommand<?, ?> command, Message message, KubernetesEndpointConfiguration endpointConfiguration, TestContext context) {
     }
 
     @Override
-    public Message convertInbound(KubernetesCommand<?> command, KubernetesEndpointConfiguration endpointConfiguration, TestContext context) {
+    public Message convertInbound(KubernetesCommand<?, ?> command, KubernetesEndpointConfiguration endpointConfiguration, TestContext context) {
         KubernetesResponse response = new KubernetesResponse();
         KubernetesMessage message = KubernetesMessage.response(response);
 
@@ -84,53 +83,33 @@ public class KubernetesMessageConverter implements MessageConverter<KubernetesCo
      * @param commandName
      * @return
      */
-    private KubernetesCommand<?> getCommandByName(String commandName) {
+    private KubernetesCommand<?, ?> getCommandByName(String commandName) {
         if (!StringUtils.hasText(commandName)) {
             throw new CitrusRuntimeException("Missing command name property");
         }
 
-        switch (commandName) {
-            case "info":
-                return new Info();
-            case "list-events":
-                return new ListEvents();
-            case "list-endpoints":
-                return new ListEndpoints();
-            case "create-pod":
-                return new CreatePod();
-            case "get-pod":
-                return new GetPod();
-            case "delete-pod":
-                return new DeletePod();
-            case "list-pods":
-                return new ListPods();
-            case "watch-pods":
-                return new WatchPods();
-            case "list-namespaces":
-                return new ListNamespaces();
-            case "watch-namespaces":
-                return new WatchNamespaces();
-            case "list-nodes":
-                return new ListNodes();
-            case "watch-nodes":
-                return new WatchNodes();
-            case "list-replication-controllers":
-                return new ListReplicationControllers();
-            case "watch-replication-controllers":
-                return new WatchReplicationControllers();
-            case "create-service":
-                return new CreateService();
-            case "get-service":
-                return new GetService();
-            case "delete-service":
-                return new DeleteService();
-            case "list-services":
-                return new ListServices();
-            case "watch-services":
-                return new WatchServices();
-            default:
-                throw new CitrusRuntimeException("Unknown kubernetes command: " + commandName);
-        }
+        return switch (commandName) {
+            case "info" -> new Info();
+            case "list-events" -> new ListEvents();
+            case "list-endpoints" -> new ListEndpoints();
+            case "create-pod" -> new CreatePod();
+            case "get-pod" -> new GetPod();
+            case "delete-pod" -> new DeletePod();
+            case "list-pods" -> new ListPods();
+            case "watch-pods" -> new WatchPods();
+            case "list-namespaces" -> new ListNamespaces();
+            case "watch-namespaces" -> new WatchNamespaces();
+            case "list-nodes" -> new ListNodes();
+            case "watch-nodes" -> new WatchNodes();
+            case "list-replication-controllers" -> new ListReplicationControllers();
+            case "watch-replication-controllers" -> new WatchReplicationControllers();
+            case "create-service" -> new CreateService();
+            case "get-service" -> new GetService();
+            case "delete-service" -> new DeleteService();
+            case "list-services" -> new ListServices();
+            case "watch-services" -> new WatchServices();
+            default -> throw new CitrusRuntimeException("Unknown kubernetes command: " + commandName);
+        };
     }
 
     /**
@@ -138,14 +117,11 @@ public class KubernetesMessageConverter implements MessageConverter<KubernetesCo
      * @param command
      * @return
      */
-    private Map<String,Object> createMessageHeaders(KubernetesCommand<?> command) {
-        Map<String, Object> headers = new HashMap<String, Object>();
+    private Map<String,Object> createMessageHeaders(KubernetesCommand<?, ?> command) {
+        Map<String, Object> headers = new HashMap<>();
 
         headers.put(KubernetesMessageHeaders.COMMAND, command.getName());
-
-        for (Map.Entry<String, Object> entry : command.getParameters().entrySet()) {
-            headers.put(entry.getKey(), entry.getValue());
-        }
+        headers.putAll(command.getParameters());
 
         return headers;
     }
@@ -158,10 +134,10 @@ public class KubernetesMessageConverter implements MessageConverter<KubernetesCo
      * @param endpointConfiguration
      * @return
      */
-    private KubernetesCommand<?> getCommand(Message message, KubernetesEndpointConfiguration endpointConfiguration) {
+    private KubernetesCommand<?, ?> getCommand(Message message, KubernetesEndpointConfiguration endpointConfiguration) {
         Object payload = message.getPayload();
 
-        KubernetesCommand<?> command;
+        KubernetesCommand<?, ?> command;
         if (message instanceof KubernetesMessage) {
             command = createCommandFromRequest(message.getPayload(KubernetesRequest.class));
         } else if (message.getHeaders().containsKey(KubernetesMessageHeaders.COMMAND) &&
@@ -186,8 +162,8 @@ public class KubernetesMessageConverter implements MessageConverter<KubernetesCo
         return command;
     }
 
-    private KubernetesCommand<?> createCommandFromRequest(KubernetesRequest request) {
-        KubernetesCommand<?> command = getCommandByName(request.getCommand());
+    private KubernetesCommand<?, ?> createCommandFromRequest(KubernetesRequest request) {
+        KubernetesCommand<?, ?> command = getCommandByName(request.getCommand());
 
         if (StringUtils.hasText(request.getName())) {
             command.getParameters().put(KubernetesMessageHeaders.NAME, request.getName());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.citrusframework.kafka.config.annotation;
 
-import java.util.Map;
-
 import org.citrusframework.TestActor;
 import org.citrusframework.config.annotation.AnnotationConfigParser;
 import org.citrusframework.exceptions.CitrusRuntimeException;
@@ -28,8 +26,9 @@ import org.citrusframework.kafka.message.KafkaMessageHeaderMapper;
 import org.citrusframework.spi.ReferenceResolver;
 import org.citrusframework.util.StringUtils;
 
+import java.util.Map;
+
 /**
- * @author Christoph Deppisch
  * @since 2.8
  */
 public class KafkaEndpointConfigParser implements AnnotationConfigParser<KafkaEndpointConfig, KafkaEndpoint> {

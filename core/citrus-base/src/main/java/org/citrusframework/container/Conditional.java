@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Class executes nested test actions if condition expression evaluates to true.
  *
- * @author Matthias Beil, Christoph Deppisch
  * @since 1.2
  */
 public class Conditional extends AbstractActionContainer {
@@ -109,7 +108,6 @@ public class Conditional extends AbstractActionContainer {
     public ConditionExpression getConditionExpression() {
         return conditionExpression;
     }
-
 
     /**
      * Action builder.

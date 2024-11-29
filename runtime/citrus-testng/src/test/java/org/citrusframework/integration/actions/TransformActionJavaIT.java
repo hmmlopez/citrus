@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,6 @@ import org.testng.annotations.Test;
 import static org.citrusframework.actions.EchoAction.Builder.echo;
 import static org.citrusframework.actions.TransformAction.Builder.transform;
 
-/**
- * @author Christoph Deppisch
- */
 @Test
 public class TransformActionJavaIT extends TestNGCitrusSpringSupport {
 
@@ -36,16 +33,17 @@ public class TransformActionJavaIT extends TestNGCitrusSpringSupport {
             .source("<TestRequest>" +
                         "<Message>Hello World!</Message>" +
                     "</TestRequest>")
-            .xslt("<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n" +
-                        "<xsl:template match=\"/\">\n" +
-                        "<html>\n" +
-                            "<body>\n" +
-                                "<h2>Test Request</h2>\n" +
-                                "<p>Message: <xsl:value-of select=\"TestRequest/Message\"/></p>\n" +
-                            "</body>\n" +
-                        "</html>\n" +
-                        "</xsl:template>\n" +
-                    "</xsl:stylesheet>")
+            .xslt("""
+                    <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+                        <xsl:template match="/">
+                            <html>
+                                <body>
+                                    <h2>Test Request</h2>
+                                    <p>Message: <xsl:value-of select="TestRequest/Message"/></p>
+                                </body>
+                            </html>
+                        </xsl:template>
+                    </xsl:stylesheet>""")
             .result("result"));
 
         run(echo("${result}"));
@@ -54,7 +52,6 @@ public class TransformActionJavaIT extends TestNGCitrusSpringSupport {
             .source(Resources.fromClasspath("org/citrusframework/integration/actions/transform-source.xml"))
             .xslt(Resources.fromClasspath("org/citrusframework/integration/actions/transform.xslt"))
             .result("result"));
-
 
         run(echo("${result}"));
     }

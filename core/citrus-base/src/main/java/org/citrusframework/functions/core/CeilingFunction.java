@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,13 @@ import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.InvalidFunctionUsageException;
 import org.citrusframework.functions.Function;
 
+import static java.lang.Double.parseDouble;
+import static java.lang.Math.ceil;
+
 /**
  * Returns the smallest (closest to negative infinity) double value
  * according to the numeric argument.
  *
- * @author Christoph Deppisch
  */
 public class CeilingFunction implements Function {
 
@@ -39,7 +41,6 @@ public class CeilingFunction implements Function {
             throw new InvalidFunctionUsageException("Function parameters must not be empty");
         }
 
-        return String.valueOf(Math.ceil(Double.valueOf(parameterList.get(0))));
+        return String.valueOf(ceil(parseDouble(parameterList.get(0))));
     }
-
 }

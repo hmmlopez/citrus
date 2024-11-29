@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.citrusframework.camel.config.xml;
 
 import java.util.List;
 
+import org.citrusframework.camel.CamelSettings;
 import org.citrusframework.camel.actions.AbstractCamelRouteAction;
 import org.citrusframework.config.util.BeanDefinitionParserUtils;
 import org.citrusframework.config.xml.AbstractTestActionFactoryBean;
@@ -30,7 +31,6 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.w3c.dom.Element;
 
 /**
- * @author Christoph Deppisch
  * @since 2.4
  */
 public abstract class AbstractCamelRouteActionParser implements BeanDefinitionParser {
@@ -43,7 +43,7 @@ public abstract class AbstractCamelRouteActionParser implements BeanDefinitionPa
         DescriptionElementParser.doParse(element, beanDefinition);
 
         BeanDefinitionParserUtils.setPropertyReference(beanDefinition,
-                element.getAttribute("camel-context"), "camelContext", "citrusCamelContext");
+                element.getAttribute("camel-context"), "camelContext", CamelSettings.getContextName());
         parse(beanDefinition, element, parserContext);
 
         return beanDefinition.getBeanDefinition();

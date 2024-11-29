@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,12 @@ import org.citrusframework.exceptions.CitrusRuntimeException;
  * Endpoint adapter mapping strategy simply holds a map of mapping keys and adapter instances. Searches for available mapping key
  * and returns respective adapter implementation.
  *
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class SimpleMappingStrategy implements EndpointAdapterMappingStrategy {
 
     /** Simple map holds mapping key and endpoint adapters */
-    private Map<String, EndpointAdapter> adapterMappings = new HashMap<String, EndpointAdapter>();
+    private Map<String, EndpointAdapter> adapterMappings = new HashMap<>();
 
     @Override
     public EndpointAdapter getEndpointAdapter(String mappingKey) {

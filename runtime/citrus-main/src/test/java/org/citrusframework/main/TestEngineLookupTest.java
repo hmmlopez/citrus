@@ -1,14 +1,11 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright the original author or authors.
  *
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,14 +19,26 @@ package org.citrusframework.main;
 import org.citrusframework.cucumber.CucumberTestEngine;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.junit.JUnit4TestEngine;
+import org.citrusframework.junit.jupiter.JUnitJupiterEngine;
 import org.citrusframework.testng.TestNGEngine;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * @author Christoph Deppisch
- */
 public class TestEngineLookupTest {
+
+    @Test
+    public void shouldResolveJUnit5Engine() {
+        TestRunConfiguration configuration = new TestRunConfiguration();
+        configuration.setEngine("junit5");
+        Assert.assertEquals(TestEngine.lookup(configuration).getClass(), JUnitJupiterEngine.class);
+    }
+
+    @Test
+    public void shouldResolveJUnitJupiterEngine() {
+        TestRunConfiguration configuration = new TestRunConfiguration();
+        configuration.setEngine("junit-jupiter");
+        Assert.assertEquals(TestEngine.lookup(configuration).getClass(), JUnitJupiterEngine.class);
+    }
 
     @Test
     public void shouldResolveJUnit4Engine() {

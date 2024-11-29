@@ -1,12 +1,11 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * Copyright the original author or authors.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +31,6 @@ import org.springframework.util.StringUtils;
  * with generated random test data according to specification and creates inbound payloads with proper validation expressions to
  * enforce the specification rules.
  *
- * @author Christoph Deppisch
  */
 public class OpenApiTestDataGenerator {
 
@@ -120,7 +118,7 @@ public class OpenApiTestDataGenerator {
             }
 
             if (schema.format != null && schema.format.equals("date")) {
-                payload.append("citrus:currentDate()");
+                payload.append("citrus:currentDate('yyyy-MM-dd')");
             } else if (schema.format != null && schema.format.equals("date-time")) {
                 payload.append("citrus:currentDate('yyyy-MM-dd'T'hh:mm:ss')");
             } else if (StringUtils.hasText(schema.pattern)) {
@@ -350,5 +348,4 @@ public class OpenApiTestDataGenerator {
                 return "";
         }
     }
-
 }

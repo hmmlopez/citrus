@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import org.citrusframework.message.WithPayloadBuilder;
  * Default message builder delegates to given message header builders and message payload
  * builder.
  *
- * @author Christoph Deppisch
  */
 public class DefaultMessageBuilder implements MessageBuilder, WithPayloadBuilder, WithHeaderBuilder, Named {
 

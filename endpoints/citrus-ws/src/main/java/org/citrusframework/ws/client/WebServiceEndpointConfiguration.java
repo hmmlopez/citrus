@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 
 package org.citrusframework.ws.client;
 
+import static java.util.Collections.singletonList;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
 import org.citrusframework.endpoint.AbstractPollableEndpointConfiguration;
 import org.citrusframework.endpoint.resolver.DynamicEndpointUriResolver;
 import org.citrusframework.endpoint.resolver.EndpointUriResolver;
@@ -37,7 +38,6 @@ import org.springframework.ws.client.support.interceptor.ClientInterceptor;
 import org.springframework.ws.transport.WebServiceMessageSender;
 
 /**
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class WebServiceEndpointConfiguration extends AbstractPollableEndpointConfiguration {
@@ -82,9 +82,7 @@ public class WebServiceEndpointConfiguration extends AbstractPollableEndpointCon
      * Default constructor initializes with default logging interceptor.
      */
     public WebServiceEndpointConfiguration() {
-        List<ClientInterceptor> interceptors = new ArrayList<>();
-        interceptors.add(new LoggingClientInterceptor());
-        setInterceptors(interceptors);
+        setInterceptors(new ArrayList<>(singletonList(new LoggingClientInterceptor())));
     }
 
     /**
@@ -229,7 +227,7 @@ public class WebServiceEndpointConfiguration extends AbstractPollableEndpointCon
      * Gets the client interceptors.
      * @return
      */
-    public List<ClientInterceptor> getInterceptors() {
+    List<ClientInterceptor> getInterceptors() {
         return interceptors;
     }
 
@@ -247,7 +245,14 @@ public class WebServiceEndpointConfiguration extends AbstractPollableEndpointCon
      * @param interceptor
      */
     public void setInterceptor(ClientInterceptor interceptor) {
-        List<ClientInterceptor> interceptors = new ArrayList<>();
+        setInterceptors(new ArrayList<>(singletonList(interceptor)));
+    }
+
+    /**
+     * Adds the client interceptor to the already existing ones.
+     * @param interceptor
+     */
+    public void addInterceptor(ClientInterceptor interceptor) {
         interceptors.add(interceptor);
         setInterceptors(interceptors);
     }

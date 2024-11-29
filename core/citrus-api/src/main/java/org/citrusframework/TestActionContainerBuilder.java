@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import java.util.List;
 import org.citrusframework.container.TestActionContainer;
 
 /**
- * @author Christoph Deppisch
  * @since 2.3
  */
 public interface TestActionContainerBuilder<T extends TestActionContainer, S extends TestActionContainerBuilder<T, S>> extends TestActionBuilder<T> {

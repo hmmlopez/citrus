@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2024 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ import org.springframework.ws.transport.http.MessageDispatcherServlet;
 import java.util.Arrays;
 
 import static java.nio.file.Paths.get;
+import static java.util.Objects.nonNull;
 
 /**
  * Jetty server implementation wrapping a {@link Server} with Citrus server behaviour, so
  * server can be started/stopped by Citrus.
  *
- * @author Christoph Deppisch
  */
 public class WebServiceServer extends AbstractServer {
 
@@ -59,7 +59,7 @@ public class WebServiceServer extends AbstractServer {
     /**
      * Server resource base
      */
-    private String resourceBase = "src/main/resources";
+    private String resourceBase;
 
     /**
      * Application context location for payload mappings etc.
@@ -77,9 +77,9 @@ public class WebServiceServer extends AbstractServer {
     private boolean useRootContextAsParent = false;
 
     /**
-     * Do only start one instance after another so we need a static lock object
+     * Do only start one instance after another, so we need a static lock object
      */
-    private static Object serverLock = new Object();
+    private static final Object serverLock = new Object();
 
     /**
      * Set custom connector with custom idle time and other configuration options
@@ -179,7 +179,10 @@ public class WebServiceServer extends AbstractServer {
 
             ServletContextHandler contextHandler = new ServletContextHandler();
             contextHandler.setContextPath(contextPath);
-            contextHandler.setBaseResourceAsPath(get(resourceBase));
+
+            if (nonNull(resourceBase)) {
+                contextHandler.setBaseResourceAsPath(get(resourceBase));
+            }
 
             //add the root application context as parent to the constructed WebApplicationContext
             if (useRootContextAsParent && getReferenceResolver() instanceof SpringBeanReferenceResolver springBeanReferenceResolver) {
@@ -209,11 +212,15 @@ public class WebServiceServer extends AbstractServer {
 
             jettyServer.setHandler(handlers);
 
-            try {
-                jettyServer.start();
-            } catch (Exception e) {
-                throw new CitrusRuntimeException(e);
-            }
+            startJettyServerThrowingCitrusRuntimeException();
+        }
+    }
+
+    private void startJettyServerThrowingCitrusRuntimeException() throws CitrusRuntimeException {
+        try {
+            jettyServer.start();
+        } catch (Exception e) {
+            throw new CitrusRuntimeException(e);
         }
     }
 

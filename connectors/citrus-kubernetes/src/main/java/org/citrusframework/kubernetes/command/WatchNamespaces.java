@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 
 package org.citrusframework.kubernetes.command;
 
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.NamespaceList;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.api.model.Namespace;
-import io.fabric8.kubernetes.client.dsl.ClientNonNamespaceOperation;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
-public class WatchNamespaces extends AbstractWatchCommand<Namespace, WatchNamespaces> {
+public class WatchNamespaces extends AbstractWatchCommand<Namespace, NamespaceList, Resource<Namespace>, WatchNamespaces> {
 
     /**
      * Default constructor initializing the command name.
@@ -35,7 +36,12 @@ public class WatchNamespaces extends AbstractWatchCommand<Namespace, WatchNamesp
     }
 
     @Override
-    protected ClientNonNamespaceOperation operation(KubernetesClient kubernetesClient, TestContext context) {
-        return kubernetesClient.getClient().namespaces();
+    protected MixedOperation<Namespace, NamespaceList, Resource<Namespace>> operation(KubernetesClient kubernetesClient, TestContext context) {
+        return (MixedOperation<Namespace, NamespaceList, Resource<Namespace>>) kubernetesClient.getClient().namespaces();
+    }
+
+    @Override
+    protected boolean isNamespaceOperation() {
+        return false;
     }
 }

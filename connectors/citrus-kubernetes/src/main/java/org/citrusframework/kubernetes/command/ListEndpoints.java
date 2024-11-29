@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 
 package org.citrusframework.kubernetes.command;
 
+import io.fabric8.kubernetes.api.model.Endpoints;
+import io.fabric8.kubernetes.api.model.EndpointsList;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.api.model.EndpointsList;
-import io.fabric8.kubernetes.client.dsl.ClientMixedOperation;
 
 /**
- * @author Christoph Deppisch
  * @since 2.7
  */
-public class ListEndpoints extends AbstractListCommand<EndpointsList, ListEndpoints> {
+public class ListEndpoints extends AbstractListCommand<Endpoints, EndpointsList, Resource<Endpoints>, ListEndpoints> {
 
     /**
      * Default constructor initializing the command name.
@@ -35,7 +36,7 @@ public class ListEndpoints extends AbstractListCommand<EndpointsList, ListEndpoi
     }
 
     @Override
-    protected ClientMixedOperation operation(KubernetesClient kubernetesClient, TestContext context) {
+    protected MixedOperation<Endpoints, EndpointsList, Resource<Endpoints>> operation(KubernetesClient kubernetesClient, TestContext context) {
         return kubernetesClient.getClient().endpoints();
     }
 }

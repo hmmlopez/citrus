@@ -29,7 +29,7 @@ Citrus framework:
 Installed JDK plus JAVA_HOME environment variable set
 up and pointing to your Java installation directory. Used to compile and build the Citrus code.
 
-* Maven 3.9.5+
+* Maven 3.9.8+
 Citrus projects will fit best with [Maven](https://maven.apache.org).
 However, it is not required to use Maven. You can also run tests using [Gradle](https://gradle.org/) for instance.
 
@@ -76,13 +76,13 @@ projects in the separate repository [https://github.com/citrusframework/citrus-s
 Licensing
 ---------
 
-Copyright 2006-2023 the original author or authors.
+Copyright 2006-2024 the original author or authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-  https://www.apache.org/licenses/LICENSE-2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,

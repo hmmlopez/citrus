@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,6 @@ import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-/**
- * @author Christoph Deppisch
- */
 public class HeaderValuesTest extends UnitTestSupport {
     private Endpoint endpoint = Mockito.mock(Endpoint.class);
     private Consumer consumer = Mockito.mock(Consumer.class);
@@ -79,7 +76,7 @@ public class HeaderValuesTest extends UnitTestSupport {
                             + "</element>"
                             + "</root>"));
 
-        HashMap<String, Object> validateHeaderValues = new HashMap<String, Object>();
+        HashMap<String, Object> validateHeaderValues = new HashMap<>();
         validateHeaderValues.put("header-valueA", "A");
 
         controlMessageBuilder.addHeaderBuilder(new DefaultHeaderBuilder(validateHeaderValues));
@@ -122,7 +119,7 @@ public class HeaderValuesTest extends UnitTestSupport {
                             + "</element>"
                             + "</root>"));
 
-        HashMap<String, Object> validateHeaderValues = new HashMap<String, Object>();
+        HashMap<String, Object> validateHeaderValues = new HashMap<>();
         validateHeaderValues.put("header-valueA", "A");
         validateHeaderValues.put("header-valueB", "B");
         validateHeaderValues.put("header-valueC", "C");
@@ -168,7 +165,7 @@ public class HeaderValuesTest extends UnitTestSupport {
                             + "</element>"
                             + "</root>"));
 
-        HashMap<String, Object> validateHeaderValues = new HashMap<String, Object>();
+        HashMap<String, Object> validateHeaderValues = new HashMap<>();
         validateHeaderValues.put("header-valueA", "wrong");
 
         controlMessageBuilder.addHeaderBuilder(new DefaultHeaderBuilder(validateHeaderValues));
@@ -211,7 +208,7 @@ public class HeaderValuesTest extends UnitTestSupport {
                             + "</element>"
                             + "</root>"));
 
-        HashMap<String, Object> validateHeaderValues = new HashMap<String, Object>();
+        HashMap<String, Object> validateHeaderValues = new HashMap<>();
         validateHeaderValues.put("header-wrong", "A");
 
         controlMessageBuilder.addHeaderBuilder(new DefaultHeaderBuilder(validateHeaderValues));
@@ -254,7 +251,7 @@ public class HeaderValuesTest extends UnitTestSupport {
                             + "</element>"
                             + "</root>"));
 
-        HashMap<String, Object> validateHeaderValues = new HashMap<String, Object>();
+        HashMap<String, Object> validateHeaderValues = new HashMap<>();
         validateHeaderValues.put("header-valueA", "");
         validateHeaderValues.put("header-valueB", "");
         validateHeaderValues.put("header-valueC", "");
@@ -299,7 +296,7 @@ public class HeaderValuesTest extends UnitTestSupport {
                             + "</element>"
                             + "</root>"));
 
-        HashMap<String, Object> validateHeaderValues = new HashMap<String, Object>();
+        HashMap<String, Object> validateHeaderValues = new HashMap<>();
         validateHeaderValues.put("header-valueA", "null");
         validateHeaderValues.put("header-valueB", "null");
         validateHeaderValues.put("header-valueC", "null");
@@ -344,7 +341,7 @@ public class HeaderValuesTest extends UnitTestSupport {
                             + "</element>"
                             + "</root>"));
 
-        HashMap<String, String> extractHeaderValues = new HashMap<String, String>();
+        HashMap<String, String> extractHeaderValues = new HashMap<>();
         extractHeaderValues.put("header-valueA", "${valueA}");
         extractHeaderValues.put("header-valueB", "${valueB}");
 

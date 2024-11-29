@@ -1,5 +1,5 @@
-/**
- * Copyright 2006-2013 the original author or authors.
+/*
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
  * Function changes given date value by adding/subtracting day/month/year/hour/minute
  * offset values. Class uses special date format to parse date string to Calendar instance.
  *
- * @author Christoph Deppisch
  * @since 1.3.1
  */
 public class ChangeDateFunction extends AbstractDateFunction {
@@ -53,7 +52,7 @@ public class ChangeDateFunction extends AbstractDateFunction {
         Calendar calendar = calendarProvider.getInstance();
 
         SimpleDateFormat dateFormat;
-        String result = "";
+        String result;
 
         if (parameterList.size() > 2) {
             dateFormat = new SimpleDateFormat(parameterList.get(2));

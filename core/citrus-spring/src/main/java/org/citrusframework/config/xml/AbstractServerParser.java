@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.w3c.dom.Element;
 
 /**
  * Abstract server parser adds endpoint adapter construction and basic server property parsing.
- * @author Christoph Deppisch
  * @since 1.4
  */
 public abstract class AbstractServerParser extends AbstractBeanDefinitionParser {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,6 @@
  */
 
 package org.citrusframework.validation.script;
-
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.List;
 
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
@@ -37,6 +33,11 @@ import org.codehaus.groovy.control.CompilationFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.List;
+
 /**
  * Groovy script message validator passing the message to a validation script.
  * Tester needs to write validation code in Groovy.
@@ -44,7 +45,6 @@ import org.slf4j.LoggerFactory;
  * Available objects inside groovy script are 'receivedMessage' which is the actual {@link Message} object
  * to validate and 'context' the current {@link TestContext}.
  *
- * @author Christoph Deppisch
  */
 public class GroovyScriptMessageValidator extends AbstractMessageValidator<ScriptValidationContext> {
 
@@ -78,29 +78,32 @@ public class GroovyScriptMessageValidator extends AbstractMessageValidator<Scrip
             if (StringUtils.hasText(validationScript)) {
                 logger.debug("Start groovy message validation ...");
 
-                GroovyClassLoader loader = AccessController.doPrivileged(new PrivilegedAction<GroovyClassLoader>() {
-                    public GroovyClassLoader run() {
-                        return new GroovyClassLoader(GroovyScriptMessageValidator.class.getClassLoader());
-                    }
-                });
-                Class<?> groovyClass = loader.parseClass(TemplateBasedScriptBuilder.fromTemplateResource(scriptTemplateResource)
-                                                            .withCode(validationScript)
-                                                            .build());
+                try (var loader = getPrivilegedGroovyLoader()) {
+                    Class<?> groovyClass = loader.parseClass(TemplateBasedScriptBuilder.fromTemplateResource(scriptTemplateResource)
+                            .withCode(validationScript)
+                            .build());
 
-                if (groovyClass == null) {
-                    throw new CitrusRuntimeException("Failed to load groovy validation script resource");
+                    if (groovyClass == null) {
+                        throw new CitrusRuntimeException("Failed to load groovy validation script resource");
+                    }
+
+                    GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance();
+                    ((GroovyScriptExecutor) groovyObject).validate(receivedMessage, context);
+                } catch (IOException e) {
+                    throw new CitrusRuntimeException("Failed to load groovy validation script resource", e);
                 }
 
-                GroovyObject groovyObject = (GroovyObject) groovyClass.newInstance();
-                ((GroovyScriptExecutor) groovyObject).validate(receivedMessage, context);
-
-                logger.info("Groovy message validation successful: All values OK");
+                logger.debug("Groovy message validation successful: All values OK");
             }
         } catch (CompilationFailedException | InstantiationException | IllegalAccessException e) {
             throw new CitrusRuntimeException(e);
         } catch (AssertionError e) {
             throw new ValidationException("Groovy script validation failed with assertion error:\n" + e.getMessage(), e);
         }
+    }
+
+    private static GroovyClassLoader getPrivilegedGroovyLoader() {
+        return AccessController.doPrivileged((PrivilegedAction<GroovyClassLoader>) () -> new GroovyClassLoader(GroovyScriptMessageValidator.class.getClassLoader()));
     }
 
     @Override

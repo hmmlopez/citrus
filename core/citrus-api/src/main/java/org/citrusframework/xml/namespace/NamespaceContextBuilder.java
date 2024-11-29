@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.citrusframework.message.Message;
  * Namespace mappings are defined as key value pairs where key is definded as namespace prefix and value is the
  * actual namespace uri.
  *
- * @author Christoph Deppisch
  */
 public class NamespaceContextBuilder {
 

@@ -1,0 +1,15 @@
+name: "StartRedpandaTest"
+author: "Christoph"
+status: "FINAL"
+description: Sample test in XML
+actions:
+  - testcontainers:
+      start:
+        redpanda:
+          autoRemove: false
+          labels:
+            - name: app
+              value: citrus
+          env:
+            - name: APP
+              value: CITRUS

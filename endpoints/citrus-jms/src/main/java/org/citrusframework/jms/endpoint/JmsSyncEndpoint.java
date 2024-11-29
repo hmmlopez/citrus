@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.citrusframework.messaging.SelectiveConsumer;
  * Synchronous Jms message endpoint. When sending messages endpoint sets replyTo message header and waits for synchronous response.
  * When receiving messages endpoint reads replyTo header from incoming request and sends synchronous response back.
  *
- * @author Christoph Deppisch
  * @since 1.4
  */
 public class JmsSyncEndpoint extends JmsEndpoint implements ShutdownPhase {
@@ -85,5 +84,4 @@ public class JmsSyncEndpoint extends JmsEndpoint implements ShutdownPhase {
             jmsSyncMessageProducer.destroy();
         }
     }
-
 }

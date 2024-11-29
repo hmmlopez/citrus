@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.w3c.dom.Element;
 /**
  * Bean definition parser for schema-repository configuration.
  *
- * @author Martin.Maher
  * @since 1.3.1
  */
 public class SchemaRepositoryParser implements BeanDefinitionParser {

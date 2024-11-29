@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,6 @@ public class JavaTestGenerator<T extends JavaTestGenerator<T>> extends AbstractT
     private CodeBlock getJavaDoc() {
         return CodeBlock.builder()
                 .add("$L\n\n", Optional.ofNullable(getDescription()).orElseGet(this::getName))
-                .add("@author $L\n", getAuthor())
                 .add("@since $L\n", getCreationDate())
                 .build();
     }
@@ -170,12 +169,11 @@ public class JavaTestGenerator<T extends JavaTestGenerator<T>> extends AbstractT
      * @return The annotation spec for test cases
      */
     private AnnotationSpec[] getTestAnnotations() {
-        switch (getFramework()){
-            case JUNIT4: return createJunit4TestAnnotations();
-            case JUNIT5: return createJunit5Annotations();
-            case TESTNG: return createTestNgTestAnnotations();
-            default: throw new CitrusRuntimeException("Unsupported framework: " + getFramework());
-        }
+        return switch (getFramework()) {
+            case JUNIT4 -> createJunit4TestAnnotations();
+            case JUNIT5 -> createJunit5Annotations();
+            case TESTNG -> createTestNgTestAnnotations();
+        };
     }
 
     /**

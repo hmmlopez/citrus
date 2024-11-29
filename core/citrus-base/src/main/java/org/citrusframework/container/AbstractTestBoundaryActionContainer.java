@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
  * Abstract test action container describes methods to enable/disable container execution based on given test name, package
  * and test groups. This action container is typically used by before and after test action containers.
  *
- * @author Christoph Deppisch
  * @since 2.0
  */
 public abstract class AbstractTestBoundaryActionContainer extends AbstractActionContainer {
@@ -117,7 +116,6 @@ public abstract class AbstractTestBoundaryActionContainer extends AbstractAction
 
         return pattern;
     }
-
 
     /**
      * Checks on included test groups if we should execute sequence. Included group list should have

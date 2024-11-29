@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ package org.citrusframework.exceptions;
  * Throw this exception in case you did not receive a message on a destination in time.
  * Used in message receivers to state that expected message did not arrive.
  *
- * @author Christoph Deppisch
  */
 public class ActionTimeoutException extends CitrusRuntimeException {
 

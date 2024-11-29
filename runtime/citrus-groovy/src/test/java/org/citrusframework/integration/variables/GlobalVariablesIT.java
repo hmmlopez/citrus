@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 the original author or authors.
+ * Copyright the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.testng.annotations.Test;
  * Global variables are loaded in advance to this test. Variables are printed within this test
  * to show that global property loader works fine.
  *
- * @author Philipp Komninos
  * @since 2010
  */
 public class GlobalVariablesIT extends TestNGCitrusSpringSupport {
