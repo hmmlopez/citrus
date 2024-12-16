@@ -21,7 +21,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,9 +45,11 @@ public class LocalStackContainer extends GenericContainer<LocalStackContainer> {
     private static final String HOSTNAME_EXTERNAL_ENV = "HOSTNAME_EXTERNAL";
 
     private static final String DOCKER_IMAGE_NAME = LocalStackSettings.getImageName();
-    private static final String DOCKER_IMAGE_TAG = LocalStackSettings.VERSION_DEFAULT;
+    private static final String DOCKER_IMAGE_TAG = LocalStackSettings.getVersion();
 
     private final Set<Service> services = new HashSet<>();
+    private final Map<Service, Object> clients = new HashMap<>();
+
     private String secretKey = "secretkey";
     private String accessKey = "accesskey";
     private String region = Region.US_EAST_1.id();
@@ -183,6 +188,34 @@ public class LocalStackContainer extends GenericContainer<LocalStackContainer> {
         return services.toArray(Service[]::new);
     }
 
+    public void addClient(Service service, Object client) {
+        this.clients.put(service, client);
+    }
+
+    public <T> T getClient(Service service) {
+        if (!services.contains(service)) {
+            throw new CitrusRuntimeException("Unable to create client for disabled service: %s".formatted(service));
+        }
+
+        Object client = clients.get(service);
+        if (client != null) {
+            return (T) client;
+        }
+
+        // lazy load client for this container
+        Optional<ClientFactory<?>> clientFactory = ClientFactory.lookup(service);
+        if (clientFactory.isPresent()) {
+            client = clientFactory.get().createClient(this);
+            clients.put(service, client);
+        }
+
+        if (client != null) {
+            return (T) client;
+        }
+
+        throw new CitrusRuntimeException("Missing client for service %s".formatted(service));
+    }
+
     public enum Service {
         CLOUD_WATCH("cloudwatch"),
         DYNAMODB("dynamodb"),
@@ -210,6 +243,13 @@ public class LocalStackContainer extends GenericContainer<LocalStackContainer> {
 
         public static String serviceName(Service service) {
             return service.serviceName;
+        }
+
+        public static Service fromServiceName(String serviceName) {
+            return Arrays.stream(Service.values())
+                    .filter(service -> service.serviceName.equals(serviceName))
+                    .findFirst()
+                    .orElseThrow(() -> new CitrusRuntimeException("Unknown AWS LocalStack service name: %s".formatted(serviceName)));
         }
     }
 }

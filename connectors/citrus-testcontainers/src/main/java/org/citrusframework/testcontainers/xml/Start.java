@@ -16,6 +16,8 @@
 
 package org.citrusframework.testcontainers.xml;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -28,6 +30,7 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import jakarta.xml.bind.annotation.XmlValue;
 import org.citrusframework.TestActor;
+import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.spi.ReferenceResolver;
 import org.citrusframework.spi.ReferenceResolverAware;
 import org.citrusframework.spi.Resources;
@@ -35,12 +38,14 @@ import org.citrusframework.testcontainers.TestContainersSettings;
 import org.citrusframework.testcontainers.actions.AbstractTestcontainersAction;
 import org.citrusframework.testcontainers.actions.StartTestcontainersAction;
 import org.citrusframework.testcontainers.aws2.LocalStackContainer;
+import org.citrusframework.testcontainers.aws2.LocalStackSettings;
 import org.citrusframework.testcontainers.aws2.StartLocalStackAction;
 import org.citrusframework.testcontainers.kafka.StartKafkaAction;
 import org.citrusframework.testcontainers.mongodb.StartMongoDBAction;
 import org.citrusframework.testcontainers.postgresql.StartPostgreSQLAction;
 import org.citrusframework.testcontainers.redpanda.StartRedpandaAction;
 import org.citrusframework.util.ObjectHelper;
+import org.citrusframework.util.StringUtils;
 
 @XmlRootElement(name = "start")
 public class Start extends AbstractTestcontainersAction.Builder<StartTestcontainersAction<?>, Start> implements ReferenceResolverAware {
@@ -60,6 +65,8 @@ public class Start extends AbstractTestcontainersAction.Builder<StartTestcontain
         if (container.getVersion() != null) {
             builder.version(container.getVersion());
         }
+
+        builder.autoCreateClients(container.isAutoCreateClients());
 
         configureStartActionBuilder(builder, container);
 
@@ -194,6 +201,20 @@ public class Start extends AbstractTestcontainersAction.Builder<StartTestcontain
             container.getLabels().getLabels().forEach(label -> builder.withLabel(label.getName(), label.getValue()));
         }
 
+        if (container.getWaitFor() != null) {
+            if (container.getWaitFor().isDisabled()) {
+                builder.waitStrategyDisabled();
+            } else if (StringUtils.hasText(container.getWaitFor().getLogMessage())) {
+                builder.waitFor(container.getWaitFor().getLogMessage());
+            } else if (StringUtils.hasText(container.getWaitFor().getUrl())) {
+                try {
+                    builder.waitFor(new URL(container.getWaitFor().getUrl()));
+                } catch (MalformedURLException e) {
+                    throw new CitrusRuntimeException("Invalid Http(s) URL to wait for: %s".formatted(container.getWaitFor().getUrl()), e);
+                }
+            }
+        }
+
         if (container.getExposedPorts() != null) {
             container.getExposedPorts().getPorts().forEach(builder::addExposedPort);
         }
@@ -214,6 +235,7 @@ public class Start extends AbstractTestcontainersAction.Builder<StartTestcontain
             "environmentVariables",
             "exposedPorts",
             "portBindings",
+            "waitFor",
             "volumeMounts"
     })
     public static class Container {
@@ -241,6 +263,9 @@ public class Start extends AbstractTestcontainersAction.Builder<StartTestcontain
 
         @XmlElement
         protected Labels labels;
+
+        @XmlElement(name = "wait-for")
+        protected WaitFor waitFor;
 
         @XmlElement(name = "exposed-ports")
         protected ExposedPorts exposedPorts;
@@ -315,6 +340,14 @@ public class Start extends AbstractTestcontainersAction.Builder<StartTestcontain
             this.labels = labels;
         }
 
+        public void setWaitFor(WaitFor waitFor) {
+            this.waitFor = waitFor;
+        }
+
+        public WaitFor getWaitFor() {
+            return waitFor;
+        }
+
         public ExposedPorts getExposedPorts() {
             return exposedPorts;
         }
@@ -387,6 +420,44 @@ public class Start extends AbstractTestcontainersAction.Builder<StartTestcontain
         }
 
         @XmlAccessorType(XmlAccessType.FIELD)
+        @XmlType(name = "")
+        public static class WaitFor {
+
+            @XmlAttribute(name = "log-message")
+            private String logMessage;
+
+            @XmlAttribute
+            private String url;
+
+            @XmlAttribute
+            private boolean disabled;
+
+            public String getLogMessage() {
+                return logMessage;
+            }
+
+            public void setLogMessage(String logMessage) {
+                this.logMessage = logMessage;
+            }
+
+            public String getUrl() {
+                return url;
+            }
+
+            public void setUrl(String url) {
+                this.url = url;
+            }
+
+            public boolean isDisabled() {
+                return disabled;
+            }
+
+            public void setDisabled(boolean disabled) {
+                this.disabled = disabled;
+            }
+        }
+
+        @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(name = "", propOrder = {
                 "ports"
         })
@@ -438,6 +509,9 @@ public class Start extends AbstractTestcontainersAction.Builder<StartTestcontain
         @XmlAttribute
         protected String version;
 
+        @XmlAttribute(name = "auto-create-clients")
+        protected boolean autoCreateClients = LocalStackSettings.isAutoCreateClients();
+
         @XmlAttribute(name = "services")
         protected String serviceList;
 
@@ -467,6 +541,14 @@ public class Start extends AbstractTestcontainersAction.Builder<StartTestcontain
 
         public void setServices(Services services) {
             this.services = services;
+        }
+
+        public boolean isAutoCreateClients() {
+            return autoCreateClients;
+        }
+
+        public void setAutoCreateClients(boolean autoCreateClients) {
+            this.autoCreateClients = autoCreateClients;
         }
 
         @XmlAccessorType(XmlAccessType.FIELD)

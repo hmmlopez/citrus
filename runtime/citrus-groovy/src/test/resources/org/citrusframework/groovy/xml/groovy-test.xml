@@ -23,21 +23,29 @@
   </variables>
   <actions>
     <groovy>
-      println 'Hello Citrus'
+      <script>
+        println 'Hello Citrus'
+      </script>
     </groovy>
 
-    <groovy use-script-template="false">
-      println 'Hello Citrus'
+    <groovy>
+      <script use-script-template="false">
+        println 'Hello Citrus'
+      </script>
     </groovy>
 
-    <groovy script-template="classpath:org/citrusframework/script/custom-script-template.groovy">
-      <![CDATA[
-        Assert.assertEquals(context.getVariable("scriptTemplateVar"), "It works!")
-        Assert.assertEquals(context.getVariable("greetingText"), "Hello Citrus!")
-        Assert.assertEquals(context.getVariable("greetingText"), "${greetingText}")
-      ]]>
+    <groovy>
+      <script script-template="classpath:org/citrusframework/script/custom-script-template.groovy">
+        <![CDATA[
+          Assert.assertEquals(context.getVariable("scriptTemplateVar"), "It works!")
+          Assert.assertEquals(context.getVariable("greetingText"), "Hello Citrus!")
+          Assert.assertEquals(context.getVariable("greetingText"), "${greetingText}")
+        ]]>
+      </script>
     </groovy>
 
-    <groovy file="classpath:org/citrusframework/script/example.groovy"/>
+    <groovy>
+      <script file="classpath:org/citrusframework/script/example.groovy"/>
+    </groovy>
   </actions>
 </test>

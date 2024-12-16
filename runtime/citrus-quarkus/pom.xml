@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.citrusframework</groupId>
     <artifactId>citrus-runtime</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.6.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -13,41 +13,6 @@
   <name>Citrus :: Runtime :: Quarkus Extension</name>
   <description>Citrus Quarkus Extension</description>
   <packaging>pom</packaging>
-
-  <properties>
-    <quarkus.platform.version>3.16.0</quarkus.platform.version>
-  </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-arc</artifactId>
-        <version>${quarkus.platform.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-arc-deployment</artifactId>
-        <version>${quarkus.platform.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-junit5</artifactId>
-        <version>${quarkus.platform.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-test-common</artifactId>
-        <version>${quarkus.platform.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-jacoco</artifactId>
-        <version>${quarkus.platform.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <build>
     <pluginManagement>

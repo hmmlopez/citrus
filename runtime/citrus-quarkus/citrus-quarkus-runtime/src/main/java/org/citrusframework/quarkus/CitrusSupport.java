@@ -25,11 +25,14 @@ import io.quarkus.test.common.QuarkusTestResource;
 
 /**
  * Special Citrus annotation that enables Citrus support on QuarkusTest framework.
- *
  */
-@QuarkusTestResource(CitrusTestResource.class)
+@QuarkusTestResource(value = CitrusTestResource.class, restrictToAnnotatedClass = true)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface CitrusSupport {
 
+    /**
+     * Supplier capable of setting application properties for the Quarkus application under test.
+     */
+    Class<? extends ApplicationPropertiesSupplier>[] applicationPropertiesSupplier() default {};
 }

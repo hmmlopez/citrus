@@ -850,13 +850,53 @@
   </xs:complexType>
 
   <xs:complexType name="Groovy">
-    <xs:simpleContent>
-      <xs:extension base="xs:string">
-        <xs:attribute name="file" type="xs:string"/>
-        <xs:attribute name="script-template" type="xs:string"/>
-        <xs:attribute name="use-script-template" type="xs:boolean"/>
-      </xs:extension>
-    </xs:simpleContent>
+    <xs:sequence>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+      <xs:choice>
+        <xs:element name="script">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="file" type="xs:string"/>
+                <xs:attribute name="script-template" type="xs:string"/>
+                <xs:attribute name="use-script-template" type="xs:boolean"/>
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="endpoints">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="script">
+                <xs:complexType>
+                  <xs:simpleContent>
+                    <xs:extension base="xs:string">
+                      <xs:attribute name="file" type="xs:string"/>
+                    </xs:extension>
+                  </xs:simpleContent>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="beans">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="script">
+                <xs:complexType>
+                  <xs:simpleContent>
+                    <xs:extension base="xs:string">
+                      <xs:attribute name="file" type="xs:string"/>
+                    </xs:extension>
+                  </xs:simpleContent>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="actor" type="xs:string"/>
   </xs:complexType>
 
   <xs:complexType name="Camel">
@@ -1091,6 +1131,7 @@
         </xs:element>
       </xs:choice>
     </xs:sequence>
+    <xs:attribute name="actor" type="xs:string"/>
     <xs:attribute name="camel-context" type="xs:string"/>
   </xs:complexType>
 
@@ -1877,6 +1918,42 @@
     <xs:sequence>
     <xs:element name="description" type="xs:string" minOccurs="0"/>
     <xs:choice>
+      <xs:element name="compose">
+        <xs:complexType>
+          <xs:choice>
+            <xs:element name="up">
+              <xs:complexType>
+                <xs:sequence>
+                  <xs:element name="exposedService" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                      <xs:sequence>
+                        <xs:element name="wait-for" minOccurs="0">
+                          <xs:complexType>
+                            <xs:attribute name="log-message" type="xs:string"/>
+                            <xs:attribute name="url" type="xs:string"/>
+                            <xs:attribute name="disabled" type="xs:boolean"/>
+                          </xs:complexType>
+                        </xs:element>
+                      </xs:sequence>
+                      <xs:attribute name="name" use="required" type="xs:string"/>
+                      <xs:attribute name="port" use="required" type="xs:string"/>
+                    </xs:complexType>
+                  </xs:element>
+                </xs:sequence>
+                <xs:attribute name="name" type="xs:string"/>
+                <xs:attribute name="file" type="xs:string"/>
+                <xs:attribute name="auto-remove" type="xs:boolean"/>
+                <xs:attribute name="startup-timeout" type="xs:int"/>
+              </xs:complexType>
+            </xs:element>
+            <xs:element name="down">
+              <xs:complexType>
+                <xs:attribute name="name" type="xs:string"/>
+              </xs:complexType>
+            </xs:element>
+          </xs:choice>
+        </xs:complexType>
+      </xs:element>
       <xs:element name="start">
         <xs:complexType>
           <xs:choice>
@@ -1919,6 +1996,13 @@
                       <xs:sequence>
                         <xs:element name="binding" maxOccurs="unbounded" type="xs:string"/>
                       </xs:sequence>
+                    </xs:complexType>
+                  </xs:element>
+                  <xs:element name="wait-for" minOccurs="0">
+                    <xs:complexType>
+                      <xs:attribute name="log-message" type="xs:string"/>
+                      <xs:attribute name="url" type="xs:string"/>
+                      <xs:attribute name="disabled" type="xs:boolean"/>
                     </xs:complexType>
                   </xs:element>
                   <xs:element name="volume-mounts" minOccurs="0">
@@ -1981,6 +2065,7 @@
                 <xs:attribute name="service-name" type="xs:string"/>
                 <xs:attribute name="version" type="xs:string"/>
                 <xs:attribute name="auto-remove" type="xs:boolean"/>
+                <xs:attribute name="auto-create-clients" type="xs:boolean"/>
                 <xs:attribute name="services" type="xs:string"/>
                 <xs:attribute name="image" type="xs:string"/>
                 <xs:attribute name="command" type="xs:string"/>

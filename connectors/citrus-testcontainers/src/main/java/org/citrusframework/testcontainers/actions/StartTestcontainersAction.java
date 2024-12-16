@@ -16,6 +16,7 @@
 
 package org.citrusframework.testcontainers.actions;
 
+import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,8 +29,11 @@ import org.citrusframework.context.TestContext;
 import org.citrusframework.spi.Resource;
 import org.citrusframework.spi.Resources;
 import org.citrusframework.testcontainers.TestContainersSettings;
+import org.citrusframework.testcontainers.WaitStrategyHelper;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.utility.MountableFile;
 
 import static org.citrusframework.testcontainers.TestcontainersHelper.getEnvVarName;
@@ -96,7 +100,7 @@ public class StartTestcontainersAction<C extends GenericContainer<?>> extends Ab
         }
     }
 
-    protected C getContainer() {
+    public C getContainer() {
         return container;
     }
 
@@ -126,6 +130,8 @@ public class StartTestcontainersAction<C extends GenericContainer<?>> extends Ab
         protected final List<String> portBindings = new ArrayList<>();
 
         protected final Map<MountableFile, String> volumeMounts = new HashMap<>();
+
+        protected WaitStrategy waitStrategy;
 
         private boolean autoRemoveResources = TestContainersSettings.isAutoRemoveResources();
 
@@ -244,6 +250,30 @@ public class StartTestcontainersAction<C extends GenericContainer<?>> extends Ab
             return self;
         }
 
+        public B waitFor(WaitStrategy waitStrategy) {
+            this.waitStrategy = waitStrategy;
+            return self;
+        }
+
+        public B waitFor(URL url) {
+            this.waitStrategy = WaitStrategyHelper.waitFor(url);
+            return self;
+        }
+
+        public B waitFor(String logMessage) {
+            return waitFor(logMessage, 1);
+        }
+
+        public B waitFor(String logMessage, int times) {
+            this.waitStrategy = Wait.forLogMessage(logMessage, times);
+            return self;
+        }
+
+        public B waitStrategyDisabled() {
+            this.waitStrategy = WaitStrategyHelper.getNoopStrategy();
+            return self;
+        }
+
         public B withVolumeMount(MountableFile mountableFile, String containerPath) {
             this.volumeMounts.put(mountableFile, containerPath);
             return self;
@@ -267,37 +297,50 @@ public class StartTestcontainersAction<C extends GenericContainer<?>> extends Ab
         protected void prepareBuild() {
         }
 
-        @Override
-        public T build() {
-            prepareBuild();
+        protected C buildContainer() {
+            C container = (C) new GenericContainer<>(image);
 
-            if (container == null) {
-                container = (C) new GenericContainer<>(image);
-
-                if (network != null) {
-                    container.withNetwork(network);
-                    if (serviceName != null) {
-                        container.withNetworkAliases(serviceName);
-                    } else if (containerName != null) {
-                        container.withNetworkAliases(containerName);
-                    }
+            if (network != null) {
+                container.withNetwork(network);
+                if (serviceName != null) {
+                    container.withNetworkAliases(serviceName);
+                } else if (containerName != null) {
+                    container.withNetworkAliases(containerName);
                 }
-
-                container.withStartupTimeout(startupTimeout);
             }
 
+            return container;
+        }
+
+        protected void configureContainer(C container) {
             container.withLabels(labels);
             container.withEnv(env);
 
             exposedPorts.forEach(container::addExposedPort);
             container.setPortBindings(portBindings);
 
-            volumeMounts.forEach((mountableFile, containerPath) ->
-                    container.withCopyFileToContainer(mountableFile, containerPath));
+            volumeMounts.forEach(container::withCopyFileToContainer);
+
+            if (waitStrategy != null) {
+                container.waitingFor(waitStrategy);
+            }
+
+            container.withStartupTimeout(startupTimeout);
 
             if (!commandLine.isEmpty()) {
                 container.withCommand(commandLine.toArray(String[]::new));
             }
+        }
+
+        @Override
+        public T build() {
+            prepareBuild();
+
+            if (container == null) {
+                container = buildContainer();
+            }
+
+            configureContainer(container);
 
             if (containerName == null && image != null) {
                 if (image.contains(":")) {
