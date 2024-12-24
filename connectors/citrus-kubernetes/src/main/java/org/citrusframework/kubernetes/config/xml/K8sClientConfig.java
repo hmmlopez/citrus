@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-package org.citrusframework.groovy.dsl
+package org.citrusframework.kubernetes.config.xml;
 
-import static org.citrusframework.container.Template.Builder.applyTemplate
+import io.fabric8.kubernetes.client.Config;
 
-name "ApplyTemplateTest"
-author "Christoph"
-status "FINAL"
-description "Sample test in Groovy"
+/**
+ * An extension of {@link Config}, but with a default constructor for initialization in Spring.
+ */
+public class K8sClientConfig extends Config {
 
-actions {
-    $(applyTemplate().templateName("myTemplate"))
-    $(applyTemplate().templateName("print")
-        .parameter("text", "Hello from Citrus!")
-        .parameter("message", """
-            <HelloRequest>
-               <Text>Hello from Citrus!</Text>
-            </HelloRequest>
-        """))
-    $(applyTemplate().file("classpath:org/citrusframework/groovy/echo-template.groovy"))
+    public K8sClientConfig() {
+        super(false);
+    }
 }

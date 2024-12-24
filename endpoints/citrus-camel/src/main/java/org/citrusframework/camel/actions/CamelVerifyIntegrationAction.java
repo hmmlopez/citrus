@@ -16,6 +16,7 @@
 
 package org.citrusframework.camel.actions;
 
+import java.util.List;
 import java.util.Map;
 
 import org.citrusframework.camel.CamelSettings;
@@ -124,18 +125,11 @@ public class CamelVerifyIntegrationAction extends AbstractCamelJBangAction {
         for (int i = 0; i < maxAttempts; i++) {
             if (context.getVariables().containsKey(name + ":pid")) {
                 Long pid = context.getVariable(name + ":pid", Long.class);
-                Map<String, String> properties = camelJBang().get(pid);
-                if ((phase.equals("Stopped") && properties.isEmpty()) || (!properties.isEmpty() && properties.get("STATUS").equals(phase))) {
-                    logger.info(String.format("Verified Camel integration '%s' state '%s' - All values OK!", name, phase));
+                if (findProcessAndVerifyStatus(pid, name, phase)) {
                     return pid;
-                } else if (phase.equals("Error")) {
-                    logger.info(String.format("Camel integration '%s' is in state 'Error'", name));
-                    if (stopOnErrorStatus) {
-                        throw new CitrusRuntimeException(String.format("Failed to verify Camel integration '%s' - is in state 'Error'", name));
-                    }
                 }
 
-                if (context.getVariables().containsKey(name + ":process:" + pid)) {
+                if (context.getVariables().containsKey("%s:process:%d".formatted(name, pid))) {
                     // check if process is still alive
                     ProcessAndOutput pao = context.getVariable(name + ":process:" + pid, ProcessAndOutput.class);
                     if (!pao.getProcess().isAlive()) {
@@ -144,6 +138,19 @@ public class CamelVerifyIntegrationAction extends AbstractCamelJBangAction {
 
                         throw new CitrusRuntimeException(String.format("Failed to verify Camel integration '%s' - exit code %s", name, pao.getProcess().exitValue()));
                     }
+
+                    // Check if there is a descendant process for the process saved in test context
+                    List<Long> descendants = pao.getDescendants();
+                    for (Long descendantPid : descendants) {
+                        // seems like there is descendant pid that should be verified
+                        if (findProcessAndVerifyStatus(descendantPid, name, phase)) {
+                            // Update pid in test context so upcoming checks can use the descendant pid
+                            context.setVariable("%s:process:%d".formatted(name, descendantPid), pao);
+                            return descendantPid;
+                        }
+                    }
+                } else {
+                    logger.warn(String.format("Missing process and output for '%s:process:%d'", name, pid));
                 }
             }
 
@@ -160,6 +167,25 @@ public class CamelVerifyIntegrationAction extends AbstractCamelJBangAction {
                 new CitrusRuntimeException(String.format("Failed to verify Camel integration '%s' - " +
                         "is not in state '%s' after %d attempts", name, phase, maxAttempts)));
 
+    }
+
+    private boolean findProcessAndVerifyStatus(Long pid, String name, String phase) {
+        Map<String, String> properties = camelJBang().get(pid);
+        if ((phase.equals("Stopped") && properties.isEmpty()) || (!properties.isEmpty() && properties.get("STATUS").equals(phase))) {
+            logger.info(String.format("Verified Camel integration '%s' state '%s' - All values OK!", name, phase));
+            return true;
+        } else if (properties.getOrDefault("STATUS", "").equals("Error")) {
+            logger.info(String.format("Camel integration '%s' is in state 'Error'", name));
+            if (stopOnErrorStatus) {
+                throw new CitrusRuntimeException(String.format("Failed to verify Camel integration '%s' - is in state 'Error'", name));
+            }
+        }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("Camel integration '%s' (pid:%d) not in state '%s'", name, pid, phase));
+        }
+
+        return false;
     }
 
     public String getIntegrationName() {

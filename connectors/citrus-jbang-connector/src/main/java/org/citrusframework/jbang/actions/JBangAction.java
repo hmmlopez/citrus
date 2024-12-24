@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.citrusframework.AbstractTestActionBuilder;
 import org.citrusframework.actions.AbstractTestAction;
@@ -89,7 +88,7 @@ public class JBangAction extends AbstractTestAction {
         }
 
         if (pidVar != null) {
-            context.setVariable(pidVar, result.getProcessId(Objects.requireNonNullElse(app, scriptName)));
+            context.setVariable(pidVar, result.getProcessId());
         }
 
         int exitValue = result.getProcess().exitValue();
@@ -105,7 +104,7 @@ public class JBangAction extends AbstractTestAction {
 
         if (validationProcessor != null) {
             validationProcessor.validate(new DefaultMessage(result.getOutput().trim())
-                    .setHeader("pid", result.getProcessId(Objects.requireNonNullElse(app, scriptName)))
+                    .setHeader("pid", result.getProcessId())
                     .setHeader("exitCode", result.getProcess().exitValue()), context);
         }
 

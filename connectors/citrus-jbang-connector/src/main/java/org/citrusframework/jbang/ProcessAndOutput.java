@@ -22,21 +22,23 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.awaitility.core.ConditionTimeoutException;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.awaitility.Awaitility.await;
-
 /**
  * Process wrapper also holds the output that has been produced by the completed process.
  */
 public class ProcessAndOutput {
 
-    /** Logger */
+    /**
+     * Logger
+     */
     private static final Logger LOG = LoggerFactory.getLogger(ProcessAndOutput.class);
 
     private final Process process;
@@ -138,31 +140,34 @@ public class ProcessAndOutput {
      * Get the process id of first descendant or the parent process itself in case there is no descendant process.
      * On Linux the shell command represents the parent process and the JBang command as descendant process.
      * Typically, we need the JBang command process id.
+     *
      * @return
      */
-    public Long getProcessId(String app) {
-        try {
-            if (isUnix()) {
-                // wait for descendant process to be available
-                await().atMost(5000L, TimeUnit.MILLISECONDS)
-                        .until(() -> process.descendants().findAny().isPresent());
-                return process.descendants()
-                        .filter(p -> p.info().commandLine().orElse("").contains(app))
-                        .findFirst()
-                        .map(ProcessHandle::pid)
-                        .orElse(process.pid());
-            }
+    public Long getProcessId() {
+        return process.pid();
+    }
 
-            return process.pid();
+    /**
+     * Get the process descendants.
+     * On some Linux distributions the shell command represents the parent process and the JBang command as descendant process.
+     * Typically, we need the JBang command process id.
+     *
+     * @return
+     */
+    public List<Long> getDescendants() {
+        try {
+            return process.descendants()
+                    .peek(p -> {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.info(String.format("Found descendant process (pid:%d) for process '%d'", p.pid(), getProcessId()));
+                        }
+                    })
+                    .map(ProcessHandle::pid)
+                    .collect(Collectors.toList());
         } catch (ConditionTimeoutException | UnsupportedOperationException | SecurityException e) {
             // not able or not allowed to manage descendant process snapshot
             // return parent process id as a fallback
-            return process.pid();
+            return Collections.emptyList();
         }
-    }
-
-    private static boolean isUnix() {
-        String os = System.getProperty("os.name").toLowerCase();
-        return os.contains("nix") || os.contains("nux") || os.contains("aix");
     }
 }
