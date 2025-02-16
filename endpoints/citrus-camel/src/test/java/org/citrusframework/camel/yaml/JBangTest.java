@@ -65,4 +65,5 @@ public class JBangTest extends AbstractYamlActionTest {
         CamelStopIntegrationAction stopAction = (CamelStopIntegrationAction) ((DefaultTestCase) result).getFinalActions().get(0);
         Assert.assertEquals(stopAction.getIntegrationName(), "hello-yaml");
     }
+
 }

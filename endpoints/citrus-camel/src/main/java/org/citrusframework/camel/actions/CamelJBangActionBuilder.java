@@ -87,6 +87,26 @@ public class CamelJBangActionBuilder extends AbstractReferenceResolverAwareTestA
     }
 
     /**
+     * Perform actions related to Camel JBang plugins.
+     * @return
+     */
+    public CamelPluginActionBuilder plugin() {
+        CamelPluginActionBuilder builder = new CamelPluginActionBuilder();
+        this.delegate = builder;
+        return builder;
+    }
+
+    /**
+     * Perform actions related to Camel JBang Kubernetes plugin.
+     * @return
+     */
+    public CamelKubernetesPluginActionBuilder kubernetes() {
+        CamelKubernetesPluginActionBuilder builder = new CamelKubernetesPluginActionBuilder();
+        this.delegate = builder;
+        return builder;
+    }
+
+    /**
      * Sets the bean reference resolver.
      * @param referenceResolver
      */

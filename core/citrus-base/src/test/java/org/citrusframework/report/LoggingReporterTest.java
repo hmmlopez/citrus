@@ -93,7 +93,7 @@ public class LoggingReporterTest {
         fixture.onTestStart(test);
         fixture.onTestActionStart(test, echo);
         fixture.onTestActionFinish(test, echo);
-        fixture.onTestFinish(test);
+        fixture.onTestExecutionEnd(test);
         fixture.onTestSuccess(test);
         fixture.onFinish();
         fixture.onFinishSuccess();
@@ -123,7 +123,7 @@ public class LoggingReporterTest {
         fixture.onStartSuccess();
         fixture.onTestStart(test);
         fixture.onTestActionStart(test, echo);
-        fixture.onTestFinish(test);
+        fixture.onTestExecutionEnd(test);
         fixture.onTestFailure(test, cause);
         fixture.onFinish();
         fixture.onFinishSuccess();
@@ -171,7 +171,7 @@ public class LoggingReporterTest {
         fixture.onStart();
         fixture.onStartSuccess();
         fixture.onTestStart(test);
-        fixture.onTestFinish(test);
+        fixture.onTestExecutionEnd(test);
         fixture.onTestSuccess(test);
         fixture.onTestSkipped(new DefaultTestCase());
         fixture.onFinish();
@@ -207,7 +207,7 @@ public class LoggingReporterTest {
         fixture.onTestStart(test);
         fixture.onTestActionStart(test, echo);
         fixture.onTestActionFinish(test, echo);
-        fixture.onTestFinish(test);
+        fixture.onTestExecutionEnd(test);
         fixture.onTestSuccess(test);
         fixture.onFinish();
         fixture.onFinishFailure(new CitrusRuntimeException("Failed!"));
@@ -223,9 +223,9 @@ public class LoggingReporterTest {
 
     private void verifyResultSummaryLog(int total, int success, int failed, long performance) {
         verify(logger).info("TOTAL:\t\t" + total);
-        verify(logger).info("SUCCESS:\t" + success + " (" + calculatePercentage(total, success) + "%)");
+        verify(logger).info("PASSED:\t\t" + success + " (" + calculatePercentage(total, success) + "%)");
         verify(logger).info("FAILED:\t\t" + failed + " (" + calculatePercentage(total, failed) + "%)");
-        verify(logger).info("PERFORMANCE:\t" + performance + " ms");
+        verify(logger).info("TIME:\t\t" + performance + " ms");
     }
 
     private String calculatePercentage(int total, int success) {

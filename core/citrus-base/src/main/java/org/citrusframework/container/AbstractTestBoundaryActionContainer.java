@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.citrusframework.AbstractTestContainerBuilder;
+import org.citrusframework.TestActionBuilder;
+import org.citrusframework.spi.ReferenceResolver;
+import org.citrusframework.spi.ReferenceResolverAware;
 import org.citrusframework.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +36,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 2.0
  */
-public abstract class AbstractTestBoundaryActionContainer extends AbstractActionContainer {
+public abstract class AbstractTestBoundaryActionContainer extends AbstractActionContainer implements ReferenceResolverAware {
 
     /** Logger */
     private static final Logger logger = LoggerFactory.getLogger(AbstractTestBoundaryActionContainer.class);
@@ -52,6 +56,10 @@ public abstract class AbstractTestBoundaryActionContainer extends AbstractAction
     /** Optional system properties */
     private Map<String, String> systemProperties = new HashMap<>();
 
+    public AbstractTestBoundaryActionContainer(String name, AbstractTestContainerBuilder<?, ?> builder) {
+        super(name, builder);
+    }
+
     /**
      * Checks if this suite actions should execute according to suite name and included test groups.
      * @param testName
@@ -64,27 +72,27 @@ public abstract class AbstractTestBoundaryActionContainer extends AbstractAction
 
         if (StringUtils.hasText(packageNamePattern)) {
             if (!Pattern.compile(packageNamePattern).matcher(packageName).matches()) {
-                logger.warn(String.format(baseErrorMessage, "test package", getName()));
+                logger.debug(String.format(baseErrorMessage, "test package", getName()));
                 return false;
             }
         }
 
         if (StringUtils.hasText(namePattern)) {
             if (!Pattern.compile(sanitizePatten(namePattern)).matcher(testName).matches()) {
-                logger.warn(String.format(baseErrorMessage, "test name", getName()));
+                logger.debug(String.format(baseErrorMessage, "test name", getName()));
                 return false;
             }
         }
 
         if (!checkTestGroups(includedGroups)) {
-            logger.warn(String.format(baseErrorMessage, "test groups", getName()));
+            logger.debug(String.format(baseErrorMessage, "test groups", getName()));
             return false;
         }
 
         for (Map.Entry<String, String> envEntry : env.entrySet()) {
             if (!System.getenv().containsKey(envEntry.getKey()) ||
                     (StringUtils.hasText(envEntry.getValue()) && !System.getenv().get(envEntry.getKey()).equals(envEntry.getValue()))) {
-                logger.warn(String.format(baseErrorMessage, "env properties", getName()));
+                logger.debug(String.format(baseErrorMessage, "env properties", getName()));
                 return false;
             }
         }
@@ -92,7 +100,7 @@ public abstract class AbstractTestBoundaryActionContainer extends AbstractAction
         for (Map.Entry<String, String> systemProperty : systemProperties.entrySet()) {
             if (!System.getProperties().containsKey(systemProperty.getKey()) ||
                     (StringUtils.hasText(systemProperty.getValue()) && !System.getProperties().get(systemProperty.getKey()).equals(systemProperty.getValue()))) {
-                logger.warn(String.format(baseErrorMessage, "system properties", getName()));
+                logger.debug(String.format(baseErrorMessage, "system properties", getName()));
                 return false;
             }
         }
@@ -222,5 +230,14 @@ public abstract class AbstractTestBoundaryActionContainer extends AbstractAction
      */
     public void setSystemProperties(Map<String, String> systemProperties) {
         this.systemProperties = systemProperties;
+    }
+
+    @Override
+    public void setReferenceResolver(ReferenceResolver referenceResolver) {
+        for (TestActionBuilder<?> builder : actions) {
+            if (builder instanceof ReferenceResolverAware referenceResolverAwareBuilder) {
+                referenceResolverAwareBuilder.setReferenceResolver(referenceResolver);
+            }
+        }
     }
 }

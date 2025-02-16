@@ -14,26 +14,13 @@
  * limitations under the License.
  */
 
-package org.citrusframework.actions;
+package org.citrusframework.groovy.yaml;
 
-import org.citrusframework.TestAction;
-import org.citrusframework.context.TestContext;
+public class FooBean {
 
-/**
- * Special test action doing nothing but implementing the test action interface. This is useful during Java dsl fluent API
- * that needs to return a test action but this should not be included or executed during the test run. See test behavior applying
- * test actions.
- *
- */
-public class NoopTestAction implements TestAction {
+    private final String message;
 
-    @Override
-    public void execute(TestContext context) {
-        // do nothing
-    }
-
-    @Override
-    public String getName() {
-        return "noop";
+    public FooBean(String message) {
+        this.message = message;
     }
 }

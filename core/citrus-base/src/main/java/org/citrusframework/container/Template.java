@@ -16,20 +16,10 @@
 
 package org.citrusframework.container;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import org.citrusframework.AbstractTestActionBuilder;
 import org.citrusframework.TestAction;
 import org.citrusframework.TestActionBuilder;
 import org.citrusframework.actions.AbstractTestAction;
-import org.citrusframework.actions.NoopTestAction;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.context.TestContextFactory;
 import org.citrusframework.exceptions.CitrusRuntimeException;
@@ -42,6 +32,15 @@ import org.citrusframework.variable.VariableUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * This class represents a previously defined block of test actions. Test cases can call
  * templates and reuse their functionality.
@@ -52,9 +51,9 @@ import org.slf4j.LoggerFactory;
  * Nested test actions are executed in sequence.
  *
  * The template execution may affect existing variable values in the calling test case. So
- * variables may have different values in the test case after template execution. Therefore
+ * variables may have different values in the test case after template execution. Therefore,
  * users can create a local test context by setting globalContext to false. Templates then will
- * have no affect on the variables used in the test case.
+ * have no effect on the variables used in the test case.
  *
  * @since 2007
  */
@@ -91,9 +90,7 @@ public class Template extends AbstractTestAction {
 
     @Override
     public void doExecute(TestContext context) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Executing template '" + getName() + "' with " + actions.size() + " embedded actions");
-        }
+        logger.debug("Executing template '{}' with {} embedded actions", getTemplateName(), actions.size());
 
         TestContext innerContext;
 
@@ -113,9 +110,7 @@ public class Template extends AbstractTestAction {
                 paramValue = FunctionUtils.resolveFunction(paramValue, context);
             }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Setting parameter for template " + param + "=" + paramValue);
-            }
+            logger.debug("Setting parameter for template {}={}", param, paramValue);
 
             innerContext.setVariable(param, paramValue);
         }
@@ -124,7 +119,7 @@ public class Template extends AbstractTestAction {
             action.build().execute(innerContext);
         }
 
-        logger.info("Template was executed successfully");
+        logger.info("Template '{}' was executed successfully", getTemplateName());
     }
 
     /**
@@ -286,9 +281,8 @@ public class Template extends AbstractTestAction {
          */
         public B actions(List<TestAction> actions) {
             return actions(actions.stream()
-                    .filter(action -> !(action instanceof NoopTestAction))
                     .map(action -> (TestActionBuilder<?>)() -> action)
-                    .collect(Collectors.toList())
+                    .toList()
                     .toArray(new TestActionBuilder<?>[]{}));
         }
 
@@ -300,10 +294,6 @@ public class Template extends AbstractTestAction {
         public B actions(TestActionBuilder<?>... actions) {
             for (int i = 0; i < actions.length; i++) {
                 TestActionBuilder<?> current = actions[i];
-
-                if (current.build() instanceof NoopTestAction) {
-                    continue;
-                }
 
                 if (this.actions.size() == i) {
                     this.actions.add(current);
@@ -355,8 +345,8 @@ public class Template extends AbstractTestAction {
          * @return the builder itself or the delegate builder if this builder is a delegating builder.
          */
         private TestActionBuilder<?> resolveActionBuilder(TestActionBuilder<?> builder) {
-            if (builder instanceof DelegatingTestActionBuilder) {
-                return resolveActionBuilder(((DelegatingTestActionBuilder<?>) builder).getDelegate());
+            if (builder instanceof DelegatingTestActionBuilder<?> delegatingTestActionBuilder) {
+                return resolveActionBuilder(delegatingTestActionBuilder.getDelegate());
             }
             return builder;
         }

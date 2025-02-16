@@ -22,7 +22,6 @@ import javax.script.ScriptException;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.CitrusRuntimeException;
-import org.citrusframework.kubernetes.KubernetesSupport;
 import org.citrusframework.spi.Resource;
 import org.citrusframework.spi.Resources;
 import org.citrusframework.testcontainers.TestContainersSettings;
@@ -155,7 +154,7 @@ public class StartPostgreSQLAction extends StartTestcontainersAction<PostgreSQLC
             }
 
             if (image == null) {
-                image("postgres");
+                image(PostgreSQLSettings.getImageName());
             }
 
             env.putIfAbsent("PGDATA", "/var/lib/postgresql/data/mydata");
@@ -170,8 +169,17 @@ public class StartPostgreSQLAction extends StartTestcontainersAction<PostgreSQLC
             if (referenceResolver != null && referenceResolver.isResolvable(containerName, PostgreSQLContainer.class)) {
                 postgreSQLContainer = referenceResolver.resolve(containerName, PostgreSQLContainer.class);
             } else {
-                postgreSQLContainer = new PostgreSQLContainer<>(
-                        DockerImageName.parse(image).withTag(postgreSQLVersion))
+                DockerImageName imageName;
+                if (TestContainersSettings.isRegistryMirrorEnabled()) {
+                    // make sure the mirror image is declared as compatible with original image
+                    imageName = DockerImageName.parse(image).withTag(postgreSQLVersion)
+                            .asCompatibleSubstituteFor(DockerImageName.parse("postgres"));
+                } else {
+                    imageName =
+                        DockerImageName.parse(image).withTag(postgreSQLVersion);
+                }
+
+                postgreSQLContainer = new PostgreSQLContainer<>(imageName)
                         .withUsername(username)
                         .withPassword(password)
                         .withDatabaseName(databaseName)
