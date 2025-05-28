@@ -17,7 +17,6 @@
 package org.citrusframework.http.actions;
 
 import jakarta.servlet.http.Cookie;
-
 import org.citrusframework.actions.SendMessageAction;
 import org.citrusframework.http.message.HttpMessage;
 import org.citrusframework.http.message.HttpMessageBuilder;
@@ -31,9 +30,12 @@ import org.springframework.util.MultiValueMap;
 /**
  * @since 2.4
  */
-public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessageActionBuilder<SendMessageAction, HttpClientRequestActionBuilder.HttpMessageBuilderSupport, HttpClientRequestActionBuilder> {
+public class HttpClientRequestActionBuilder extends
+    SendMessageAction.SendMessageActionBuilder<SendMessageAction, HttpClientRequestActionBuilder.HttpMessageBuilderSupport, HttpClientRequestActionBuilder> {
 
-    /** Http message to send or receive */
+    /**
+     * Http message to send or receive
+     */
     private final HttpMessage httpMessage;
 
     /**
@@ -46,10 +48,9 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
     /**
      * Subclasses may use custom message builder and Http message.
-     * @param messageBuilder
-     * @param httpMessage
      */
-    protected HttpClientRequestActionBuilder(MessageBuilder messageBuilder, HttpMessage httpMessage) {
+    protected HttpClientRequestActionBuilder(MessageBuilder messageBuilder,
+        HttpMessage httpMessage) {
         this.httpMessage = httpMessage;
         message(messageBuilder);
     }
@@ -57,15 +58,17 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
     @Override
     public HttpMessageBuilderSupport getMessageBuilderSupport() {
         if (messageBuilderSupport == null) {
-            messageBuilderSupport = new HttpMessageBuilderSupport(httpMessage, this);
+            messageBuilderSupport = createHttpMessageBuilderSupport();
         }
         return super.getMessageBuilderSupport();
     }
 
+    protected HttpMessageBuilderSupport createHttpMessageBuilderSupport() {
+        return new HttpMessageBuilderSupport(httpMessage, this);
+    }
+
     /**
      * Sets the request path.
-     * @param path
-     * @return
      */
     public HttpClientRequestActionBuilder path(String path) {
         httpMessage.path(path);
@@ -74,8 +77,6 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
     /**
      * Sets the request method.
-     * @param method
-     * @return
      */
     public HttpClientRequestActionBuilder method(HttpMethod method) {
         httpMessage.method(method);
@@ -83,8 +84,8 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
     }
 
     /**
-     * Set the endpoint URI for the request. This works only if the HTTP endpoint used
-     * doesn't provide an own endpoint URI resolver.
+     * Set the endpoint URI for the request. This works only if the HTTP endpoint used doesn't
+     * provide an own endpoint URI resolver.
      *
      * @param uri absolute URI to use for the endpoint
      * @return self
@@ -96,8 +97,6 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
     /**
      * Adds a query param to the request uri.
-     * @param name
-     * @return
      */
     public HttpClientRequestActionBuilder queryParam(String name) {
         httpMessage.queryParam(name, null);
@@ -106,20 +105,19 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
     /**
      * Adds a query param to the request uri.
-     * @param name
-     * @param value
-     * @return
      */
     public HttpClientRequestActionBuilder queryParam(String name, String value) {
         httpMessage.queryParam(name, value);
         return this;
     }
 
-    public static class HttpMessageBuilderSupport extends SendMessageBuilderSupport<SendMessageAction, HttpClientRequestActionBuilder, HttpMessageBuilderSupport> {
+    public static class HttpMessageBuilderSupport extends
+        SendMessageBuilderSupport<SendMessageAction, HttpClientRequestActionBuilder, HttpMessageBuilderSupport> {
 
         private final HttpMessage httpMessage;
 
-        protected HttpMessageBuilderSupport(HttpMessage httpMessage, HttpClientRequestActionBuilder delegate) {
+        protected HttpMessageBuilderSupport(HttpMessage httpMessage,
+            HttpClientRequestActionBuilder delegate) {
             super(delegate);
             this.httpMessage = httpMessage;
         }
@@ -131,12 +129,10 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
         }
 
         /**
-         * Adds message payload multi value map data to this builder. This is used when using multipart file upload via
-         * Spring RestTemplate.
-         * @param payload
-         * @return
+         * Adds message payload multi value map data to this builder. This is used when using
+         * multipart file upload via Spring RestTemplate.
          */
-        public HttpMessageBuilderSupport body(MultiValueMap<String,Object> payload) {
+        public HttpMessageBuilderSupport body(MultiValueMap<String, Object> payload) {
             httpMessage.setPayload(payload);
             return this;
         }
@@ -155,8 +151,6 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
         /**
          * Sets the request method.
-         * @param method
-         * @return
          */
         public HttpMessageBuilderSupport method(HttpMethod method) {
             delegate.method(method);
@@ -164,8 +158,8 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
         }
 
         /**
-         * Set the endpoint URI for the request. This works only if the HTTP endpoint used
-         * doesn't provide an own endpoint URI resolver.
+         * Set the endpoint URI for the request. This works only if the HTTP endpoint used doesn't
+         * provide an own endpoint URI resolver.
          *
          * @param uri absolute URI to use for the endpoint
          * @return self
@@ -177,8 +171,6 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
         /**
          * Adds a query param to the request uri.
-         * @param name
-         * @return
          */
         public HttpMessageBuilderSupport queryParam(String name) {
             delegate.queryParam(name, null);
@@ -187,9 +179,6 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
         /**
          * Adds a query param to the request uri.
-         * @param name
-         * @param value
-         * @return
          */
         public HttpMessageBuilderSupport queryParam(String name, String value) {
             delegate.queryParam(name, value);
@@ -198,8 +187,6 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
         /**
          * Sets the http version.
-         * @param version
-         * @return
          */
         public HttpMessageBuilderSupport version(String version) {
             httpMessage.version(version);
@@ -208,8 +195,6 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
         /**
          * Sets the request content type header.
-         * @param contentType
-         * @return
          */
         public HttpMessageBuilderSupport contentType(String contentType) {
             httpMessage.contentType(contentType);
@@ -218,8 +203,6 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
         /**
          * Sets the request accept header.
-         * @param accept
-         * @return
          */
         public HttpMessageBuilderSupport accept(String accept) {
             httpMessage.accept(accept);
@@ -228,8 +211,6 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
         /**
          * Adds cookie to response by "Cookie" header.
-         * @param cookie
-         * @return
          */
         public HttpMessageBuilderSupport cookie(Cookie cookie) {
             httpMessage.cookie(cookie);
@@ -239,6 +220,14 @@ public class HttpClientRequestActionBuilder extends SendMessageAction.SendMessag
 
     @Override
     public SendMessageAction doBuild() {
+        return createSendMessageAction();
+    }
+
+    /**
+     * Creates the actual SendMessageAction. Subclasses may override this method to provide specific
+     * implementations.
+     */
+    protected SendMessageAction createSendMessageAction() {
         return new SendMessageAction(this);
     }
 }

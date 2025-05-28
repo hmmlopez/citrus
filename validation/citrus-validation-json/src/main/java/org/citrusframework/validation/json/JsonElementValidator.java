@@ -16,13 +16,16 @@
 
 package org.citrusframework.validation.json;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.ValidationException;
-
-import java.util.Collection;
-import java.util.Objects;
+import org.citrusframework.validation.context.MessageValidationContext;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.citrusframework.CitrusSettings.IGNORE_PLACEHOLDER;
@@ -104,16 +107,31 @@ public class JsonElementValidator {
         if (strict) {
             validateSameSize(control.getJsonPath(), arrayControl.expected, arrayControl.actual);
         }
-        int actualIndex = 0;
+
+        List<Object> remaining = new ArrayList<>(arrayControl.actual.size());
+        arrayControl.actual.iterator().forEachRemaining(remaining::add);
         for (int i = 0; i < arrayControl.expected.size(); i++) {
-            if (isIgnoredByPlaceholderOrExpressionList(ignoreExpressions, arrayControl.child(i, i))) {
+            if (isIgnoredByPlaceholderOrExpressionList(ignoreExpressions,
+                    arrayControl.child(i, i, arrayControl.expected.get(i)).parent(arrayControl))) {
                 continue;
             }
+
+            if (remaining.isEmpty()) {
+                throwValueMismatch("Missing entries in array element: '" + control.getName() + "'",
+                        arrayControl.expected.size(), arrayControl.actual.size());
+            }
+
             boolean isValid = false;
 
-            while (!isValid && actualIndex < arrayControl.actual.size()) {
-                JsonElementValidatorItem<Object> item = arrayControl.child(i, arrayControl.actual.get(actualIndex));
-                isValid = isValidItem(item, validator);
+            int actualIndex = 0;
+            while (!isValid && actualIndex < remaining.size()) {
+                JsonElementValidatorItem<Object> item = arrayControl.child(i,
+                        remaining.get(actualIndex), arrayControl.expected.get(i))
+                        .parent(arrayControl);
+                if (isValidItem(item, validator)) {
+                    isValid = true;
+                    remaining.remove(actualIndex);
+                }
                 actualIndex++;
             }
 
@@ -154,12 +172,12 @@ public class JsonElementValidator {
 
     @FunctionalInterface
     public interface Provider {
-        JsonElementValidator getValidator(boolean isStrict, TestContext context, JsonMessageValidationContext validationContext);
+        JsonElementValidator getValidator(boolean isStrict, TestContext context, MessageValidationContext validationContext);
 
         Provider DEFAULT = (
                 boolean isStrict,
                 TestContext context,
-                JsonMessageValidationContext validationContext
+                MessageValidationContext validationContext
         ) -> new JsonElementValidator(isStrict, context, validationContext.getIgnoreExpressions());
     }
 }

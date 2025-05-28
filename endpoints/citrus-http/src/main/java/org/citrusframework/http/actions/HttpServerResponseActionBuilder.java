@@ -17,7 +17,6 @@
 package org.citrusframework.http.actions;
 
 import jakarta.servlet.http.Cookie;
-
 import org.citrusframework.actions.SendMessageAction;
 import org.citrusframework.http.message.HttpMessage;
 import org.citrusframework.http.message.HttpMessageBuilder;
@@ -46,8 +45,6 @@ public class HttpServerResponseActionBuilder extends SendMessageAction.SendMessa
 
     /**
      * Subclasses may use custom message builder and Http message.
-     * @param messageBuilder
-     * @param httpMessage
      */
     public HttpServerResponseActionBuilder(MessageBuilder messageBuilder, HttpMessage httpMessage) {
         this.httpMessage = httpMessage;
@@ -57,9 +54,13 @@ public class HttpServerResponseActionBuilder extends SendMessageAction.SendMessa
     @Override
     public HttpMessageBuilderSupport getMessageBuilderSupport() {
         if (messageBuilderSupport == null) {
-            messageBuilderSupport = new HttpMessageBuilderSupport(httpMessage, this);
+            messageBuilderSupport = createMessageBuilderSupport();
         }
         return super.getMessageBuilderSupport();
+    }
+
+    protected HttpMessageBuilderSupport createMessageBuilderSupport() {
+        return new HttpMessageBuilderSupport(httpMessage, this);
     }
 
     public static class HttpMessageBuilderSupport extends SendMessageBuilderSupport<SendMessageAction, HttpServerResponseActionBuilder, HttpMessageBuilderSupport> {
@@ -91,8 +92,6 @@ public class HttpServerResponseActionBuilder extends SendMessageAction.SendMessa
 
         /**
          * Sets the response status.
-         * @param status
-         * @return
          */
         public HttpMessageBuilderSupport status(HttpStatus status) {
             httpMessage.status(status);
@@ -101,8 +100,6 @@ public class HttpServerResponseActionBuilder extends SendMessageAction.SendMessa
 
         /**
          * Sets the response status code.
-         * @param statusCode
-         * @return
          */
         public HttpMessageBuilderSupport statusCode(Integer statusCode) {
             httpMessage.status(HttpStatusCode.valueOf(statusCode));
@@ -111,8 +108,6 @@ public class HttpServerResponseActionBuilder extends SendMessageAction.SendMessa
 
         /**
          * Sets the response reason phrase.
-         * @param reasonPhrase
-         * @return
          */
         public HttpMessageBuilderSupport reasonPhrase(String reasonPhrase) {
             httpMessage.reasonPhrase(reasonPhrase);
@@ -121,8 +116,6 @@ public class HttpServerResponseActionBuilder extends SendMessageAction.SendMessa
 
         /**
          * Sets the http version.
-         * @param version
-         * @return
          */
         public HttpMessageBuilderSupport version(String version) {
             httpMessage.version(version);
@@ -131,8 +124,6 @@ public class HttpServerResponseActionBuilder extends SendMessageAction.SendMessa
 
         /**
          * Sets the response content type header.
-         * @param contentType
-         * @return
          */
         public HttpMessageBuilderSupport contentType(String contentType) {
             httpMessage.contentType(contentType);
@@ -141,8 +132,6 @@ public class HttpServerResponseActionBuilder extends SendMessageAction.SendMessa
 
         /**
          * Adds cookie to response by "Set-Cookie" header.
-         * @param cookie
-         * @return
          */
         public HttpMessageBuilderSupport cookie(Cookie cookie) {
             httpMessage.cookie(cookie);

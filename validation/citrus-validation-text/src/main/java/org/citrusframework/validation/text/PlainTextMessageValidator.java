@@ -16,6 +16,8 @@
 
 package org.citrusframework.validation.text;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,15 +28,16 @@ import org.citrusframework.message.Message;
 import org.citrusframework.message.MessageType;
 import org.citrusframework.util.StringUtils;
 import org.citrusframework.validation.DefaultMessageValidator;
+import org.citrusframework.validation.context.MessageValidationContext;
 import org.citrusframework.validation.context.ValidationContext;
 import org.citrusframework.validation.matcher.ValidationMatcherUtils;
 
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
+import static org.citrusframework.util.StringUtils.normalizeWhitespace;
 
 /**
  * Plain text validator using simple String comparison.
- *
  */
 public class PlainTextMessageValidator extends DefaultMessageValidator {
 
@@ -49,7 +52,8 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
             System.getenv(IGNORE_WHITESPACE_ENV) : "false"));
 
     @Override
-    public void validateMessage(Message receivedMessage, Message controlMessage, TestContext context, ValidationContext validationContext) throws ValidationException {
+    public void validateMessage(Message receivedMessage, Message controlMessage,
+                                TestContext context, ValidationContext validationContext) throws ValidationException {
         if (controlMessage == null || controlMessage.getPayload() == null) {
             logger.debug("Skip message payload validation as no control message was defined");
             return;
@@ -58,8 +62,8 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
         logger.debug("Start text message validation");
 
         try {
-            String resultValue = normalizeWhitespace(receivedMessage.getPayload(String.class).trim());
-            String controlValue = normalizeWhitespace(context.replaceDynamicContentInString(controlMessage.getPayload(String.class).trim()));
+            String resultValue = normalizeWhitespace(receivedMessage.getPayload(String.class).trim(), ignoreWhitespace, ignoreNewLineType);
+            String controlValue = normalizeWhitespace(context.replaceDynamicContentInString(controlMessage.getPayload(String.class).trim()), ignoreWhitespace, ignoreNewLineType);
 
             controlValue = processIgnoreStatements(controlValue, resultValue);
             controlValue = processVariableStatements(controlValue, resultValue, context);
@@ -80,9 +84,6 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
     /**
      * Processes nested ignore statements in control value and replaces that ignore placeholder with the actual value at this position.
      * This way we can ignore words in a plaintext value.
-     * @param control
-     * @param result
-     * @return
      */
     private String processIgnoreStatements(String control, String result) {
         if (control.equals(CitrusSettings.IGNORE_PLACEHOLDER)) {
@@ -125,10 +126,6 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
     /**
      * Processes nested ignore statements in control value and replaces that ignore placeholder with the actual value at this position.
      * This way we can ignore words in a plaintext value.
-     * @param control
-     * @param result
-     * @param context
-     * @return
      */
     private String processVariableStatements(String control, String result, TestContext context) {
         if (control.equals(CitrusSettings.IGNORE_PLACEHOLDER)) {
@@ -156,9 +153,6 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
 
     /**
      * Compares two string with each other in order to validate plain text.
-     *
-     * @param receivedMessagePayload
-     * @param controlMessagePayload
      */
     private void validateText(String receivedMessagePayload, String controlMessagePayload) {
         if (!StringUtils.hasText(controlMessagePayload)) {
@@ -180,48 +174,23 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
         }
     }
 
-    /**
-     * Normalize whitespace characters if appropriate. Based on system property settings this method normalizes
-     * new line characters exclusively or filters all whitespaces such as double whitespaces and new lines.
-     *
-     * @param payload
-     * @return
-     */
-    private String normalizeWhitespace(String payload) {
-        if (ignoreWhitespace) {
-            StringBuilder result = new StringBuilder();
-            boolean lastWasSpace = true;
-            for (int i = 0; i < payload.length(); i++) {
-                char c = payload.charAt(i);
-                if (Character.isWhitespace(c)) {
-                    if (!lastWasSpace) {
-                        result.append(' ');
-                    }
-                    lastWasSpace = true;
-                } else {
-                    result.append(c);
-                    lastWasSpace = false;
-                }
-            }
-            return result.toString().trim();
-        }
-
-        if (ignoreNewLineType) {
-            return payload.replaceAll("\\r(\\n)?", "\n");
-        }
-
-        return payload;
-    }
 
     @Override
     public boolean supportsMessageType(String messageType, Message message) {
         return messageType.equalsIgnoreCase(MessageType.PLAINTEXT.toString());
     }
 
+    @Override
+    public ValidationContext findValidationContext(List<ValidationContext> validationContexts) {
+        Optional<ValidationContext> messageValidationContext = validationContexts.stream()
+                .filter(MessageValidationContext.class::isInstance)
+                .findFirst();
+
+        return messageValidationContext.orElseGet(() -> super.findValidationContext(validationContexts));
+    }
+
     /**
      * Gets the ignoreWhitespace.
-     *
-     * @return
      */
     public boolean isIgnoreWhitespace() {
         return ignoreWhitespace;
@@ -229,8 +198,6 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
 
     /**
      * Sets the ignoreWhitespace.
-     *
-     * @param ignoreWhitespace
      */
     public void setIgnoreWhitespace(boolean ignoreWhitespace) {
         this.ignoreWhitespace = ignoreWhitespace;
@@ -238,8 +205,6 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
 
     /**
      * Gets the ignoreNewLineType.
-     *
-     * @return
      */
     public boolean isIgnoreNewLineType() {
         return ignoreNewLineType;
@@ -247,8 +212,6 @@ public class PlainTextMessageValidator extends DefaultMessageValidator {
 
     /**
      * Sets the ignoreNewLineType.
-     *
-     * @param ignoreNewLineType
      */
     public void setIgnoreNewLineType(boolean ignoreNewLineType) {
         this.ignoreNewLineType = ignoreNewLineType;

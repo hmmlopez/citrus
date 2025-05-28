@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.citrusframework</groupId>
     <artifactId>citrus-quarkus-extension</artifactId>
-    <version>4.6.0-SNAPSHOT</version>
+    <version>4.7.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -107,14 +107,6 @@
       </plugin>
 
       <!-- Do not deploy this module to Maven central -->
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>${maven.nexus-staging.plugin.version}</version>
-        <configuration>
-          <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>

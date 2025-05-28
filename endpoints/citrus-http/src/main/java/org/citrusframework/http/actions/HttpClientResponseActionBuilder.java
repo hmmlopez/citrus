@@ -16,6 +16,8 @@
 
 package org.citrusframework.http.actions;
 
+import java.util.Optional;
+
 import jakarta.servlet.http.Cookie;
 import org.citrusframework.actions.ReceiveMessageAction;
 import org.citrusframework.http.message.HttpMessage;
@@ -25,8 +27,6 @@ import org.citrusframework.message.Message;
 import org.citrusframework.message.MessageBuilder;
 import org.citrusframework.message.builder.ReceiveMessageBuilderSupport;
 import org.springframework.http.HttpStatusCode;
-
-import java.util.Optional;
 
 /**
  * @since 2.4
@@ -47,8 +47,6 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
 
     /**
      * Subclasses may use custom message builder and Http message.
-     * @param messageBuilder
-     * @param httpMessage
      */
     public HttpClientResponseActionBuilder(MessageBuilder messageBuilder, HttpMessage httpMessage) {
         this.httpMessage = httpMessage;
@@ -59,9 +57,13 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
     @Override
     public HttpMessageBuilderSupport getMessageBuilderSupport() {
         if (messageBuilderSupport == null) {
-            messageBuilderSupport = new HttpMessageBuilderSupport(httpMessage, this);
+            messageBuilderSupport = createHttpMessageBuilderSupport();
         }
         return super.getMessageBuilderSupport();
+    }
+
+    protected HttpMessageBuilderSupport createHttpMessageBuilderSupport() {
+        return new HttpMessageBuilderSupport(httpMessage, this);
     }
 
     public static class HttpMessageBuilderSupport extends ReceiveMessageBuilderSupport<ReceiveMessageAction, HttpClientResponseActionBuilder, HttpMessageBuilderSupport> {
@@ -93,8 +95,6 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
 
         /**
          * Sets the response status.
-         * @param status
-         * @return
          */
         public HttpMessageBuilderSupport status(HttpStatusCode status) {
             httpMessage.status(status);
@@ -103,8 +103,6 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
 
         /**
          * Sets the response status code.
-         * @param statusCode
-         * @return
          */
         public HttpMessageBuilderSupport statusCode(Integer statusCode) {
             httpMessage.status(HttpStatusCode.valueOf(statusCode));
@@ -113,8 +111,6 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
 
         /**
          * Sets the response reason phrase.
-         * @param reasonPhrase
-         * @return
          */
         public HttpMessageBuilderSupport reasonPhrase(String reasonPhrase) {
             httpMessage.reasonPhrase(reasonPhrase);
@@ -123,8 +119,6 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
 
         /**
          * Sets the http version.
-         * @param version
-         * @return
          */
         public HttpMessageBuilderSupport version(String version) {
             httpMessage.version(version);
@@ -133,8 +127,6 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
 
         /**
          * Sets the request content type header.
-         * @param contentType
-         * @return
          */
         public HttpMessageBuilderSupport contentType(String contentType) {
             httpMessage.contentType(contentType);
@@ -143,8 +135,6 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
 
         /**
          * Expects cookie on response via "Set-Cookie" header.
-         * @param cookie
-         * @return
          */
         public HttpMessageBuilderSupport cookie(Cookie cookie) {
             httpMessage.cookie(cookie);
@@ -154,6 +144,15 @@ public class HttpClientResponseActionBuilder extends ReceiveMessageAction.Receiv
 
     @Override
     public ReceiveMessageAction doBuild() {
+        return createReceiveMessageAction();
+    }
+
+
+    /**
+     * Creates the actual SendMessageAction. Subclasses may override this method to provide specific
+     * implementations.
+     */
+    protected ReceiveMessageAction createReceiveMessageAction() {
         return new ReceiveMessageAction(this);
     }
 

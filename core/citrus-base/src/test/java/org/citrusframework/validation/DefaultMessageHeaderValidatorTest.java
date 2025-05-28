@@ -28,11 +28,11 @@ import org.testng.annotations.Test;
  */
 public class DefaultMessageHeaderValidatorTest extends UnitTestSupport {
 
-    private DefaultMessageHeaderValidator validator = new DefaultMessageHeaderValidator();
-    private HeaderValidationContext validationContext = new HeaderValidationContext();
+    private final DefaultMessageHeaderValidator validator = new DefaultMessageHeaderValidator();
+    private final HeaderValidationContext validationContext = new HeaderValidationContext.Builder().build();
 
     @Test
-    public void testValidateNoMessageHeaders() throws Exception {
+    public void testValidateNoMessageHeaders() {
         Message receivedMessage = new DefaultMessage("Hello World!");
         Message controlMessage = new DefaultMessage("Hello World!");
 
@@ -40,7 +40,7 @@ public class DefaultMessageHeaderValidatorTest extends UnitTestSupport {
     }
 
     @Test
-    public void testValidateMessageHeaders() throws Exception {
+    public void testValidateMessageHeaders() {
         Message receivedMessage = new DefaultMessage("Hello World!")
                 .setHeader("foo", "foo_test")
                 .setHeader("additional", "additional")
@@ -53,25 +53,23 @@ public class DefaultMessageHeaderValidatorTest extends UnitTestSupport {
     }
 
     @Test
-    public void testValidateMessageHeadersIgnoreCase() throws Exception {
-        try {
-            Message receivedMessage = new DefaultMessage("Hello World!")
-                    .setHeader("X-Foo", "foo_test")
-                    .setHeader("X-Additional", "additional")
-                    .setHeader("X-Bar", "bar_test");
-            Message controlMessage = new DefaultMessage("Hello World!")
-                    .setHeader("x-foo", "foo_test")
-                    .setHeader("x-bar", "bar_test");
+    public void testValidateMessageHeadersIgnoreCase() {
+        Message receivedMessage = new DefaultMessage("Hello World!")
+                .setHeader("X-Foo", "foo_test")
+                .setHeader("X-Additional", "additional")
+                .setHeader("X-Bar", "bar_test");
+        Message controlMessage = new DefaultMessage("Hello World!")
+                .setHeader("x-foo", "foo_test")
+                .setHeader("x-bar", "bar_test");
 
-            validationContext.setHeaderNameIgnoreCase(true);
-            validator.validateMessage(receivedMessage, controlMessage, context, validationContext);
-        } finally {
-            validationContext.setHeaderNameIgnoreCase(false);
-        }
+        HeaderValidationContext validationContext = new HeaderValidationContext.Builder()
+                .ignoreCase(true)
+                .build();
+        validator.validateMessage(receivedMessage, controlMessage, context, validationContext);
     }
 
     @Test(expectedExceptions = ValidationException.class)
-    public void testValidateMessageHeadersIgnoreCaseError() throws Exception {
+    public void testValidateMessageHeadersIgnoreCaseError() {
         Message receivedMessage = new DefaultMessage("Hello World!")
                 .setHeader("X-Foo", "foo_test")
                 .setHeader("X-Additional", "additional")
@@ -84,7 +82,7 @@ public class DefaultMessageHeaderValidatorTest extends UnitTestSupport {
     }
 
     @Test
-    public void testValidateMessageHeadersVariableSupport() throws Exception {
+    public void testValidateMessageHeadersVariableSupport() {
         Message receivedMessage = new DefaultMessage("Hello World!")
                 .setHeader("foo", "foo_test")
                 .setHeader("additional", "additional")
@@ -99,7 +97,7 @@ public class DefaultMessageHeaderValidatorTest extends UnitTestSupport {
     }
 
     @Test
-    public void testValidateMessageHeadersMatcherSupport() throws Exception {
+    public void testValidateMessageHeadersMatcherSupport() {
         Message receivedMessage = new DefaultMessage("Hello World!")
                 .setHeader("foo", "foo_test")
                 .setHeader("additional", "additional")
@@ -112,7 +110,7 @@ public class DefaultMessageHeaderValidatorTest extends UnitTestSupport {
     }
 
     @Test(expectedExceptions = ValidationException.class)
-    public void testValidateError() throws Exception {
+    public void testValidateError() {
         Message receivedMessage = new DefaultMessage("Hello World!")
                 .setHeader("foo", "other_value")
                 .setHeader("bar", "bar_test");
@@ -124,7 +122,7 @@ public class DefaultMessageHeaderValidatorTest extends UnitTestSupport {
     }
 
     @Test(expectedExceptions = ValidationException.class)
-    public void testValidateErrorMissingHeader() throws Exception {
+    public void testValidateErrorMissingHeader() {
         Message receivedMessage = new DefaultMessage("Hello World!")
                 .setHeader("bar", "bar_test");
         Message controlMessage = new DefaultMessage("Hello World!")

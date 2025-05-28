@@ -28,6 +28,7 @@ import org.citrusframework.message.builder.DefaultHeaderBuilder;
 import org.citrusframework.validation.builder.DefaultMessageBuilder;
 import org.citrusframework.validation.context.ValidationContext;
 import org.citrusframework.ws.actions.ReceiveSoapMessageAction;
+import org.citrusframework.ws.actions.ReceiveSoapMessageAction.Builder;
 import org.citrusframework.ws.message.SoapAttachment;
 import org.citrusframework.ws.message.SoapMessageHeaders;
 import org.citrusframework.ws.validation.SoapAttachmentValidator;
@@ -44,7 +45,7 @@ public class ReceiveSoapMessageActionParser extends ReceiveMessageActionParser {
 
     @Override
     protected BeanDefinitionBuilder parseComponent(Element element, ParserContext parserContext) {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(ReceiveSoapMessageActionFactoryBean.class);
+        BeanDefinitionBuilder builder = super.parseComponent(element, parserContext);
 
         List<Element> attachmentElements = DomUtils.getChildElementsByTagName(element, "attachment");
         List<SoapAttachment> attachments = new ArrayList<>();
@@ -63,7 +64,12 @@ public class ReceiveSoapMessageActionParser extends ReceiveMessageActionParser {
     }
 
     @Override
-    protected void parseHeaderElements(Element actionElement, DefaultMessageBuilder messageBuilder, List<ValidationContext> validationContexts) {
+    protected Class<? extends ReceiveSoapMessageActionFactoryBean> getMessageFactoryClass() {
+        return ReceiveSoapMessageActionFactoryBean.class;
+    }
+
+    @Override
+    protected void parseHeaderElements(Element actionElement, DefaultMessageBuilder messageBuilder, List<ValidationContext.Builder<?, ?>> validationContexts) {
         super.parseHeaderElements(actionElement, messageBuilder, validationContexts);
 
         Map<String, Object> headers = new HashMap<>();
@@ -89,7 +95,15 @@ public class ReceiveSoapMessageActionParser extends ReceiveMessageActionParser {
      */
     public static class ReceiveSoapMessageActionFactoryBean extends AbstractReceiveMessageActionFactoryBean<ReceiveSoapMessageAction, ReceiveSoapMessageAction.SoapMessageBuilderSupport, ReceiveSoapMessageAction.Builder> {
 
-        private final ReceiveSoapMessageAction.Builder builder = new ReceiveSoapMessageAction.Builder();
+        private final Builder builder;
+
+        public ReceiveSoapMessageActionFactoryBean() {
+            this(new Builder());
+        }
+
+        public ReceiveSoapMessageActionFactoryBean(Builder builder) {
+            this.builder = builder;
+        }
 
         /**
          * Sets the control attachments.

@@ -16,6 +16,10 @@
 
 package org.citrusframework.http.server;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import jakarta.servlet.Filter;
 import org.citrusframework.context.SpringBeanReferenceResolver;
 import org.citrusframework.exceptions.CitrusRuntimeException;
@@ -43,17 +47,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.DispatcherServlet;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import static java.nio.file.Paths.get;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOf;
 import static java.util.Objects.nonNull;
 import static org.citrusframework.util.StringUtils.hasText;
 import static org.springframework.http.MediaType.valueOf;
-import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE;
 
 /**
@@ -150,6 +149,11 @@ public class HttpServer extends AbstractServer {
     private boolean handleCookies = false;
 
     /**
+     * Should handle matrix encoded path parameters
+     */
+    private boolean removeSemicolonPathContent = true;
+
+    /**
      * Default status code returned by http server
      */
     private int defaultStatusCode = HttpStatus.OK.value();
@@ -158,6 +162,11 @@ public class HttpServer extends AbstractServer {
      * Default size of in memory response cahce for message tracing reasons
      */
     private int responseCacheSize = HttpServerSettings.responseCacheSize();
+
+    /**
+     * When enabled default servlet filters (e.g. request caching filter) will be added to the servlet context.
+     */
+    private boolean useDefaultFilters = HttpServerSettings.isUseDefaultFilters();
 
     /**
      * List of media types that should be handled with binary content processing
@@ -241,7 +250,7 @@ public class HttpServer extends AbstractServer {
                 servletHandler.addFilter(filterHolder, filterMapping);
             }
 
-            if (isEmpty(filters)) {
+            if (useDefaultFilters) {
                 addRequestCachingFilter();
                 addGzipFilter();
             }
@@ -414,6 +423,14 @@ public class HttpServer extends AbstractServer {
      */
     public void setContextConfigLocation(String contextConfigLocation) {
         this.contextConfigLocation = contextConfigLocation;
+    }
+
+    public boolean isUseDefaultFilters() {
+        return useDefaultFilters;
+    }
+
+    public void setUseDefaultFilters(boolean useDefaultFilters) {
+        this.useDefaultFilters = useDefaultFilters;
     }
 
     /**
@@ -643,6 +660,20 @@ public class HttpServer extends AbstractServer {
      */
     public void setHandleCookies(boolean handleCookies) {
         this.handleCookies = handleCookies;
+    }
+
+    /**
+     * Gets the removeSemicolonPathContent.
+     */
+    public boolean isRemoveSemicolonPathContent() {
+        return removeSemicolonPathContent;
+    }
+
+    /**
+     * Sets the removeSemicolonPathContent.
+     */
+    public void setRemoveSemicolonPathContent(boolean removeSemicolonPathContent) {
+        this.removeSemicolonPathContent = removeSemicolonPathContent;
     }
 
     /**

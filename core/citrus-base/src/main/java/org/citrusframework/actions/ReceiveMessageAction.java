@@ -26,52 +26,63 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.citrusframework.CitrusSettings;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.endpoint.Endpoint;
 import org.citrusframework.exceptions.CitrusRuntimeException;
+import org.citrusframework.exceptions.ValidationException;
 import org.citrusframework.message.Message;
 import org.citrusframework.message.MessageBuilder;
 import org.citrusframework.message.MessageDirection;
-import org.citrusframework.message.MessagePayloadBuilder;
+import org.citrusframework.message.MessagePayload;
 import org.citrusframework.message.MessagePayloadUtils;
 import org.citrusframework.message.MessageProcessor;
 import org.citrusframework.message.MessageSelectorBuilder;
+import org.citrusframework.message.MessageType;
 import org.citrusframework.message.WithPayloadBuilder;
 import org.citrusframework.message.builder.DefaultPayloadBuilder;
+import org.citrusframework.message.builder.FileResourcePayloadBuilder;
 import org.citrusframework.message.builder.MessageBuilderSupport;
 import org.citrusframework.message.builder.ReceiveMessageBuilderSupport;
 import org.citrusframework.messaging.Consumer;
 import org.citrusframework.messaging.SelectiveConsumer;
 import org.citrusframework.spi.ReferenceResolverAware;
-import org.citrusframework.util.StringUtils;
+import org.citrusframework.util.FileUtils;
+import org.citrusframework.util.TypeConverter;
 import org.citrusframework.validation.DefaultMessageHeaderValidator;
 import org.citrusframework.validation.HeaderValidator;
 import org.citrusframework.validation.MessageValidator;
 import org.citrusframework.validation.ValidationContextAdapter;
 import org.citrusframework.validation.ValidationProcessor;
 import org.citrusframework.validation.builder.StaticMessageBuilder;
+import org.citrusframework.validation.context.DefaultMessageValidationContext;
 import org.citrusframework.validation.context.HeaderValidationContext;
+import org.citrusframework.validation.context.MessageValidationContext;
 import org.citrusframework.validation.context.ValidationContext;
+import org.citrusframework.validation.context.ValidationStatus;
 import org.citrusframework.validation.json.JsonMessageValidationContext;
-import org.citrusframework.validation.json.JsonPathMessageValidationContext;
-import org.citrusframework.validation.script.ScriptValidationContext;
 import org.citrusframework.validation.xml.XmlMessageValidationContext;
-import org.citrusframework.validation.xml.XpathMessageValidationContext;
+import org.citrusframework.validation.yaml.YamlMessageValidationContext;
 import org.citrusframework.variable.VariableExtractor;
 import org.citrusframework.variable.dictionary.DataDictionary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static org.citrusframework.util.StringUtils.hasText;
+
 /**
  * This action receives messages from a service destination. Action uses a {@link org.citrusframework.endpoint.Endpoint}
  * to receive the message, this means that this action is independent of any message transport.
- *
+ * <p>
  * The received message is validated using a {@link MessageValidator} supporting expected
  * control message payload and header templates.
  *
  * @since 2008
  */
 public class ReceiveMessageAction extends AbstractTestAction {
+
     /** Build message selector with name value pairs */
     private final Map<String, Object> messageSelectorMap;
 
@@ -111,9 +122,11 @@ public class ReceiveMessageAction extends AbstractTestAction {
     /** List of processors that handle the control message builder */
     private final List<MessageProcessor> controlMessageProcessors;
 
-    /** The expected message type to arrive in this receive action - this information is needed to find a proper
-     * message validator for this message */
-    private final String messageType;
+    /**
+     * The expected message type to arrive in this receive action.
+     * This information is needed to find a proper message validator for this message
+     * */
+    private String messageType;
 
     /** Logger */
     private static final Logger logger = LoggerFactory.getLogger(ReceiveMessageAction.class);
@@ -152,7 +165,7 @@ public class ReceiveMessageAction extends AbstractTestAction {
         String selector = MessageSelectorBuilder.build(messageSelector, messageSelectorMap, context);
 
         //receive message either selected or plain with message receiver
-        if (StringUtils.hasText(selector)) {
+        if (hasText(selector)) {
             receivedMessage = receiveSelected(context, selector);
         } else {
             receivedMessage = receive(context);
@@ -184,9 +197,7 @@ public class ReceiveMessageAction extends AbstractTestAction {
      * @return
      */
     private Message receiveSelected(TestContext context, String selectorString) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Setting message selector: '" + selectorString + "'");
-        }
+        logger.debug("Setting message selector: '{}'", selectorString);
 
         Endpoint messageEndpoint = getOrCreateEndpoint(context);
         Consumer consumer = messageEndpoint.createConsumer();
@@ -201,7 +212,7 @@ public class ReceiveMessageAction extends AbstractTestAction {
                         context, messageEndpoint.getEndpointConfiguration().getTimeout());
             }
         } else {
-            logger.warn(String.format("Unable to receive selective with consumer implementation: '%s'", consumer.getClass()));
+            logger.warn("Unable to receive selective with consumer implementation: '{}'", consumer.getClass());
             return receive(context);
         }
     }
@@ -213,9 +224,7 @@ public class ReceiveMessageAction extends AbstractTestAction {
     protected void validateMessage(Message message, TestContext context) {
         messageProcessors.forEach(processor -> processor.process(message, context));
 
-        if (logger.isDebugEnabled()) {
-            logger.debug("Received message:\n" + message.print(context));
-        }
+        logger.debug("Received message:\n{}", message.print(context));
 
         // extract variables from received message content
         for (VariableExtractor variableExtractor : variableExtractors) {
@@ -223,20 +232,24 @@ public class ReceiveMessageAction extends AbstractTestAction {
         }
 
         Message controlMessage = createControlMessage(context, messageType);
-        if (StringUtils.hasText(controlMessage.getName())) {
+        if (hasText(controlMessage.getName())) {
             context.getMessageStore().storeMessage(controlMessage.getName(), message);
         } else {
             context.getMessageStore().storeMessage(context.getMessageStore().constructMessageName(this, getOrCreateEndpoint(context)), message);
         }
 
-        if (validationProcessor != null) {
+        if (nonNull(validationProcessor)) {
             validationProcessor.validate(message, context);
         } else {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Control message:\n" + controlMessage.print(context));
+            logger.debug("Control message:\n{}", controlMessage.print(context));
+
+            if (hasText(controlMessage.getPayload(String.class))) {
+                assumeMessageType(controlMessage);
+            } else {
+                assumeMessageType(message);
             }
 
-            if (!validators.isEmpty()) {
+            if (nonNull(validators) && !validators.isEmpty()) {
                 for (MessageValidator<? extends ValidationContext> messageValidator : validators) {
                     messageValidator.validateMessage(message, controlMessage, context, validationContexts);
                 }
@@ -251,16 +264,62 @@ public class ReceiveMessageAction extends AbstractTestAction {
                 }
             } else {
                 boolean mustFindValidator = validationContexts.stream()
-                        .anyMatch(item -> JsonPathMessageValidationContext.class.isAssignableFrom(item.getClass()) ||
-                                XpathMessageValidationContext.class.isAssignableFrom(item.getClass()) ||
-                                ScriptValidationContext.class.isAssignableFrom(item.getClass()));
+                        .anyMatch(ValidationContext::requiresValidator);
 
-                List<MessageValidator<? extends ValidationContext>> validators =
+                List<MessageValidator<? extends ValidationContext>> activeValidators =
                         context.getMessageValidatorRegistry().findMessageValidators(messageType, message, mustFindValidator);
 
-                for (MessageValidator<? extends ValidationContext> messageValidator : validators) {
+                for (MessageValidator<? extends ValidationContext> messageValidator : activeValidators) {
                     messageValidator.validateMessage(message, controlMessage, context, validationContexts);
                 }
+
+                if (CitrusSettings.isPerformDefaultValidation() &&
+                        validationContexts.stream().anyMatch(validationContext -> validationContext.getStatus() == ValidationStatus.UNKNOWN)) {
+                    var defaultValidator = context.getMessageValidatorRegistry().getDefaultMessageValidator();
+                    if (activeValidators.stream().noneMatch(validator -> defaultValidator.getClass().isInstance(validator))) {
+                        defaultValidator.validateMessage(message, controlMessage, context, validationContexts);
+                    }
+                }
+            }
+
+            List<ValidationContext> unknown = validationContexts.stream()
+                    .filter(validationContext -> validationContext.getStatus() == ValidationStatus.UNKNOWN)
+                    .toList();
+            if (!unknown.isEmpty()) {
+                unknown.forEach(validationContext -> logger.warn("Found validation context that has not been processed: {}", validationContext.getClass().getName()));
+                throw new ValidationException("Incomplete message validation - total of %d validation context has not been processed".formatted(unknown.size()));
+            }
+        }
+    }
+
+    private void assumeMessageType(Message message) {
+        if (MessageType.isBinary(getMessageType()) ||
+                MessageType.FORM_URL_ENCODED.equalsIgnoreCase(getMessageType())) {
+            return;
+        }
+
+        var payload = message.getPayload(String.class);
+        if (hasText(payload)) {
+            payload = payload.trim();
+
+            if (MessagePayloadUtils.isXml(payload)
+                    && (isNull(getMessageType()) || !MessageType.isXml(getMessageType()))) {
+                logger.warn("Detected XML message payload type, but non-XML message type '{}' configured! Assuming message type {}",
+                        getMessageType(), MessageType.XML);
+
+                setMessageType(MessageType.XML);
+            } else if (MessagePayloadUtils.isJson(payload)
+                    && (isNull(getMessageType()) || !getMessageType().equalsIgnoreCase(MessageType.JSON.name()))) {
+                logger.warn("Detected JSON message payload type, but non-JSON message type '{}' configured! Assuming message type {}",
+                        getMessageType(), MessageType.JSON);
+
+                setMessageType(MessageType.JSON);
+            } else if (MessagePayloadUtils.isYaml(payload)
+                    && (isNull(getMessageType()) || !getMessageType().equalsIgnoreCase(MessageType.YAML.name()))) {
+                logger.warn("Detected YAML message payload type, but non-YAML message type '{}' configured! Assuming message type {}",
+                        getMessageType(), MessageType.YAML);
+
+                setMessageType(MessageType.YAML);
             }
         }
     }
@@ -306,7 +365,7 @@ public class ReceiveMessageAction extends AbstractTestAction {
     public Endpoint getOrCreateEndpoint(TestContext context) {
         if (endpoint != null) {
             return endpoint;
-        } else if (StringUtils.hasText(endpointUri)) {
+        } else if (hasText(endpointUri)) {
             return context.getEndpointFactory().create(endpointUri, context);
         } else {
             throw new CitrusRuntimeException("Neither endpoint nor endpoint uri is set properly!");
@@ -359,6 +418,10 @@ public class ReceiveMessageAction extends AbstractTestAction {
      */
     public String getMessageType() {
         return messageType;
+    }
+
+    private void setMessageType(MessageType messageType) {
+        this.messageType = messageType.name();
     }
 
     /**
@@ -428,7 +491,7 @@ public class ReceiveMessageAction extends AbstractTestAction {
     /**
      * Action builder.
      */
-    public static final class Builder extends ReceiveMessageActionBuilder<ReceiveMessageAction, ReceiveMessageActionBuilderSupport, Builder> {
+    public static class Builder extends ReceiveMessageActionBuilder<ReceiveMessageAction, ReceiveMessageActionBuilderSupport, Builder> {
 
         /**
          * Fluent API action building entry method used in Java DSL.
@@ -496,7 +559,7 @@ public class ReceiveMessageAction extends AbstractTestAction {
         private final List<ValidationContext.Builder<?, ?>> validationContexts = new ArrayList<>();
 
         /** Validation context used in this action builder */
-        private HeaderValidationContext headerValidationContext;
+        private HeaderValidationContext.Builder headerValidationContext;
 
         private final List<String> validatorNames = new ArrayList<>();
 
@@ -654,7 +717,7 @@ public class ReceiveMessageAction extends AbstractTestAction {
          * @return
          */
         public B validator(final HeaderValidator validators) {
-            Stream.of(validators).forEach(getHeaderValidationContext()::addHeaderValidator);
+            Stream.of(validators).forEach(getHeaderValidationContext()::validator);
             return self;
         }
 
@@ -691,6 +754,10 @@ public class ReceiveMessageAction extends AbstractTestAction {
 
             reconcileValidationContexts();
 
+            validationContexts.stream()
+                    .filter(HeaderValidationContext.Builder.class::isInstance)
+                    .forEach(c -> ((HeaderValidationContext.Builder) c).ignoreCase(getMessageBuilderSupport().isHeaderNameIgnoreCase()));
+
             if (referenceResolver != null) {
                 if (validationProcessor != null &&
                         validationProcessor instanceof ReferenceResolverAware) {
@@ -702,7 +769,7 @@ public class ReceiveMessageAction extends AbstractTestAction {
 
                     Object validator = referenceResolver.resolve(validatorName);
                     if (validator instanceof HeaderValidator) {
-                        getHeaderValidationContext().addHeaderValidator((HeaderValidator) validator);
+                        getHeaderValidationContext().validator((HeaderValidator) validator);
                     } else {
                         this.validators.add((MessageValidator<? extends ValidationContext>) validator);
                     }
@@ -720,9 +787,9 @@ public class ReceiveMessageAction extends AbstractTestAction {
         /**
          * Creates new header validation context if not done before and gets the header validation context.
          */
-        public HeaderValidationContext getHeaderValidationContext() {
+        public HeaderValidationContext.Builder getHeaderValidationContext() {
             if (headerValidationContext == null) {
-                headerValidationContext = new HeaderValidationContext();
+                headerValidationContext = new HeaderValidationContext.Builder();
 
                 validate(headerValidationContext);
             }
@@ -733,13 +800,13 @@ public class ReceiveMessageAction extends AbstractTestAction {
         /**
          * Revisit configured validation context list and automatically add context based on message payload and path
          * expression contexts if any.
-         *
+         * <p>
          * This method makes sure that validation contexts are configured. If no validation context has been set yet the method
          * automatically adds proper validation contexts for Json and XML message payloads.
-         *
+         * <p>
          * In case a path expression (JsonPath, XPath) context is set but no proper message validation context (Json, Xml) the
          * method automatically adds the proper message validation context.
-         *
+         * <p>
          * Only when validation contexts are set properly according to the message type and content the message validation
          * steps will execute later on.
          */
@@ -749,28 +816,67 @@ public class ReceiveMessageAction extends AbstractTestAction {
                 getHeaderValidationContext();
             }
 
-            if (validationContexts.stream().allMatch(HeaderValidationContext.class::isInstance)) {
-                validate(new XmlMessageValidationContext());
-                validate(new JsonMessageValidationContext());
-            } else if (validationContexts.stream().anyMatch(JsonPathMessageValidationContext.class::isInstance)
-                    && validationContexts.stream().noneMatch(JsonMessageValidationContext.class::isInstance)) {
-                validate(new JsonMessageValidationContext());
-            } else if (validationContexts.stream().noneMatch(XmlMessageValidationContext.class::isInstance)
-                        && validationContexts.stream().noneMatch(JsonMessageValidationContext.class::isInstance)) {
-                // if still no Json or Xml message validation context is set check the message payload and set proper context
-                Optional<String> payload = getMessagePayload();
-                if (payload.isPresent()) {
-                    if (MessagePayloadUtils.isXml(payload.get())) {
-                        validate(new XmlMessageValidationContext());
-                    } else if (MessagePayloadUtils.isJson(payload.get())) {
-                        validate(new JsonMessageValidationContext());
+            if (validationContexts.stream().noneMatch(MessageValidationContext.class::isInstance)) {
+                injectMessageValidationContext();
+            }
+        }
+
+        private void injectMessageValidationContext() {
+            // if still no Json or Xml message validation context is set check the message payload and set proper context
+            ValidationContext validationContext = null;
+            Optional<String> payload = getMessagePayload();
+            if (payload.isPresent()) {
+                if (MessagePayloadUtils.isXml(payload.get())) {
+                    validationContext = new XmlMessageValidationContext();
+                } else if (MessagePayloadUtils.isJson(payload.get())) {
+                    validationContext = new JsonMessageValidationContext();
+                } else {
+                    validationContext = new DefaultMessageValidationContext();
+                }
+            }
+
+            if (validationContext == null && messageBuilderSupport != null) {
+                if (messageBuilderSupport.getMessageBuilder().getClass().isAnnotationPresent(MessagePayload.class)) {
+                    MessageType type = messageBuilderSupport.getMessageBuilder().getClass().getAnnotation(MessagePayload.class).value();
+                    if (type == MessageType.XML || type == MessageType.XHTML) {
+                        validationContext = new XmlMessageValidationContext();
+                    } else if (type == MessageType.JSON) {
+                        validationContext = new JsonMessageValidationContext();
+                    } else if (type == MessageType.YAML) {
+                        validationContext = new YamlMessageValidationContext();
+                    } else if (type == MessageType.PLAINTEXT) {
+                        validationContext = new DefaultMessageValidationContext();
                     }
                 }
             }
 
-            validationContexts.stream()
-                    .filter(HeaderValidationContext.class::isInstance)
-                    .forEach(c -> ((HeaderValidationContext) c).setHeaderNameIgnoreCase(getMessageBuilderSupport().isHeaderNameIgnoreCase()));
+            if (validationContext == null) {
+                Optional<String> resource = getMessageResource();
+                if (resource.isPresent()) {
+                    String fileExt = FileUtils.getFileExtension(resource.get());
+                    if ("xml".equals(fileExt)) {
+                        validationContext = new XmlMessageValidationContext();
+                    } else if ("json".equals(fileExt)) {
+                        validationContext = new JsonMessageValidationContext();
+                    } else {
+                        validationContext = new DefaultMessageValidationContext();
+                    }
+                }
+            }
+
+            if (validationContext == null && messageBuilderSupport != null) {
+                if (messageBuilderSupport.getMessageBuilder() instanceof StaticMessageBuilder) {
+                    validationContext = new DefaultMessageValidationContext();
+                } else if (messageBuilderSupport.getMessageBuilder() instanceof WithPayloadBuilder payloadBuilder) {
+                    if (payloadBuilder.getPayloadBuilder() != null) {
+                        validationContext = new DefaultMessageValidationContext();
+                    }
+                }
+            }
+
+            if (validationContext != null) {
+                validate(validationContext);
+            }
         }
 
         /**
@@ -782,16 +888,33 @@ public class ReceiveMessageAction extends AbstractTestAction {
                 return Optional.empty();
             }
 
-            if (messageBuilderSupport.getMessageBuilder() instanceof StaticMessageBuilder) {
-                Message message = ((StaticMessageBuilder) messageBuilderSupport.getMessageBuilder()).getMessage();
+            if (messageBuilderSupport.getMessageBuilder() instanceof StaticMessageBuilder staticMessageBuilder) {
+                Message message = staticMessageBuilder.getMessage();
                 if (message.getPayload() instanceof String) {
                     return Optional.of(message.getPayload(String.class));
                 }
-            } else if (messageBuilderSupport.getMessageBuilder() instanceof WithPayloadBuilder) {
-                MessagePayloadBuilder payloadBuilder = ((WithPayloadBuilder) messageBuilderSupport.getMessageBuilder()).getPayloadBuilder();
-                if (payloadBuilder instanceof DefaultPayloadBuilder) {
-                    return Optional.ofNullable(((DefaultPayloadBuilder) payloadBuilder).getPayload())
-                            .map(Object::toString);
+            } else if (messageBuilderSupport.getMessageBuilder() instanceof WithPayloadBuilder withPayloadBuilder) {
+                if (withPayloadBuilder.getPayloadBuilder() instanceof DefaultPayloadBuilder defaultPayloadBuilder) {
+                    return Optional.ofNullable(defaultPayloadBuilder.getPayload())
+                            .map(object -> TypeConverter.lookupDefault().convertIfNecessary(object, String.class));
+                }
+            }
+
+            return Optional.empty();
+        }
+
+        /**
+         * Gets message resource file path from configured message builder.
+         * @return
+         */
+        protected Optional<String> getMessageResource() {
+            if (messageBuilderSupport == null) {
+                return Optional.empty();
+            }
+
+            if (messageBuilderSupport.getMessageBuilder() instanceof WithPayloadBuilder withPayloadBuilder) {
+                if (withPayloadBuilder.getPayloadBuilder() instanceof FileResourcePayloadBuilder filePayloadBuilder) {
+                    return Optional.ofNullable(filePayloadBuilder.getResourcePath());
                 }
             }
 

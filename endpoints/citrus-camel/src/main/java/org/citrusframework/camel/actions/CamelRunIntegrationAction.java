@@ -35,6 +35,7 @@ import org.citrusframework.spi.Resource;
 import org.citrusframework.util.FileUtils;
 import org.citrusframework.util.IsJsonPredicate;
 import org.citrusframework.util.IsXmlPredicate;
+import org.citrusframework.util.IsYamlPredicate;
 import org.citrusframework.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,9 +117,9 @@ public class CamelRunIntegrationAction extends AbstractCamelJBangAction {
             }
 
             camelJBang().dumpIntegrationOutput(dumpIntegrationOutput);
-            camelJBang().camelApp().withEnvs(context.resolveDynamicValuesInMap(envVars));
-            camelJBang().camelApp().withSystemProperties(context.resolveDynamicValuesInMap(systemProperties));
-            camelJBang().camelApp().workingDir(integrationToRun.toAbsolutePath().getParent());
+            camelJBang().withEnvs(context.resolveDynamicValuesInMap(envVars));
+            camelJBang().withSystemProperties(context.resolveDynamicValuesInMap(systemProperties));
+            camelJBang().workingDir(integrationToRun.toAbsolutePath().getParent());
 
             ProcessAndOutput pao = camelJBang().run(name, integrationToRun.getFileName().toString(), resourceFiles,
                     context.resolveDynamicValuesInList(args).toArray(String[]::new));
@@ -173,6 +174,8 @@ public class CamelRunIntegrationAction extends AbstractCamelJBangAction {
             return "yaml";
         } else if (sourceCode.contains("kind: Kamelet") || sourceCode.contains("kind: KameletBinding") ||
                 sourceCode.contains("kind: Pipe") || sourceCode.contains("kind: Integration")) {
+            return "yaml";
+        } else if (IsYamlPredicate.getInstance().test(sourceCode)) {
             return "yaml";
         } else {
             return "groovy";

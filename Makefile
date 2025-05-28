@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION := 4.6.0-SNAPSHOT
+VERSION := 4.7.0-SNAPSHOT
 RELEASE_GIT_REMOTE := origin
 GIT_COMMIT := $(shell git rev-list -1 HEAD)
 
@@ -49,4 +49,4 @@ release-major:
 	./scripts/citrus release --git-remote $(RELEASE_GIT_REMOTE) --major-release --release-version $(VERSION)
 
 release-dry-run:
-	./scripts/citrus release --git-remote $(RELEASE_GIT_REMOTE) --release-version $(VERSION) --skip-tests --dry-run --no-git-push --keep-staging-repo
+	./scripts/citrus release --git-remote $(RELEASE_GIT_REMOTE) --release-version $(VERSION) --skip-tests --dry-run --no-git-push

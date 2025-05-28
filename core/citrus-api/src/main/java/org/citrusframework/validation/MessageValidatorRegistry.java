@@ -25,18 +25,22 @@ import java.util.Optional;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.exceptions.NoSuchMessageValidatorException;
 import org.citrusframework.message.Message;
+import org.citrusframework.message.MessagePayloadUtils;
 import org.citrusframework.message.MessageType;
 import org.citrusframework.util.IsJsonPredicate;
 import org.citrusframework.util.IsXmlPredicate;
+import org.citrusframework.util.IsYamlPredicate;
 import org.citrusframework.validation.context.SchemaValidationContext;
 import org.citrusframework.validation.context.ValidationContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.lang.String.format;
+
 /**
  * Simple registry holding all available message validator implementations. Test context can ask this registry for
  * matching validator implementation according to the message type (e.g. xml, json, csv, plaintext).
- *
+ * <p>
  * Registry tries to find a matching validator for the message.
  *
  */
@@ -95,24 +99,29 @@ public class MessageValidatorRegistry {
                     !message.getPayload(String.class).isBlank()) {
                 String payload = message.getPayload(String.class).trim();
 
-                if (payload.startsWith("<") && !messageType.equals(MessageType.XML.name())) {
+                if (MessagePayloadUtils.isXml(payload) && !messageType.equals(MessageType.XML.name())) {
                     matchingValidators = findFallbackMessageValidators(MessageType.XML.name(), message);
-                } else if ((payload.startsWith("{") || payload.startsWith("[")) && !messageType.equals(MessageType.JSON.name())) {
+                } else if (MessagePayloadUtils.isJson(payload) && !messageType.equals(MessageType.JSON.name())) {
                     matchingValidators = findFallbackMessageValidators(MessageType.JSON.name(), message);
+                } else if (MessagePayloadUtils.isYaml(payload) && !messageType.equals(MessageType.YAML.name())) {
+                    matchingValidators = findFallbackMessageValidators(MessageType.YAML.name(), message);
                 } else if (!messageType.equals(MessageType.PLAINTEXT.name())) {
                     matchingValidators = findFallbackMessageValidators(MessageType.PLAINTEXT.name(), message);
                 }
             }
         }
 
-        if (isEmptyOrDefault(matchingValidators) &&
-                (message.getPayload(String.class) == null || message.getPayload(String.class).isBlank())) {
+        if (isEmptyOrDefault(matchingValidators)
+                && (message.getPayload(String.class) == null || message.getPayload(String.class).isBlank())) {
             matchingValidators.add(defaultEmptyMessageValidator);
         }
 
         if (isEmptyOrDefault(matchingValidators)) {
             if (mustFindValidator) {
-                logger.warn(String.format("Unable to find proper message validator. Message type is '%s' and message payload is '%s'", messageType, message.getPayload(String.class)));
+                if (logger.isWarnEnabled()) {
+                    logger.warn("Unable to find proper message validator. Message type is '{}' and message payload is '{}'", messageType, message.getPayload(String.class));
+                }
+
                 throw new CitrusRuntimeException("Failed to find proper message validator for message");
             }
 
@@ -120,9 +129,7 @@ public class MessageValidatorRegistry {
             matchingValidators.add(defaultTextEqualsMessageValidator);
         }
 
-        if (logger.isDebugEnabled()) {
-            logger.debug(String.format("Found %s message validators for message", matchingValidators.size()));
-        }
+        logger.debug("Found {} message validators for message", matchingValidators.size());
 
         return matchingValidators;
     }
@@ -197,7 +204,7 @@ public class MessageValidatorRegistry {
             return this.messageValidators.get(name);
         }
 
-        throw new NoSuchMessageValidatorException(String.format("Unable to find message validator with name '%s'", name));
+        throw new NoSuchMessageValidatorException(format("Unable to find message validator with name '%s'", name));
     }
 
     /**
@@ -207,7 +214,7 @@ public class MessageValidatorRegistry {
      */
     public void addMessageValidator(String name, MessageValidator<? extends ValidationContext> messageValidator) {
         if (this.messageValidators.containsKey(name) && logger.isDebugEnabled()) {
-            logger.debug(String.format("Overwriting message validator '%s' in registry", name));
+            logger.debug("Overwriting message validator '{}' in registry", name);
         }
 
         this.messageValidators.put(name, messageValidator);
@@ -220,7 +227,7 @@ public class MessageValidatorRegistry {
      */
     public void addSchemaValidator(String name, SchemaValidator<? extends SchemaValidationContext> schemaValidator) {
         if (this.schemaValidators.containsKey(name) && logger.isDebugEnabled()) {
-            logger.debug(String.format("Overwriting message validator '%s' in registry", name));
+            logger.debug("Overwriting message validator '{}' in registry", name);
         }
 
         this.schemaValidators.put(name, schemaValidator);
@@ -230,8 +237,7 @@ public class MessageValidatorRegistry {
      * Sets available message validator implementations.
      * @param messageValidators the messageValidators to set
      */
-    public void setMessageValidators(
-            Map<String, MessageValidator<? extends ValidationContext>> messageValidators) {
+    public void setMessageValidators(Map<String, MessageValidator<? extends ValidationContext>> messageValidators) {
         this.messageValidators = messageValidators;
     }
 
@@ -241,6 +247,14 @@ public class MessageValidatorRegistry {
      */
     public Map<String, MessageValidator<? extends ValidationContext>> getMessageValidators() {
         return messageValidators;
+    }
+
+    /**
+     * Gets the default message validator.
+     * @return
+     */
+    public MessageValidator<? extends ValidationContext> getDefaultMessageValidator() {
+        return defaultTextEqualsMessageValidator;
     }
 
     /**
@@ -281,6 +295,8 @@ public class MessageValidatorRegistry {
                     matchingSchemaValidators = findFallbackSchemaValidators(MessageType.XML.name(), message);
                 } else if (IsJsonPredicate.getInstance().test(payload) && !messageType.equals(MessageType.JSON.name())) {
                     matchingSchemaValidators = findFallbackSchemaValidators(MessageType.JSON.name(), message);
+                } else if (IsYamlPredicate.getInstance().test(payload) && !messageType.equals(MessageType.YAML.name())) {
+                    matchingSchemaValidators = findFallbackSchemaValidators(MessageType.YAML.name(), message);
                 }
             }
         }
@@ -307,5 +323,12 @@ public class MessageValidatorRegistry {
      */
     public void setSchemaValidators(Map<String, SchemaValidator<? extends SchemaValidationContext>> schemaValidators) {
         this.schemaValidators = schemaValidators;
+    }
+
+    /**
+     * Return all schema validators.
+     */
+    public Map<String, SchemaValidator<? extends SchemaValidationContext>> getSchemaValidators() {
+        return schemaValidators;
     }
 }

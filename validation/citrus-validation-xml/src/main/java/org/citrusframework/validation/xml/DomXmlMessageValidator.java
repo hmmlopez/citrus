@@ -16,6 +16,13 @@
 
 package org.citrusframework.validation.xml;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import javax.xml.XMLConstants;
+import javax.xml.namespace.NamespaceContext;
+
 import org.citrusframework.CitrusSettings;
 import org.citrusframework.XmlValidationHelper;
 import org.citrusframework.context.TestContext;
@@ -28,6 +35,8 @@ import org.citrusframework.util.MessageUtils;
 import org.citrusframework.util.XMLUtils;
 import org.citrusframework.validation.AbstractMessageValidator;
 import org.citrusframework.validation.ValidationUtils;
+import org.citrusframework.validation.context.DefaultMessageValidationContext;
+import org.citrusframework.validation.context.ValidationContext;
 import org.citrusframework.validation.matcher.ValidationMatcherUtils;
 import org.citrusframework.validation.xml.schema.XmlSchemaValidation;
 import org.citrusframework.xml.namespace.NamespaceContextBuilder;
@@ -41,12 +50,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.ls.LSException;
-
-import javax.xml.XMLConstants;
-import javax.xml.namespace.NamespaceContext;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import static org.citrusframework.util.StringUtils.hasText;
 import static org.citrusframework.util.XMLUtils.prettyPrint;
@@ -78,7 +81,12 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
     @Override
     public void validateMessage(Message receivedMessage, Message controlMessage,
                                 TestContext context, XmlMessageValidationContext validationContext) throws ValidationException {
-        logger.debug("Start XML message validation: {}", prettyPrint(receivedMessage.getPayload(String.class)));
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Start XML message validation: {}",
+                prettyPrint(receivedMessage.getPayload(String.class)));
+        }
+
         try {
             if (validationContext.isSchemaValidationEnabled()) {
                 schemaValidator.validate(receivedMessage, context, validationContext);
@@ -110,9 +118,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
      * Validate namespaces in message. The method compares namespace declarations in the root
      * element of the received message to expected namespaces. Prefixes are important too, so
      * differing namespace prefixes will fail the validation.
-     *
-     * @param expectedNamespaces
-     * @param receivedMessage
      */
     protected void validateNamespaces(Map<String, String> expectedNamespaces, Message receivedMessage) {
         if (expectedNamespaces == null || expectedNamespaces.isEmpty()) {
@@ -188,10 +193,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
 
     /**
      * Validate message payloads by comparing to a control message.
-     *
-     * @param receivedMessage
-     * @param validationContext
-     * @param context
      */
     protected void validateMessageContent(Message receivedMessage, Message controlMessage,
                                           XmlMessageValidationContext validationContext, TestContext context) {
@@ -232,10 +233,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
 
     /**
      * Validates XML header fragment data.
-     * @param receivedHeaderData
-     * @param controlHeaderData
-     * @param validationContext
-     * @param context
      */
     private void validateXmlHeaderFragment(String receivedHeaderData, String controlHeaderData,
             XmlMessageValidationContext validationContext, TestContext context) {
@@ -257,10 +254,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
 
     /**
      * Walk the XML tree and validate all nodes.
-     *
-     * @param received
-     * @param source
-     * @param validationContext
      */
     private void validateXmlTree(Node received, Node source,
             XmlMessageValidationContext validationContext, NamespaceContext namespaceContext, TestContext context) {
@@ -289,10 +282,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
 
     /**
      * Handle document type definition with validation of publicId and systemId.
-     * @param received
-     * @param source
-     * @param validationContext
-     * @param namespaceContext
      */
     private void doDocumentTypeDefinition(Node received, Node source,
             XmlMessageValidationContext validationContext,
@@ -336,10 +325,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
 
     /**
      * Handle element node.
-     *
-     * @param received
-     * @param source
-     * @param validationContext
      */
     private void doElement(Node received, Node source,
             XmlMessageValidationContext validationContext, NamespaceContext namespaceContext, TestContext context) {
@@ -397,9 +382,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
 
     /**
      * Handle text node during validation.
-     *
-     * @param received
-     * @param source
      */
     private void doText(Element received, Element source) {
         logger.debug("Validating node value for element: {}", received.getLocalName());
@@ -412,16 +394,13 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
                         + received.getLocalName() + "'", sourceText.trim(), receivedText.trim()));
         }
 
-        logger.debug("Node value '{}': OK", receivedText.trim());
+        if (logger.isDebugEnabled()) {
+            logger.debug("Node value '{}': OK", receivedText.trim());
+        }
     }
 
     /**
      * Handle attribute node during validation.
-     *
-     * @param receivedElement
-     * @param receivedAttribute
-     * @param sourceElement
-     * @param validationContext
      */
     private void doAttribute(Node receivedElement, Node receivedAttribute, Node sourceElement,
             XmlMessageValidationContext validationContext, NamespaceContext namespaceContext, TestContext context) {
@@ -466,10 +445,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
     /**
      * Perform validation on namespace qualified attribute values if present. This includes the validation of namespace presence
      * and equality.
-     * @param receivedElement
-     * @param receivedAttribute
-     * @param sourceElement
-     * @param sourceAttribute
      */
     private void doNamespaceQualifiedAttributeValidation(Node receivedElement, Node receivedAttribute, Node sourceElement, Node sourceAttribute) {
         String receivedValue = receivedAttribute.getNodeValue();
@@ -511,8 +486,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
 
     /**
      * Handle processing instruction during validation.
-     *
-     * @param received
      */
     private void doPI(Node received) {
         logger.debug("Ignored processing instruction ({}={})", received.getLocalName(), received.getNodeValue());
@@ -537,7 +510,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
 
     /**
      * Checks whether the given node contains a validation matcher
-     * @param node
      * @return true if node value contains validation matcher, false if not
      */
     private boolean isValidationMatcherExpression(Node node) {
@@ -563,10 +535,24 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
         return messageType.equalsIgnoreCase(MessageType.XML.name()) && MessageUtils.hasXmlPayload(message);
     }
 
+    @Override
+    public XmlMessageValidationContext findValidationContext(List<ValidationContext> validationContexts) {
+        if (validationContexts.stream().noneMatch(XmlMessageValidationContext.class::isInstance)) {
+            Optional<DefaultMessageValidationContext> messageValidationContext = validationContexts.stream()
+                    .filter(context -> context.getClass().equals(DefaultMessageValidationContext.class))
+                    .map(DefaultMessageValidationContext.class::cast)
+                    .findFirst();
+
+            if (messageValidationContext.isPresent()) {
+                return XmlMessageValidationContext.Builder.adapt(messageValidationContext.get()).build();
+            }
+        }
+
+        return super.findValidationContext(validationContexts);
+    }
+
     /**
      * Get explicit namespace context builder set on this class or obtain instance from reference resolver.
-     * @param context
-     * @return
      */
     private NamespaceContextBuilder getNamespaceContextBuilder(TestContext context) {
         if (namespaceContextBuilder != null) {
@@ -578,7 +564,6 @@ public class DomXmlMessageValidator extends AbstractMessageValidator<XmlMessageV
 
     /**
      * Sets the namespace context builder.
-     * @param namespaceContextBuilder
      */
     public void setNamespaceContextBuilder(NamespaceContextBuilder namespaceContextBuilder) {
         this.namespaceContextBuilder = namespaceContextBuilder;

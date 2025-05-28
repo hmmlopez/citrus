@@ -39,6 +39,7 @@ import org.citrusframework.annotations.CitrusTestSource;
 import org.citrusframework.common.DefaultTestLoader;
 import org.citrusframework.common.TestLoader;
 import org.citrusframework.common.TestSourceAware;
+import org.citrusframework.common.TestSourceHelper;
 import org.citrusframework.config.CitrusSpringConfig;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.CitrusRuntimeException;
@@ -139,7 +140,7 @@ public class TestNGCitrusSpringSupport extends AbstractTestNGSpringContextTests
                 if (testLoader instanceof TestSourceAware testSourceAware) {
                     String[] sources = method.getAnnotation(CitrusTestSource.class).sources();
                     if (sources.length > 0) {
-                        testSourceAware.setSource(sources[0]);
+                        testSourceAware.setSource(TestSourceHelper.create(sources[0]));
                     }
                 }
             } else {
@@ -163,6 +164,10 @@ public class TestNGCitrusSpringSupport extends AbstractTestNGSpringContextTests
 
     @BeforeClass(alwaysRun = true)
     public final void before() {
+        // TODO
+        // We need to consider the possibility, that one test has meanwhile modified the current citrus instance,
+        // as there can be plenty of tests running between @BeforeSuite and the execution of an actual subclass of
+        // this support. The citrus instance may even have a mocked context.
         if (citrus == null) {
             citrus = Citrus.newInstance(new CitrusSpringContextProvider(applicationContext));
             CitrusAnnotations.injectCitrusFramework(this, citrus);
@@ -205,7 +210,7 @@ public class TestNGCitrusSpringSupport extends AbstractTestNGSpringContextTests
         CitrusAnnotations.injectCitrusFramework(this, citrus);
         beforeSuite(citrus.getCitrusContext());
         citrus.beforeSuite(Reporter.getCurrentTestResult().getTestContext().getSuite().getName(),
-                Reporter.getCurrentTestResult().getTestContext().getIncludedGroups());
+            Reporter.getCurrentTestResult().getTestContext().getIncludedGroups());
     }
 
     /**

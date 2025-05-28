@@ -27,6 +27,7 @@ import org.citrusframework.message.builder.DefaultHeaderBuilder;
 import org.citrusframework.validation.builder.DefaultMessageBuilder;
 import org.citrusframework.validation.context.ValidationContext;
 import org.citrusframework.ws.actions.SendSoapMessageAction;
+import org.citrusframework.ws.actions.SendSoapMessageAction.Builder;
 import org.citrusframework.ws.message.SoapAttachment;
 import org.citrusframework.ws.message.SoapMessageHeaders;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -60,7 +61,7 @@ public class SendSoapMessageActionParser extends SendMessageActionParser {
     }
 
     @Override
-    protected void parseHeaderElements(Element actionElement, DefaultMessageBuilder messageBuilder, List<ValidationContext> validationContexts) {
+    protected void parseHeaderElements(Element actionElement, DefaultMessageBuilder messageBuilder, List<ValidationContext.Builder<?, ?>> validationContexts) {
         super.parseHeaderElements(actionElement, messageBuilder, validationContexts);
 
         Map<String, Object> headers = new HashMap<>();
@@ -82,7 +83,7 @@ public class SendSoapMessageActionParser extends SendMessageActionParser {
     }
 
     @Override
-    protected Class<? extends AbstractSendMessageActionFactoryBean<?, ?, ?>> getBeanDefinitionClass() {
+    protected Class<? extends AbstractSendMessageActionFactoryBean<?, ?, ?>> getMessageFactoryClass() {
         return SendSoapMessageActionFactoryBean.class;
     }
 
@@ -91,7 +92,15 @@ public class SendSoapMessageActionParser extends SendMessageActionParser {
      */
     public static class SendSoapMessageActionFactoryBean extends AbstractSendMessageActionFactoryBean<SendSoapMessageAction, SendSoapMessageAction.Builder.SendSoapMessageBuilderSupport, SendSoapMessageAction.Builder> {
 
-        private final SendSoapMessageAction.Builder builder = new SendSoapMessageAction.Builder();
+        private final SendSoapMessageAction.Builder builder;
+
+        public SendSoapMessageActionFactoryBean() {
+            this(new Builder());
+        }
+
+        public SendSoapMessageActionFactoryBean(SendSoapMessageAction.Builder builder) {
+            this.builder = builder;
+        }
 
         /**
          * Sets the control attachments.
@@ -103,7 +112,6 @@ public class SendSoapMessageActionParser extends SendMessageActionParser {
 
         /**
          * Enable or disable mtom attachments
-         * @param mtomEnabled
          */
         public void setMtomEnabled(boolean mtomEnabled) {
             builder.message().mtomEnabled(mtomEnabled);

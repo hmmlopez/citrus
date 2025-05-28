@@ -16,11 +16,15 @@
 
 package org.citrusframework.validation.json.schema;
 
-import static java.util.Collections.emptySet;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.ValidationMessage;
+import org.citrusframework.CitrusSettings;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.exceptions.CitrusRuntimeException;
 import org.citrusframework.exceptions.ValidationException;
@@ -30,22 +34,20 @@ import org.citrusframework.message.Message;
 import org.citrusframework.spi.ReferenceResolver;
 import org.citrusframework.util.IsJsonPredicate;
 import org.citrusframework.validation.SchemaValidator;
-import org.citrusframework.validation.json.JsonMessageValidationContext;
+import org.citrusframework.validation.context.MessageValidationContext;
+import org.citrusframework.validation.json.JsonMessageValidationContext.Builder;
 import org.citrusframework.validation.json.report.GraciousProcessingReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import static java.util.Collections.emptySet;
 
 /**
  * This class is responsible for the validation of json messages against json schemas / json schema repositories.
  *
  * @since 2.7.3
  */
-public class JsonSchemaValidation implements SchemaValidator<JsonMessageValidationContext> {
+public class JsonSchemaValidation implements SchemaValidator<MessageValidationContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(JsonSchemaValidation.class);
 
@@ -62,7 +64,7 @@ public class JsonSchemaValidation implements SchemaValidator<JsonMessageValidati
     }
 
     @Override
-    public void validate(Message message, TestContext context, JsonMessageValidationContext validationContext) {
+    public void validate(Message message, TestContext context, MessageValidationContext validationContext) {
         logger.debug("Starting Json schema validation ...");
 
         GraciousProcessingReport report = validate(message,
@@ -71,7 +73,10 @@ public class JsonSchemaValidation implements SchemaValidator<JsonMessageValidati
             context.getReferenceResolver());
 
         if (!report.isSuccess()) {
-            logger.error("Failed to validate Json schema for message:\n{}", message.getPayload(String.class));
+            if (logger.isErrorEnabled()) {
+                logger.error("Failed to validate Json schema for message:\n{}",
+                    message.getPayload(String.class));
+            }
             throw new ValidationException(constructErrorMessage(report));
         }
 
@@ -110,7 +115,7 @@ public class JsonSchemaValidation implements SchemaValidator<JsonMessageValidati
      */
     public GraciousProcessingReport validate(Message message,
                                              List<JsonSchemaRepository> schemaRepositories,
-                                             JsonMessageValidationContext validationContext,
+                                             MessageValidationContext validationContext,
                                              ReferenceResolver referenceResolver) {
         return validate(message, jsonSchemaFilter.filter(schemaRepositories, validationContext, referenceResolver));
     }
@@ -166,5 +171,31 @@ public class JsonSchemaValidation implements SchemaValidator<JsonMessageValidati
     public boolean supportsMessageType(String messageType, Message message) {
         return "JSON".equals(messageType)
             || (message != null && IsJsonPredicate.getInstance().test(message.getPayload(String.class)));
+    }
+
+    @Override
+    public boolean canValidate(Message message, boolean schemaValidationEnabled) {
+        return (isJsonSchemaValidationEnabled() || schemaValidationEnabled)
+            && IsJsonPredicate.getInstance().test(message.getPayload(String.class));
+    }
+
+    /**
+     * Get setting to determine if json schema validation is enabled by default.
+     * @return
+     */
+    private static boolean isJsonSchemaValidationEnabled() {
+        return Boolean.getBoolean(CitrusSettings.OUTBOUND_SCHEMA_VALIDATION_ENABLED_PROPERTY)
+            || Boolean.getBoolean(CitrusSettings.OUTBOUND_JSON_SCHEMA_VALIDATION_ENABLED_PROPERTY)
+            || Boolean.parseBoolean(System.getenv(CitrusSettings.OUTBOUND_SCHEMA_VALIDATION_ENABLED_ENV))
+            || Boolean.parseBoolean(System.getenv(CitrusSettings.OUTBOUND_JSON_SCHEMA_VALIDATION_ENABLED_ENV));
+    }
+
+    @Override
+    public void validate(Message message, TestContext context, String schemaRepository, String schema) {
+        MessageValidationContext validationContext = Builder.json()
+            .schemaValidation(true)
+            .schema(schema)
+            .schemaRepository(schemaRepository).build();
+        validate(message, context, validationContext);
     }
 }

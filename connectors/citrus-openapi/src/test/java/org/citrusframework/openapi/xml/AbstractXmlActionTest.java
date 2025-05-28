@@ -21,6 +21,7 @@ import org.citrusframework.CitrusContext;
 import org.citrusframework.CitrusInstanceManager;
 import org.citrusframework.DefaultTestCaseRunner;
 import org.citrusframework.annotations.CitrusAnnotations;
+import org.citrusframework.common.TestSourceHelper;
 import org.citrusframework.context.StaticTestContextFactory;
 import org.citrusframework.context.TestContext;
 import org.citrusframework.testng.AbstractTestNGUnitTest;
@@ -57,7 +58,7 @@ public class AbstractXmlActionTest extends AbstractTestNGUnitTest {
             CitrusAnnotations.parseConfiguration(invocationOnMock.getArgument(0, Object.class), citrusContext);
             return null;
         }).when(citrusContext).parseConfiguration((Object) any());
-        doAnswer(invocationOnMock-> {
+        doAnswer(invocationOnMock -> {
             context.getReferenceResolver().bind(invocationOnMock.getArgument(0), invocationOnMock.getArgument(1));
             return null;
         }).when(citrusContext).addComponent(anyString(), any());
@@ -69,7 +70,7 @@ public class AbstractXmlActionTest extends AbstractTestNGUnitTest {
         XmlTestLoader testLoader = new XmlTestLoader(this.getClass(), "Test", this.getClass().getPackageName());
         CitrusAnnotations.injectAll(testLoader, citrus, context);
         CitrusAnnotations.injectTestRunner(testLoader, new DefaultTestCaseRunner(context));
-        testLoader.setSource(sourcePath);
+        testLoader.setSource(TestSourceHelper.create(sourcePath));
 
         return testLoader;
     }

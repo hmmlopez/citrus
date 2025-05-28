@@ -17,6 +17,9 @@
 package org.citrusframework.message;
 
 import org.citrusframework.CitrusSettings;
+import org.citrusframework.util.IsJsonPredicate;
+import org.citrusframework.util.IsXmlPredicate;
+import org.citrusframework.util.IsYamlPredicate;
 
 public class MessagePayloadUtils {
 
@@ -55,7 +58,7 @@ public class MessagePayloadUtils {
      * @return
      */
     public static boolean isXml(String payload) {
-        return payload.trim().startsWith("<");
+        return IsXmlPredicate.getInstance().test(payload);
     }
 
     /**
@@ -64,7 +67,16 @@ public class MessagePayloadUtils {
      * @return
      */
     public static boolean isJson(String payload) {
-        return payload.trim().startsWith("{") || payload.trim().startsWith("[");
+        return IsJsonPredicate.getInstance().test(payload);
+    }
+
+    /**
+     * Check if given message payload is of YAML nature.
+     * @param payload
+     * @return
+     */
+    public static boolean isYaml(String payload) {
+        return IsYamlPredicate.getInstance().test(payload);
     }
 
     /**
@@ -105,7 +117,7 @@ public class MessagePayloadUtils {
                     if (nextStartElementPos > i + 1) {
                         String textBetweenElements = s.substring(i + 1, nextStartElementPos);
 
-                        if (textBetweenElements.replaceAll("\\s", "").length() == 0) {
+                        if (textBetweenElements.replaceAll("\\s", "").isEmpty()) {
                             sb.append(System.lineSeparator());
                         } else {
                             sb.append(textBetweenElements.trim());
